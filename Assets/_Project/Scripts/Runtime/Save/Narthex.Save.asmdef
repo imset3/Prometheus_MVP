@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.Save",
+  "rootNamespace": "Narthex.Save",
+  "references": ["Narthex.Core", "Narthex.Content"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

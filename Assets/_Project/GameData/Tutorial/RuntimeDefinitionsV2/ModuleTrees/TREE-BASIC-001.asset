@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c97b48b049cc84b3abc9df5353e26080, type: 3}
+  m_Name: TREE-BASIC-001
+  m_EditorClassIdentifier: Narthex.Content::Narthex.Content.ModuleTreeDefinition
+  stableId: TREE-BASIC-001
+  displayNameTextKey: 기본 모듈 트리
+  TreeType: 0
+  AvailableAtRunStart: 1
+  Nodes:
+  - Module: {fileID: 11400000, guid: 0bb58df2f951a43ed8445f3cf5793079, type: 2}
+    RequiredModuleIds: []
+    UiPosition: {x: 0, y: 0}

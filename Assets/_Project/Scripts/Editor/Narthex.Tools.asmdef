@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.Tools",
+  "rootNamespace": "Narthex.Tools",
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Save", "Narthex.Gameplay", "Narthex.SceneFlow", "Narthex.Presentation"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

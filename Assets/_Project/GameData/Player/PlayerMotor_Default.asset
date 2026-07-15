@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c00164e62c264412097427db09caec45, type: 3}
+  m_Name: PlayerMotor_Default
+  m_EditorClassIdentifier: Narthex.Content::Narthex.Content.PlayerMotorDefinition
+  stableId: 
+  displayNameTextKey: 
+  MaxRunSpeed: 6
+  GroundAcceleration: 45
+  JumpVelocity: 12
+  GroundProbeRadius: 0.12
+  DashSpeed: 14
+  DashDuration: 0.16
+  DashCooldown: 0.55
+  GlideFallSpeed: 3

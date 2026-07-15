@@ -1,0 +1,304 @@
+using NUnit.Framework;
+using Narthex.Content;
+using Narthex.Core;
+using Narthex.Gameplay;
+using Narthex.Save;
+using UnityEngine;
+
+namespace Narthex.Tests
+{
+    public sealed class GameplayPipelineTests
+    {
+        [Test]
+        public void TutorialQuestSequence_CompletesAllStepsAndPersistsBossCompletion()
+        {
+            var events = new GameEventBus();
+            var permanent = new PermanentSaveData();
+            var run = new RunSaveData();
+            var quests = new QuestManager(events);
+            var questDefinitions = new QuestDefinition[8];
+            var conditions = new QuestConditionDefinition[8];
+            var signalTypes = new[]
+            {
+                QuestSignalType.MovementPerformed,
+                QuestSignalType.JumpPerformed,
+                QuestSignalType.AttackPerformed,
+                QuestSignalType.DashPerformed,
+                QuestSignalType.ModuleUsed,
+                QuestSignalType.ModuleTreeOpened,
+                QuestSignalType.TowerActivated,
+                QuestSignalType.BossKilled
+            };
+            var targetIds = new[]
+            {
+                "PLAYER-001", "PLAYER-001", "PLAYER-001", "PLAYER-001",
+                "PLAYER-001", "PLAYER-001", "RELAY-TUTO-001", "BOSS-TUTO-HELTE"
+            };
+
+            for (var index = 0; index < questDefinitions.Length; index++)
+            {
+                conditions[index] = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+                conditions[index].ConfigureIdentity("COND-SEQUENCE-" + index);
+                conditions[index].SignalType = signalTypes[index];
+                conditions[index].TargetId = targetIds[index];
+                questDefinitions[index] = ScriptableObject.CreateInstance<QuestDefinition>();
+                questDefinitions[index].ConfigureIdentity("QST-TUTO-" + (index + 1).ToString("000"));
+                questDefinitions[index].Conditions = new[] { conditions[index] };
+                quests.Register(questDefinitions[index]);
+            }
+
+            var currentQuest = 0;
+            events.Subscribe<QuestCompleted>(message =>
+            {
+                if (!run.QuestIds.Contains(message.QuestId)) run.QuestIds.Add(message.QuestId);
+                currentQuest++;
+                if (currentQuest < questDefinitions.Length) quests.Start(questDefinitions[currentQuest].StableId);
+            });
+            var completion = new TutorialBossCompletion(events, permanent, run, "BOSS-TUTO-HELTE", "CHAPTER_01");
+            events.Subscribe<BossKilled>(message => completion.TryComplete(message));
+
+            Assert.That(quests.Start(questDefinitions[0].StableId), Is.True);
+            for (var index = 0; index < signalTypes.Length - 1; index++)
+                events.Publish(new GameplaySignal(signalTypes[index], targetIds[index]));
+
+            events.Publish(new BossKilled("BOSS-TUTO-HELTE", "TUTORIAL", "TREE-BOSS-HELTE"));
+            events.Publish(new GameplaySignal(QuestSignalType.BossKilled, "BOSS-TUTO-HELTE"));
+
+            Assert.That(run.QuestIds, Has.Count.EqualTo(8));
+            Assert.That(permanent.TutorialCompleted, Is.True);
+            Assert.That(permanent.UnlockedTreeIds, Does.Contain("TREE-BOSS-HELTE"));
+            Assert.That(run.CurrentStageId, Is.EqualTo("CHAPTER_01"));
+
+            quests.Dispose();
+            events.Dispose();
+            foreach (var quest in questDefinitions) Object.DestroyImmediate(quest);
+            foreach (var condition in conditions) Object.DestroyImmediate(condition);
+        }
+
+        [Test]
+        public void TutorialProgressRestore_RequiresRelayAndCompletionQuest()
+        {
+            const string relayId = "RELAY-TUTO-001";
+            const string relayQuestId = "QST-TUTO-007";
+
+            var incomplete = new RunSaveData();
+            incomplete.ActivatedTowerIds.Add(relayId);
+            Assert.That(TutorialProgressRestore.IsRelayProgressRestored(incomplete, relayId, relayQuestId), Is.False);
+
+            incomplete.QuestIds.Add(relayQuestId);
+            Assert.That(TutorialProgressRestore.IsRelayProgressRestored(incomplete, relayId, relayQuestId), Is.True);
+        }
+
+        [Test]
+        public void TutorialProgressRestore_SelectsFirstIncompleteQuest()
+        {
+            var run = new RunSaveData();
+            run.QuestIds.Add("QST-TUTO-001");
+            run.QuestIds.Add("QST-TUTO-002");
+            var questIds = new[] { "QST-TUTO-001", "QST-TUTO-002", "QST-TUTO-003" };
+
+            Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(2));
+            run.QuestIds.Add("QST-TUTO-003");
+            Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ModuleUnlockEquipUse_ExecutesAbilityAndPublishesModuleUsed()
+        {
+            var events = new GameEventBus();
+            var ability = ScriptableObject.CreateInstance<AbilityDefinition>();
+            ability.ConfigureIdentity("ABILITY-TEST");
+            var module = ScriptableObject.CreateInstance<ModuleDefinition>();
+            module.ConfigureIdentity("MODULE-TEST");
+            module.TreeId = "TREE-BASIC-001";
+            module.Ability = ability;
+            var executor = new AbilityExecutor(events);
+            var modules = new ModuleSystem(events, executor);
+            var used = false;
+            events.Subscribe<ModuleUsed>(_ => used = true);
+            modules.Register(module);
+
+            Assert.That(modules.Unlock(module.StableId), Is.True);
+            Assert.That(modules.Equip(module.StableId, 0), Is.True);
+            Assert.That(modules.TryUse("PLAYER", module.StableId), Is.True);
+            Assert.That(used, Is.True);
+
+            events.Dispose();
+            Object.DestroyImmediate(module);
+            Object.DestroyImmediate(ability);
+        }
+
+        [Test]
+        public void ModuleTree_ConsumesPointsAndRequiresPrerequisiteModules()
+        {
+            var events = new GameEventBus();
+            var permanent = new PermanentSaveData();
+            var run = new RunSaveData { ModulePoints = 2 };
+            var ability = ScriptableObject.CreateInstance<AbilityDefinition>();
+            ability.ConfigureIdentity("ABILITY-TREE");
+            var firstModule = CreateModule("MOD-TREE-001", "TREE-BASIC-001", ability, 1);
+            var secondModule = CreateModule("MOD-TREE-002", "TREE-BASIC-001", ability, 1);
+            var tree = ScriptableObject.CreateInstance<ModuleTreeDefinition>();
+            tree.ConfigureIdentity("TREE-BASIC-001");
+            tree.AvailableAtRunStart = true;
+            tree.Nodes = new[]
+            {
+                new ModuleNodeDefinition { Module = firstModule },
+                new ModuleNodeDefinition { Module = secondModule, RequiredModuleIds = new[] { firstModule.StableId } }
+            };
+            var modules = new ModuleSystem(events, new AbilityExecutor(events));
+            var manager = new ModuleTreeManager(events, modules, permanent, run);
+            manager.Register(tree);
+
+            Assert.That(manager.TryUnlockModule(secondModule.StableId), Is.False);
+            Assert.That(manager.TryUnlockModule(firstModule.StableId), Is.True);
+            Assert.That(manager.TryUnlockModule(secondModule.StableId), Is.True);
+            Assert.That(run.ModulePoints, Is.EqualTo(0));
+            Assert.That(manager.TryEquipModule(secondModule.StableId, 0), Is.True);
+            Assert.That(run.EquippedModuleSlots[0].ModuleId, Is.EqualTo(secondModule.StableId));
+
+            events.Dispose();
+            Object.DestroyImmediate(tree);
+            Object.DestroyImmediate(firstModule);
+            Object.DestroyImmediate(secondModule);
+            Object.DestroyImmediate(ability);
+        }
+
+        [Test]
+        public void QuestManager_CompletesMovementQuestFromGameplaySignal()
+        {
+            var events = new GameEventBus();
+            var condition = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+            condition.ConfigureIdentity("COND-MOVE");
+            condition.SignalType = QuestSignalType.MovementPerformed;
+            condition.TargetId = "PLAYER-001";
+            var quest = ScriptableObject.CreateInstance<QuestDefinition>();
+            quest.ConfigureIdentity("QST-TUTO-MOVE");
+            quest.Conditions = new[] { condition };
+            var quests = new QuestManager(events);
+            quests.Register(quest);
+
+            Assert.That(quests.Start(quest.StableId), Is.True);
+            events.Publish(new GameplaySignal(QuestSignalType.MovementPerformed, "PLAYER-001"));
+
+            Assert.That(quests.TryGetState(quest.StableId, out var state), Is.True);
+            Assert.That(state.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+
+            quests.Dispose();
+            events.Dispose();
+            Object.DestroyImmediate(quest);
+            Object.DestroyImmediate(condition);
+        }
+
+        [Test]
+        public void QuestManager_CompletesDashQuestFromGameplaySignal()
+        {
+            var events = new GameEventBus();
+            var condition = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+            condition.ConfigureIdentity("COND-DASH");
+            condition.SignalType = QuestSignalType.DashPerformed;
+            condition.TargetId = "PLAYER-001";
+            var quest = ScriptableObject.CreateInstance<QuestDefinition>();
+            quest.ConfigureIdentity("QST-TUTO-DASH");
+            quest.Conditions = new[] { condition };
+            var quests = new QuestManager(events);
+            quests.Register(quest);
+
+            Assert.That(quests.Start(quest.StableId), Is.True);
+            events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
+
+            Assert.That(quests.TryGetState(quest.StableId, out var state), Is.True);
+            Assert.That(state.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+
+            quests.Dispose();
+            events.Dispose();
+            Object.DestroyImmediate(quest);
+            Object.DestroyImmediate(condition);
+        }
+
+        [Test]
+        public void BossQuestCompletion_GrantsModulePointAndPermanentTree()
+        {
+            var events = new GameEventBus();
+            var permanent = new PermanentSaveData();
+            var run = new RunSaveData();
+            var reward = ScriptableObject.CreateInstance<RewardDefinition>();
+            reward.ConfigureIdentity("REWARD-HELTE");
+            reward.RewardType = RewardType.BossModuleTreeUnlock;
+            reward.TargetId = "TREE-BOSS-HELTE";
+            var condition = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+            condition.ConfigureIdentity("COND-HELTE");
+            condition.SignalType = QuestSignalType.BossKilled;
+            condition.TargetId = "BOSS-TUTO-HELTE";
+            var quest = ScriptableObject.CreateInstance<QuestDefinition>();
+            quest.ConfigureIdentity("QST-TUTO-008");
+            quest.Conditions = new[] { condition };
+            quest.Rewards = new[] { reward };
+            var rewards = new RewardExecutor(events, permanent, run);
+            rewards.Register(reward);
+            var quests = new QuestManager(events);
+            quests.Register(quest);
+            Assert.That(quests.Start(quest.StableId), Is.True);
+
+            events.Publish(new GameplaySignal(QuestSignalType.BossKilled, "BOSS-TUTO-HELTE"));
+
+            Assert.That(quests.TryGetState(quest.StableId, out var state), Is.True);
+            Assert.That(state.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+            Assert.That(permanent.UnlockedTreeIds.Contains("TREE-BOSS-HELTE"), Is.True);
+
+            quests.Dispose();
+            rewards.Dispose();
+            events.Dispose();
+            Object.DestroyImmediate(quest);
+            Object.DestroyImmediate(condition);
+            Object.DestroyImmediate(reward);
+        }
+
+        [Test]
+        public void TutorialBossCompletion_SavesPermanentBossRewardOnlyOnce()
+        {
+            var events = new GameEventBus();
+            var permanent = new PermanentSaveData();
+            var run = new RunSaveData();
+            var completion = new TutorialBossCompletion(events, permanent, run, "BOSS-TUTO-HELTE", "CHAPTER_01");
+            var completedCount = 0;
+            events.Subscribe<TutorialCompleted>(_ => completedCount++);
+            var message = new BossKilled("BOSS-TUTO-HELTE", "TUTO-006", "TREE-BOSS-HELTE");
+
+            Assert.That(completion.TryComplete(message), Is.True);
+            Assert.That(completion.TryComplete(message), Is.False);
+            Assert.That(permanent.TutorialCompleted, Is.True);
+            Assert.That(permanent.BossKillRecords, Does.Contain("BOSS-TUTO-HELTE"));
+            Assert.That(permanent.UnlockedTreeIds, Does.Contain("TREE-BOSS-HELTE"));
+            Assert.That(run.CurrentStageId, Is.EqualTo("CHAPTER_01"));
+            Assert.That(completedCount, Is.EqualTo(1));
+
+            events.Dispose();
+        }
+
+        [Test]
+        public void HeltePatternPlanner_UsesTwoBasicPatternsBeforePhaseSpecificSpecials()
+        {
+            var phaseOne = new HeltePatternPlanner();
+            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+
+            var phaseTwo = new HeltePatternPlanner();
+            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BlinkDash));
+        }
+
+        private static ModuleDefinition CreateModule(string id, string treeId, AbilityDefinition ability, int cost)
+        {
+            var module = ScriptableObject.CreateInstance<ModuleDefinition>();
+            module.ConfigureIdentity(id);
+            module.TreeId = treeId;
+            module.Ability = ability;
+            module.UnlockCost = cost;
+            return module;
+        }
+    }
+}

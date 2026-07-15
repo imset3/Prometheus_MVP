@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.Presentation",
+  "rootNamespace": "Narthex.Presentation",
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Gameplay", "UnityEngine.UI"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

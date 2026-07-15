@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.Gameplay",
+  "rootNamespace": "Narthex.Gameplay",
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Save", "Unity.InputSystem"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

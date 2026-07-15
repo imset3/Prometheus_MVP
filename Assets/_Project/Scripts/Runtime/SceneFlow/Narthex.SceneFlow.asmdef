@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.SceneFlow",
+  "rootNamespace": "Narthex.SceneFlow",
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Save", "Narthex.Gameplay"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

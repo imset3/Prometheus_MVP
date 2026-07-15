@@ -1,0 +1,14 @@
+{
+  "name": "Narthex.Content",
+  "rootNamespace": "Narthex.Content",
+  "references": ["Narthex.Core"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
