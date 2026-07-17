@@ -15,12 +15,16 @@ namespace Narthex.Gameplay
         [SerializeField] private string interactActionName = "Interact";
         [SerializeField] private string moduleActionName = "Next";
         [SerializeField] private string moduleTreeActionName = "OpenModuleTree";
+        [SerializeField] private string inventoryActionName = "OpenInventory";
 
         public event System.Action AttackRequested;
         public event System.Action InteractRequested;
         public event System.Action ModuleRequested;
         public event System.Action ModuleTreeRequested;
+        public event System.Action InventoryRequested;
+        public event System.Action DialogueAdvanceRequested;
         public bool UsesCSharpEvents => playerInput != null && playerInput.notificationBehavior == PlayerNotifications.InvokeCSharpEvents;
+        private bool dialogueInputClaimed;
 
         private void Awake()
         {
@@ -57,9 +61,19 @@ namespace Narthex.Gameplay
                 motor.SetGlideHeld(context.phase == InputActionPhase.Started || context.phase == InputActionPhase.Performed);
             else if (context.action.name == dashActionName && context.performed) motor.RequestDash();
             else if (context.action.name == attackActionName && context.performed) AttackRequested?.Invoke();
-            else if (context.action.name == interactActionName && context.performed) InteractRequested?.Invoke();
+            else if (context.action.name == interactActionName && context.performed)
+            {
+                if (dialogueInputClaimed) DialogueAdvanceRequested?.Invoke();
+                else InteractRequested?.Invoke();
+            }
             else if (context.action.name == moduleActionName && context.performed) ModuleRequested?.Invoke();
             else if (context.action.name == moduleTreeActionName && context.performed) ModuleTreeRequested?.Invoke();
+            else if (context.action.name == inventoryActionName && context.performed) InventoryRequested?.Invoke();
+        }
+
+        public void SetDialogueInputClaimed(bool claimed)
+        {
+            dialogueInputClaimed = claimed;
         }
     }
 }

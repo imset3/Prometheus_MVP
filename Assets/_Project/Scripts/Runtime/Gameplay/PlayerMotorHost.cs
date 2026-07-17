@@ -19,12 +19,15 @@ namespace Narthex.Gameplay
         private bool dashRequested;
         private bool glideHeld;
         private bool movementSignalArmed;
+        private bool doubleJumpUnlocked;
+        private bool doubleJumpAvailable;
         private float dashEndsAt;
         private float dashCooldownEndsAt;
         private float dashDirection = 1f;
 
         public bool HasServiceRoot => serviceRoot != null;
         public bool IsGliding { get; private set; }
+        public bool IsDoubleJumpUnlocked => doubleJumpUnlocked;
 
         private void Awake()
         {
@@ -44,6 +47,11 @@ namespace Narthex.Gameplay
         public void RequestJump() => jumpRequested = true;
         public void RequestDash() => dashRequested = true;
         public void SetGlideHeld(bool held) => glideHeld = held;
+        public void UnlockDoubleJump()
+        {
+            doubleJumpUnlocked = true;
+            doubleJumpAvailable = true;
+        }
 
         private void FixedUpdate()
         {
@@ -69,9 +77,11 @@ namespace Narthex.Gameplay
             }
 
             var grounded = Physics2D.OverlapCircle(groundProbe.position, motorDefinition.GroundProbeRadius, groundLayers) != null;
-            if (jumpRequested && grounded)
+            if (grounded) doubleJumpAvailable = doubleJumpUnlocked;
+            if (jumpRequested && (grounded || (doubleJumpUnlocked && doubleJumpAvailable)))
             {
                 velocity.y = motorDefinition.JumpVelocity;
+                if (!grounded) doubleJumpAvailable = false;
                 serviceRoot?.Events.Publish(new GameplaySignal(QuestSignalType.JumpPerformed, playerId));
             }
 

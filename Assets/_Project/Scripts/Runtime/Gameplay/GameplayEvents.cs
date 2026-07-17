@@ -96,6 +96,20 @@ namespace Narthex.Gameplay
         }
     }
 
+    public readonly struct TutorialNarrativeChanged
+    {
+        public readonly string QuestId;
+        public readonly string StageId;
+        public readonly string[] Lines;
+
+        public TutorialNarrativeChanged(string questId, string stageId, string[] lines)
+        {
+            QuestId = questId;
+            StageId = stageId;
+            Lines = lines;
+        }
+    }
+
     public readonly struct TowerActivated
     {
         public readonly string TowerId;

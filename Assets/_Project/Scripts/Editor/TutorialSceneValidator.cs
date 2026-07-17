@@ -20,11 +20,14 @@ namespace Narthex.Tools
             RequireComponent<ServiceRoot>(systems, issues);
             RequireComponent<CombatSystemHost>(systems, issues);
             RequireComponent<SaveSystemHost>(systems, issues);
+            RequireComponent<DevelopmentProgressResetManager>(systems, issues);
             RequireComponent<TutorialRestartHost>(systems, issues);
             RequireComponent<TutorialEncounterHost>(systems, issues);
             RequireComponent<TutorialCompletionFlowHost>(systems, issues);
             RequireComponent<QuestManagerHost>(systems, issues);
             RequireComponent<TutorialQuestSequenceHost>(systems, issues);
+            RequireComponent<TutorialNarrativeSequenceHost>(systems, issues);
+            RequireComponent<TutorialDialoguePresenter>(systems, issues);
             RequireComponent<ModuleSystemHost>(systems, issues);
             RequireComponent<ModuleTreeManagerHost>(systems, issues);
             RequireComponent<RewardExecutorHost>(systems, issues);
@@ -33,6 +36,9 @@ namespace Narthex.Tools
             RequireComponent<Chapter01TransitionHost>(systems, issues);
 
             var restartHost = systems != null ? systems.GetComponent<TutorialRestartHost>() : null;
+            var progressResetManager = systems != null ? systems.GetComponent<DevelopmentProgressResetManager>() : null;
+            if (progressResetManager != null && !progressResetManager.HasValidSetup)
+                issues.Add("DevelopmentProgressResetManager has no valid SaveSystemHost reference.");
             if (restartHost != null && !restartHost.HasConfiguredResetActors)
                 issues.Add("TutorialRestartHost has no valid resetActors references.");
             if (restartHost != null && !restartHost.IncludesResetActor("PLAYER-001"))
@@ -76,6 +82,30 @@ namespace Narthex.Tools
             var moduleUseHost = player != null ? player.GetComponent<TutorialModuleUseHost>() : null;
             if (moduleUseHost != null && !moduleUseHost.HasValidSetup)
                 issues.Add("TutorialModuleUseHost has no valid module setup.");
+
+            var tutorialGuide = RequireObject("TutorialGuideCompanion", issues);
+            RequireComponent<TutorialGuideCompanionHost>(tutorialGuide, issues);
+            var guideVisual = RequireChild(tutorialGuide, "Visual", issues);
+            RequireChild(guideVisual, "ModelSlot", issues);
+            RequireChild(guideVisual, "EffectsSlot", issues);
+            RequireChild(guideVisual, "AttachmentSlot", issues);
+
+            var objectiveBeacon = RequireObject("TutorialObjectiveBeacon", issues);
+            RequireComponent<TutorialObjectiveBeaconHost>(objectiveBeacon, issues);
+            var beaconVisual = RequireChild(objectiveBeacon, "Visual", issues);
+            RequireChild(beaconVisual, "ModelSlot", issues);
+            RequireChild(beaconVisual, "EffectsSlot", issues);
+            var beaconHost = objectiveBeacon != null ? objectiveBeacon.GetComponent<TutorialObjectiveBeaconHost>() : null;
+            if (beaconHost != null && !beaconHost.HasValidSetup)
+                issues.Add("TutorialObjectiveBeaconHost has invalid quest, player, or visual references.");
+
+            var tutorialAudioRoot = RequireObject("TutorialAudioRoot", issues);
+            RequireComponent<TutorialSfxCueHost>(tutorialAudioRoot, issues);
+            RequireChild(tutorialAudioRoot, "UIAudioSource", issues);
+            RequireChild(tutorialAudioRoot, "WorldAudioSource", issues);
+            var sfxCueHost = tutorialAudioRoot != null ? tutorialAudioRoot.GetComponent<TutorialSfxCueHost>() : null;
+            if (sfxCueHost != null && !sfxCueHost.HasValidSetup)
+                issues.Add("TutorialSfxCueHost has invalid ServiceRoot or audio source references.");
 
             var moduleTreeHost = systems != null ? systems.GetComponent<ModuleTreeManagerHost>() : null;
             if (moduleTreeHost != null && !moduleTreeHost.HasValidSetup)
@@ -130,6 +160,12 @@ namespace Narthex.Tools
             RequireObject("TerrainBoundaryLeft", issues);
             RequireObject("TerrainBoundaryRight", issues);
 
+            var narrativeRoot = RequireObject("NarrativeStageRoot", issues);
+            RequireChild(narrativeRoot, "AdamasHeadquartersRoot", issues);
+            RequireChild(narrativeRoot, "TrainingGroundNarrativeRoot", issues);
+            RequireChild(narrativeRoot, "ExteriorApproachRoot", issues);
+            RequireChild(narrativeRoot, "OreStorageNarrativeRoot", issues);
+
             var mainCamera = RequireObject("Main Camera", issues);
             RequireComponent<CameraFollowHost>(mainCamera, issues);
             var cameraFollow = mainCamera != null ? mainCamera.GetComponent<CameraFollowHost>() : null;
@@ -138,11 +174,42 @@ namespace Narthex.Tools
 
             var hud = RequireObject("TutorialHUD", issues);
             RequireChild(hud, "TutorialStatusText", issues);
-            RequireChild(hud, "PlayerHealthText", issues);
-            RequireChild(hud, "EnemyHealthText", issues);
+            var objectivePanel = RequireChild(hud, "TutorialObjectivePanel", issues);
+            RequireChild(hud, "TutorialKeyPromptText", issues);
+            var stageCaption = RequireChild(hud, "TutorialStageCaptionText", issues);
+            var interactionPromptPanel = RequireChild(hud, "TutorialInteractionPromptPanel", issues);
+            RequireChild(interactionPromptPanel, "PromptText", issues);
+            var playerHealth = RequireChild(hud, "PlayerHealthText", issues);
+            var enemyHealth = RequireChild(hud, "EnemyHealthText", issues);
             RequireChild(hud, "TutorialResultOverlay", issues);
             RequireChild(hud, "ModuleTreePanel", issues);
+            var inventoryPanel = RequireChild(hud, "InventoryPanel", issues);
+            var inventoryOpenButton = RequireChild(hud, "InventoryOpenButton", issues);
+            RequireChild(inventoryPanel, "InventoryCloseButton", issues);
+            var introductionCard = RequireChild(hud, "TutorialIntroductionCard", issues);
+            var dialoguePanel = RequireChild(hud, "TutorialDialoguePanel", issues);
+            RequireComponent<DialogueViewModule>(dialoguePanel, issues);
+            RequireChild(dialoguePanel, "StageText", issues);
+            RequireChild(dialoguePanel, "DialogueText", issues);
+            RequireChild(dialoguePanel, "ContinueText", issues);
             RequireComponent<ModuleTreePanelPresenter>(hud, issues);
+            var interactionPromptHost = hud != null ? hud.GetComponent<TutorialInteractionPromptHost>() : null;
+            RequireComponent<TutorialInteractionPromptHost>(hud, issues);
+            if (interactionPromptHost != null && !interactionPromptHost.HasValidSetup)
+                issues.Add("TutorialInteractionPromptHost has invalid player, quest, or UI references.");
+            var inventoryPresenter = hud != null ? hud.GetComponent<InventoryPanelPresenter>() : null;
+            RequireComponent<InventoryPanelPresenter>(hud, issues);
+            if (inventoryPresenter != null && !inventoryPresenter.HasValidSetup)
+                issues.Add("InventoryPanelPresenter has invalid UI or module references.");
+            RequireComponent<InventoryPanelButtonHost>(inventoryOpenButton, issues);
+            var inventoryCloseButton = inventoryPanel != null ? inventoryPanel.transform.Find("InventoryCloseButton") : null;
+            RequireComponent<InventoryPanelButtonHost>(inventoryCloseButton == null ? null : inventoryCloseButton.gameObject, issues);
+            RequireComponent<DialogueIntroductionCardModule>(introductionCard, issues);
+
+            RequireNoScreenOverlap(objectivePanel, dialoguePanel, "Tutorial objective panel overlaps the dialogue panel.", issues);
+            RequireNoScreenOverlap(interactionPromptPanel, dialoguePanel, "Interaction prompt overlaps the dialogue panel.", issues);
+            RequireNoScreenOverlap(inventoryOpenButton, enemyHealth, "Inventory button overlaps enemy health UI.", issues);
+            RequireNoScreenOverlap(stageCaption, playerHealth, "Stage caption overlaps player health UI.", issues);
 
             if (issues.Count == 0)
             {
@@ -170,10 +237,29 @@ namespace Narthex.Tools
             issues.Add($"{target.name} is missing {typeof(T).Name}.");
         }
 
-        private static void RequireChild(GameObject target, string childName, List<string> issues)
+        private static GameObject RequireChild(GameObject target, string childName, List<string> issues)
         {
-            if (target == null || target.transform.Find(childName) != null) return;
+            if (target == null) return null;
+            var child = target.transform.Find(childName);
+            if (child != null) return child.gameObject;
             issues.Add($"{target.name} is missing child '{childName}'.");
+            return null;
+        }
+
+        private static void RequireNoScreenOverlap(GameObject first, GameObject second, string issue, List<string> issues)
+        {
+            if (first == null || second == null) return;
+            if (first.transform is not RectTransform firstRect || second.transform is not RectTransform secondRect) return;
+
+            if (GetWorldRect(firstRect).Overlaps(GetWorldRect(secondRect)))
+                issues.Add(issue);
+        }
+
+        private static Rect GetWorldRect(RectTransform rectTransform)
+        {
+            var corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            return Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
         }
     }
 }

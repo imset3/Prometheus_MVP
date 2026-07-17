@@ -81,6 +81,42 @@ namespace Narthex.Tests
             }
         }
 
+        [Test]
+        public void SaveSystem_ResetProgressForSceneStart_ClearsProgressAndKeepsSettings()
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"narthex-scene-reset-{Guid.NewGuid():N}.json");
+            var events = new GameEventBus();
+            var system = new SaveSystem(events, new SaveFileStore(path));
+
+            try
+            {
+                system.Current.Permanent.TutorialCompleted = true;
+                system.Current.Permanent.DoubleJumpUnlocked = true;
+                system.Current.Run.QuestIds.Add("QST-TUTO-008");
+                system.Current.Run.ModulePoints = 4;
+                system.Current.Settings.MasterVolume = 0.45f;
+                system.Save("TestSeed");
+
+                system.ResetProgressForSceneStart();
+                var restored = new SaveFileStore(path).Load();
+
+                Assert.That(system.Current.Permanent.TutorialCompleted, Is.False);
+                Assert.That(system.Current.Permanent.DoubleJumpUnlocked, Is.False);
+                Assert.That(system.Current.Run.QuestIds, Is.Empty);
+                Assert.That(system.Current.Run.ModulePoints, Is.EqualTo(0));
+                Assert.That(system.Current.Settings.MasterVolume, Is.EqualTo(0.45f));
+                Assert.That(restored.Permanent.TutorialCompleted, Is.False);
+                Assert.That(restored.Run.QuestIds, Is.Empty);
+                Assert.That(restored.Settings.MasterVolume, Is.EqualTo(0.45f));
+            }
+            finally
+            {
+                system.Dispose();
+                events.Dispose();
+                if (File.Exists(path)) File.Delete(path);
+            }
+        }
+
         private sealed class TestMigration : ISaveMigration
         {
             public int FromVersion { get; }

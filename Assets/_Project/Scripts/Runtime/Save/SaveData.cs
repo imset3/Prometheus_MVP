@@ -18,6 +18,7 @@ namespace Narthex.Save
         public List<string> UnlockedTreeIds = new List<string>();
         public List<string> BossKillRecords = new List<string>();
         public bool TutorialCompleted;
+        public bool DoubleJumpUnlocked;
         public int TotalDeaths;
     }
 

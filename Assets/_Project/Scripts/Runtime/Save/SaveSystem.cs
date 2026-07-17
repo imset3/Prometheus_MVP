@@ -19,6 +19,22 @@ namespace Narthex.Save
 
         public void Load() { Current = store.Load(); }
 
+        /// <summary>
+        /// Starts the current scene with fresh gameplay progress while preserving player settings.
+        /// </summary>
+        public void ResetProgressForSceneStart()
+        {
+            var settings = Current != null && Current.Settings != null
+                ? Current.Settings
+                : new SettingsSaveData();
+
+            Current = new SaveData
+            {
+                Settings = settings
+            };
+            store.Save(Current);
+        }
+
         public void Save(string reason)
         {
             try

@@ -1,4 +1,5 @@
 using Narthex.Core;
+using Narthex.Gameplay;
 using Narthex.Save;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,13 +11,15 @@ namespace Narthex.SceneFlow
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private SaveSystemHost saveSystemHost;
+        [SerializeField] private PlayerInputHost playerInputHost;
+        [SerializeField] private GameObject resultOverlay;
         [SerializeField] private Button nextStageButton;
         [SerializeField] private string requiredStageId = "CHAPTER_01";
         [SerializeField] private string chapterSceneName = "Chapter01";
 
         private bool loading;
 
-        public bool HasValidSetup => serviceRoot != null && saveSystemHost != null && nextStageButton != null &&
+        public bool HasValidSetup => serviceRoot != null && saveSystemHost != null && playerInputHost != null && resultOverlay != null && nextStageButton != null &&
                                      !string.IsNullOrWhiteSpace(requiredStageId) && !string.IsNullOrWhiteSpace(chapterSceneName);
 
         private void Awake()
@@ -35,11 +38,19 @@ namespace Narthex.SceneFlow
         private void OnEnable()
         {
             if (nextStageButton != null) nextStageButton.onClick.AddListener(TryEnterChapter01);
+            if (playerInputHost != null) playerInputHost.InteractRequested += HandleInteractRequested;
         }
 
         private void OnDisable()
         {
             if (nextStageButton != null) nextStageButton.onClick.RemoveListener(TryEnterChapter01);
+            if (playerInputHost != null) playerInputHost.InteractRequested -= HandleInteractRequested;
+        }
+
+        private void HandleInteractRequested()
+        {
+            if (resultOverlay != null && resultOverlay.activeInHierarchy)
+                TryEnterChapter01();
         }
 
         public void TryEnterChapter01()

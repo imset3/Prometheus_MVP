@@ -18,6 +18,9 @@ namespace Narthex.Gameplay
         public string CurrentObjectiveText => currentStep >= 0 && currentStep < objectiveTexts.Length
             ? objectiveTexts[currentStep]
             : string.Empty;
+        public string CurrentQuestId => currentStep >= 0 && currentStep < questSequence.Length && questSequence[currentStep] != null
+            ? questSequence[currentStep].StableId
+            : string.Empty;
         public bool HasValidSequence => serviceRoot != null && saveSystemHost != null && questManagerHost != null && questSequence != null &&
                                         objectiveTexts != null && questSequence.Length > 0 &&
                                         questSequence.Length == objectiveTexts.Length;
