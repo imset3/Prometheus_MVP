@@ -1,6 +1,6 @@
 # Tutorial Guide Model Integration
 
-The tutorial guide is already placed in `SampleScene` at:
+The tutorial guide is already placed in `TutorialScene` at:
 
 `StageRoot/TutorialGuideCompanion/Visual`
 

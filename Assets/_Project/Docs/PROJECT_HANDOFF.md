@@ -4,7 +4,7 @@
 
 - Game title: `Prometheus` (Korean: `프로메테우스`)
 - Current project directory: `/Users/limseth/Unity/Unity_Projects/Prometheus_MVP`
-- Main tutorial scene: `Assets/Scenes/SampleScene.unity`
+- Main tutorial scene: `Assets/Scenes/TutorialScene.unity`
 - Chapter 1 connection scene: `Assets/Scenes/Chapter01.unity`
 - Unity version last confirmed: `6000.3.14f1`
 - Namespace and legacy assembly name: `Narthex`
@@ -173,9 +173,9 @@ Run this validator and the EditMode suite after moving or recreating the tutoria
 
 ## 10. Transfer Checklist
 
-1. Copy `Assets/_Project`, `Assets/Scenes/SampleScene.unity`, `Assets/Scenes/Chapter01.unity`, and `Assets/InputSystem_Actions.inputactions`.
+1. Copy `Assets/_Project`, `Assets/Scenes/TutorialScene.unity`, `Assets/Scenes/Chapter01.unity`, and `Assets/InputSystem_Actions.inputactions`.
 2. Keep the project packages and Input System enabled.
-3. Open `SampleScene`, allow Unity to compile, and resolve any missing serialized references before playing.
+3. Open `TutorialScene`, allow Unity to compile, and resolve any missing serialized references before playing.
 4. Check `StageRoot/StageSystems` contains all hosts listed above, especially `DevelopmentProgressResetManager` and `SaveSystemHost`.
 5. Check `TutorialHUD` contains the dialogue, introduction, module-tree, inventory, and result UI objects.
 6. Run `Narthex/Validation/Validate Active Tutorial Scene`.
