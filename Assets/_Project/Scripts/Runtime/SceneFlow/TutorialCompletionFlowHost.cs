@@ -10,18 +10,24 @@ namespace Narthex.SceneFlow
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private SaveSystemHost saveSystemHost;
         [SerializeField] private GameObject resultOverlay;
+        [SerializeField] private GameObject[] gameplayHudObjects = System.Array.Empty<GameObject>();
+
+        public bool HasValidSetup => serviceRoot != null && saveSystemHost != null && resultOverlay != null &&
+                                     gameplayHudObjects != null && gameplayHudObjects.Length > 0 &&
+                                     HasCompleteGameplayHudReferences();
+        public int GameplayHudObjectCount => gameplayHudObjects?.Length ?? 0;
 
         private void Awake()
         {
-            if (serviceRoot == null || saveSystemHost == null || resultOverlay == null)
+            if (!HasValidSetup)
             {
-                Debug.LogError("TutorialCompletionFlowHost requires pre-placed ServiceRoot, SaveSystemHost, and result overlay references.", this);
+                Debug.LogError("TutorialCompletionFlowHost requires pre-placed service, result overlay, and gameplay HUD references.", this);
                 enabled = false;
                 return;
             }
 
             serviceRoot.Initialize();
-            resultOverlay.SetActive(false);
+            SetResultPresentation(false);
             if (!saveSystemHost.Initialize())
             {
                 enabled = false;
@@ -31,7 +37,7 @@ namespace Narthex.SceneFlow
             if (saveSystemHost.System.Current.Permanent.TutorialCompleted)
             {
                 EnterResultState();
-                resultOverlay.SetActive(true);
+                SetResultPresentation(true);
                 return;
             }
 
@@ -61,7 +67,24 @@ namespace Narthex.SceneFlow
         private void HandleTutorialCompleted(TutorialCompleted message)
         {
             EnterResultState();
-            resultOverlay.SetActive(true);
+            SetResultPresentation(true);
+        }
+
+        private bool HasCompleteGameplayHudReferences()
+        {
+            foreach (var gameplayHudObject in gameplayHudObjects)
+            {
+                if (gameplayHudObject == null) return false;
+            }
+
+            return true;
+        }
+
+        private void SetResultPresentation(bool showingResult)
+        {
+            resultOverlay.SetActive(showingResult);
+            foreach (var gameplayHudObject in gameplayHudObjects)
+                gameplayHudObject.SetActive(!showingResult);
         }
 
         private void EnterResultState()

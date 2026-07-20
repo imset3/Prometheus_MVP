@@ -10,12 +10,14 @@ namespace Narthex.Gameplay
         [SerializeField] private string questId;
         [SerializeField] private string stageId;
         [TextArea(2, 5)] [SerializeField] private string[] lines = Array.Empty<string>();
+        [SerializeField] private string deferUntilPortalTargetId;
         [SerializeField] private GameObject[] activateOnStart = Array.Empty<GameObject>();
         [SerializeField] private GameObject[] deactivateOnStart = Array.Empty<GameObject>();
 
         public string QuestId => questId;
         public string StageId => stageId;
         public string[] Lines => lines;
+        public string DeferUntilPortalTargetId => deferUntilPortalTargetId;
         public GameObject[] ActivateOnStart => activateOnStart;
         public GameObject[] DeactivateOnStart => deactivateOnStart;
     }
@@ -30,7 +32,28 @@ namespace Narthex.Gameplay
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
         [SerializeField] private TutorialNarrativeBeat[] beats = Array.Empty<TutorialNarrativeBeat>();
 
+        private TutorialNarrativeBeat pendingBeat;
+
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && beats != null && beats.Length > 0;
+        public int BeatCount => beats?.Length ?? 0;
+
+        public int GetLineCount(string questId)
+        {
+            if (beats == null) return 0;
+            foreach (var beat in beats)
+                if (beat != null && beat.QuestId == questId)
+                    return beat.Lines?.Length ?? 0;
+            return 0;
+        }
+
+        public bool HasDeferredBeat(string questId, string portalTargetId)
+        {
+            if (beats == null) return false;
+            foreach (var beat in beats)
+                if (beat != null && beat.QuestId == questId && beat.DeferUntilPortalTargetId == portalTargetId)
+                    return true;
+            return false;
+        }
 
         private void Awake()
         {
@@ -49,11 +72,13 @@ namespace Narthex.Gameplay
             if (serviceRoot == null) return;
             serviceRoot.Initialize();
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            serviceRoot.Events.Subscribe<GameplaySignal>(HandleGameplaySignal);
         }
 
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            serviceRoot?.Events?.Unsubscribe<GameplaySignal>(HandleGameplaySignal);
         }
 
         private void Start()
@@ -66,17 +91,41 @@ namespace Narthex.Gameplay
             Present(message.QuestId);
         }
 
+        private void HandleGameplaySignal(GameplaySignal message)
+        {
+            if (pendingBeat == null || message.SignalType != Narthex.Content.QuestSignalType.PortalUsed ||
+                message.TargetId != pendingBeat.DeferUntilPortalTargetId)
+                return;
+
+            var beat = pendingBeat;
+            pendingBeat = null;
+            PresentBeat(beat);
+        }
+
         private void Present(string questId)
         {
             if (string.IsNullOrWhiteSpace(questId)) return;
 
+            pendingBeat = null;
+
             foreach (var beat in beats)
             {
                 if (beat == null || beat.QuestId != questId) continue;
-                ApplySceneState(beat);
-                serviceRoot.Events.Publish(new TutorialNarrativeChanged(beat.QuestId, beat.StageId, beat.Lines));
+                if (!string.IsNullOrWhiteSpace(beat.DeferUntilPortalTargetId))
+                {
+                    pendingBeat = beat;
+                    return;
+                }
+
+                PresentBeat(beat);
                 return;
             }
+        }
+
+        private void PresentBeat(TutorialNarrativeBeat beat)
+        {
+            ApplySceneState(beat);
+            serviceRoot.Events.Publish(new TutorialNarrativeChanged(beat.QuestId, beat.StageId, beat.Lines));
         }
 
         private static void ApplySceneState(TutorialNarrativeBeat beat)

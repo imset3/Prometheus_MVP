@@ -1,7 +1,7 @@
 {
   "name": "Narthex.Tests",
   "rootNamespace": "Narthex.Tests",
-  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Save", "Narthex.SceneFlow", "Narthex.Gameplay"],
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Save", "Narthex.SceneFlow", "Narthex.Gameplay", "Narthex.Presentation"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

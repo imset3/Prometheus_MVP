@@ -11,10 +11,16 @@ namespace Narthex.Presentation
         [SerializeField] private Collider2D trigger;
         [SerializeField] private GameObject availabilityRoot;
         [SerializeField] private string promptText;
+        [SerializeField] private string requiredQuestId;
 
         public bool IsAvailable => trigger != null && (availabilityRoot == null || availabilityRoot.activeInHierarchy);
         public Collider2D Trigger => trigger;
         public string PromptText => promptText;
+        public bool IsAvailableForQuest(string currentQuestId, string fallbackQuestId)
+        {
+            var questId = string.IsNullOrWhiteSpace(requiredQuestId) ? fallbackQuestId : requiredQuestId;
+            return IsAvailable && currentQuestId == questId;
+        }
     }
 
     /// <summary>
@@ -46,15 +52,10 @@ namespace Narthex.Presentation
 
         private void LateUpdate()
         {
-            if (questSequenceHost.CurrentQuestId != interactionQuestId)
-            {
-                SetPrompt(null);
-                return;
-            }
-
             foreach (var target in targets)
             {
-                if (target != null && target.IsAvailable && target.Trigger.Distance(playerCollider).isOverlapped)
+                if (target != null && target.IsAvailableForQuest(questSequenceHost.CurrentQuestId, interactionQuestId) &&
+                    target.Trigger.Distance(playerCollider).isOverlapped)
                 {
                     SetPrompt(target.PromptText);
                     return;

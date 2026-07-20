@@ -10,24 +10,28 @@ namespace Narthex.Core
         public GameClock Clock { get; private set; }
         public GameStateMachine StateMachine { get; private set; }
 
-private void Awake()
+        private void Awake()
         {
             Initialize();
         }
 
-public void Initialize()
+        public void Initialize()
         {
-            if (initialized) return;
-            initialized = true;
+            if (initialized && Events != null && Clock != null && StateMachine != null) return;
+
             Events = new GameEventBus();
             Clock = new GameClock();
             StateMachine = new GameStateMachine(Events);
+            initialized = true;
         }
-
 
         private void OnDestroy()
         {
             Events?.Dispose();
+            Events = null;
+            Clock = null;
+            StateMachine = null;
+            initialized = false;
         }
     }
 }

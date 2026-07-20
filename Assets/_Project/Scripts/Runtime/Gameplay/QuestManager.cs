@@ -42,6 +42,21 @@ namespace Narthex.Gameplay
 
         public bool TryGetState(string questId, out QuestRuntimeState state) => states.TryGetValue(questId, out state);
 
+        public int GetConditionProgress(string questId, string conditionId)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || string.IsNullOrWhiteSpace(conditionId) ||
+                !states.TryGetValue(questId, out var state)) return 0;
+            return GetProgress(state, conditionId);
+        }
+
+        public bool ResetProgress(string questId)
+        {
+            if (!states.TryGetValue(questId, out var state) || state.Status != QuestRuntimeStatus.InProgress)
+                return false;
+            state.Progress.Clear();
+            return true;
+        }
+
         private void OnSignal(GameplaySignal signal)
         {
             foreach (var pair in definitions)

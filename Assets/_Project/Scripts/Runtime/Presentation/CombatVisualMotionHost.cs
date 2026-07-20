@@ -9,6 +9,7 @@ namespace Narthex.Presentation
         [SerializeField] private Transform visualRoot;
         [SerializeField] private GameObject attackEffect;
         [SerializeField] private PlayerInputHost playerInput;
+        [SerializeField] private MeleeAttackHost meleeAttackHost;
         [SerializeField] private HelteBossPatternHost bossPatternHost;
         [SerializeField] private Rigidbody2D movementBody;
         [SerializeField, Min(0f)] private float idleBobDistance = 0.035f;
@@ -20,6 +21,8 @@ namespace Narthex.Presentation
         private Vector3 baseLocalScale;
         private float attackEndsAt;
         private float hitEndsAt;
+        private float facingDirection = 1f;
+        private int activeComboStage = 1;
 
         private void Awake()
         {
@@ -37,14 +40,18 @@ namespace Narthex.Presentation
 
         private void OnEnable()
         {
-            if (playerInput != null) playerInput.AttackRequested += StartAttackMotion;
+            if (meleeAttackHost != null) meleeAttackHost.ComboStageChanged += StartComboAttackMotion;
+            else if (playerInput != null) playerInput.AttackRequested += StartAttackMotion;
+            if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
             if (actor != null && actor.Events != null) actor.Events.Subscribe<HitConfirmed>(HandleHitConfirmed);
             if (bossPatternHost != null) bossPatternHost.PatternStarted += HandleBossPatternStarted;
         }
 
         private void OnDisable()
         {
-            if (playerInput != null) playerInput.AttackRequested -= StartAttackMotion;
+            if (meleeAttackHost != null) meleeAttackHost.ComboStageChanged -= StartComboAttackMotion;
+            else if (playerInput != null) playerInput.AttackRequested -= StartAttackMotion;
+            if (playerInput != null) playerInput.AimDirectionChanged -= HandleAimDirectionChanged;
             if (actor != null && actor.Events != null) actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
             if (bossPatternHost != null) bossPatternHost.PatternStarted -= HandleBossPatternStarted;
             if (attackEffect != null) attackEffect.SetActive(false);
@@ -65,7 +72,7 @@ namespace Narthex.Presentation
 
             var position = baseLocalPosition + Vector3.up * (Mathf.Sin(Time.time * idleBobFrequency) * idleBobDistance);
             var rotation = Quaternion.identity;
-            var scale = baseLocalScale;
+            var scale = new Vector3(Mathf.Abs(baseLocalScale.x) * facingDirection, baseLocalScale.y, baseLocalScale.z);
 
             if (movementBody != null && Mathf.Abs(movementBody.linearVelocity.x) > 0.05f)
             {
@@ -76,9 +83,24 @@ namespace Narthex.Presentation
             {
                 var progress = 1f - ((attackEndsAt - Time.time) / attackDuration);
                 var arc = Mathf.Sin(progress * Mathf.PI);
-                position += Vector3.right * (0.18f * arc);
-                rotation = Quaternion.Euler(0f, 0f, -48f * arc);
-                scale = Vector3.Scale(baseLocalScale, new Vector3(1f + (0.16f * arc), 1f - (0.1f * arc), 1f));
+                switch (activeComboStage)
+                {
+                    case 2:
+                        position += Vector3.right * (0.2f * arc * facingDirection) + Vector3.up * (0.08f * arc);
+                        rotation = Quaternion.Euler(0f, 0f, 58f * arc * facingDirection);
+                        scale = Vector3.Scale(scale, new Vector3(1f + (0.12f * arc), 1f - (0.08f * arc), 1f));
+                        break;
+                    case 3:
+                        position += Vector3.right * (0.36f * arc * facingDirection);
+                        rotation = Quaternion.Euler(0f, 0f, -18f * arc * facingDirection);
+                        scale = Vector3.Scale(scale, new Vector3(1f + (0.3f * arc), 1f - (0.16f * arc), 1f));
+                        break;
+                    default:
+                        position += Vector3.right * (0.18f * arc * facingDirection);
+                        rotation = Quaternion.Euler(0f, 0f, -48f * arc * facingDirection);
+                        scale = Vector3.Scale(scale, new Vector3(1f + (0.16f * arc), 1f - (0.1f * arc), 1f));
+                        break;
+                }
             }
 
             if (Time.time < hitEndsAt)
@@ -86,7 +108,7 @@ namespace Narthex.Presentation
                 var progress = 1f - ((hitEndsAt - Time.time) / hitDuration);
                 var shake = Mathf.Sin(progress * Mathf.PI * 4f) * 0.06f;
                 position += Vector3.right * shake;
-                scale = Vector3.Scale(baseLocalScale, new Vector3(1.12f, 0.88f, 1f));
+                scale = Vector3.Scale(scale, new Vector3(1.12f, 0.88f, 1f));
             }
 
             visualRoot.localPosition = position;
@@ -98,7 +120,7 @@ namespace Narthex.Presentation
         private void HandleHitConfirmed(HitConfirmed message)
         {
             if (actor == null) return;
-            if (message.AttackerId == actor.ActorId) StartAttackMotion();
+            if (message.AttackerId == actor.ActorId && meleeAttackHost == null) StartAttackMotion();
             if (message.TargetId == actor.ActorId) hitEndsAt = Time.time + hitDuration;
         }
 
@@ -110,7 +132,20 @@ namespace Narthex.Presentation
         private void StartAttackMotion()
         {
             if (actor == null || actor.Runtime == null || !actor.Runtime.IsAlive) return;
+            activeComboStage = 1;
             attackEndsAt = Time.time + attackDuration;
+        }
+
+        private void StartComboAttackMotion(int comboStage)
+        {
+            if (actor == null || actor.Runtime == null || !actor.Runtime.IsAlive) return;
+            activeComboStage = Mathf.Clamp(comboStage, 1, 3);
+            attackEndsAt = Time.time + attackDuration;
+        }
+
+        private void HandleAimDirectionChanged(float direction)
+        {
+            facingDirection = direction < 0f ? -1f : 1f;
         }
     }
 }

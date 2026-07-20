@@ -20,6 +20,8 @@ namespace Narthex.Gameplay
         public ActorRuntimeState Runtime { get; private set; }
         public CombatSystem CombatSystem => combatSystemHost != null ? combatSystemHost.System : null;
         public GameEventBus Events => combatSystemHost != null ? combatSystemHost.Events : null;
+        public bool IsInHitRecovery => Runtime != null && Runtime.IsInvincible && Time.time < hitRecoveryEndsAt;
+        public float HitRecoverySeconds => hitRecoverySeconds;
 
         public void ResetRuntime()
         {
@@ -68,6 +70,7 @@ namespace Narthex.Gameplay
         private void Update()
         {
             if (Runtime == null || Runtime.State != CombatState.Hit || Time.time < hitRecoveryEndsAt) return;
+            Runtime.IsInvincible = false;
             Runtime.State = CombatState.Idle;
         }
 
@@ -75,6 +78,7 @@ namespace Narthex.Gameplay
         {
             if (Runtime == null || !Runtime.IsAlive || message.TargetId != actorId) return;
             hitRecoveryEndsAt = Time.time + hitRecoverySeconds;
+            Runtime.IsInvincible = true;
         }
     }
 }

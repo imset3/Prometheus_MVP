@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Narthex.Content
 {
     public enum ActionType { Wait, SpawnHitbox, SpawnProjectile, Move, ApplyEffect, PlaySfx }
-    public enum QuestSignalType { MovementPerformed, JumpPerformed, DashPerformed, AttackPerformed, ModuleUsed, ModuleTreeOpened, TowerActivated, BossKilled, PortalUsed }
+    public enum QuestSignalType { MovementPerformed, JumpPerformed, DashPerformed, AttackPerformed, ModuleUsed, ModuleTreeOpened, TowerActivated, BossKilled, PortalUsed, DoubleJumpPerformed }
     public enum RewardType { None, ModulePoint, TreeUnlock, BossModuleTreeUnlock, StageUnlock }
     public enum ModuleTreeType { Basic, Boss }
 

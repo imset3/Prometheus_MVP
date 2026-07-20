@@ -12,14 +12,18 @@ namespace Narthex.Gameplay
         [SerializeField] private Collider2D pulseHitbox;
         [SerializeField] private LayerMask targetLayers = -1;
         [SerializeField, Min(1)] private int damage = 35;
-        [SerializeField, Min(0.01f)] private float activeSeconds = 0.12f;
+        [SerializeField] private GameObject projectileVisual;
+        [SerializeField, Min(0.1f)] private float travelDistance = 8f;
+        [SerializeField, Min(0.05f)] private float travelSeconds = 0.45f;
 
         private readonly Collider2D[] results = new Collider2D[8];
         private readonly HashSet<string> hitActorIds = new HashSet<string>();
-        private float deactivateAt;
+        private Vector3 originLocalPosition;
+        private float launchedAt;
+        private bool projectileActive;
         private bool subscribed;
 
-        public bool HasValidSetup => sourceActor != null && ability != null && pulseHitbox != null;
+        public bool HasValidSetup => sourceActor != null && ability != null && pulseHitbox != null && projectileVisual != null;
 
         private void Awake()
         {
@@ -31,6 +35,8 @@ namespace Narthex.Gameplay
             }
 
             pulseHitbox.enabled = false;
+            originLocalPosition = transform.localPosition;
+            projectileVisual.SetActive(false);
         }
 
         private void OnEnable()
@@ -48,13 +54,24 @@ namespace Narthex.Gameplay
             if (subscribed) sourceActor.Events.Unsubscribe<AbilityRequested>(HandleAbilityRequested);
             subscribed = false;
             if (pulseHitbox != null) pulseHitbox.enabled = false;
+            if (projectileVisual != null) projectileVisual.SetActive(false);
+            projectileActive = false;
         }
 
         private void Update()
         {
             TrySubscribe();
-            if (pulseHitbox != null && pulseHitbox.enabled && Time.time >= deactivateAt)
-                pulseHitbox.enabled = false;
+            if (!projectileActive) return;
+
+            var progress = Mathf.Clamp01((Time.time - launchedAt) / travelSeconds);
+            transform.localPosition = originLocalPosition + Vector3.right * (travelDistance * progress);
+            ApplyProjectileHits();
+            if (progress < 1f) return;
+
+            projectileActive = false;
+            pulseHitbox.enabled = false;
+            projectileVisual.SetActive(false);
+            transform.localPosition = originLocalPosition;
         }
 
         private void TrySubscribe()
@@ -69,14 +86,21 @@ namespace Narthex.Gameplay
             if (message.CasterId != sourceActor.ActorId || message.AbilityId != ability.StableId) return;
             if (sourceActor.Runtime == null || sourceActor.CombatSystem == null || !sourceActor.Runtime.IsAlive) return;
 
-            deactivateAt = Time.time + activeSeconds;
+            transform.localPosition = originLocalPosition;
+            launchedAt = Time.time;
+            projectileActive = true;
             pulseHitbox.enabled = true;
+            projectileVisual.SetActive(true);
+            hitActorIds.Clear();
+            ApplyProjectileHits();
+        }
 
+        private void ApplyProjectileHits()
+        {
             var filter = ContactFilter2D.noFilter;
             filter.SetLayerMask(targetLayers);
             filter.useTriggers = true;
             var count = pulseHitbox.Overlap(filter, results);
-            hitActorIds.Clear();
             for (var index = 0; index < count; index++)
             {
                 var target = results[index].GetComponentInParent<CombatActorHost>();

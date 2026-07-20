@@ -1,4 +1,5 @@
 using Narthex.Gameplay;
+using Narthex.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,7 @@ namespace Narthex.Presentation
 {
     public sealed class ModuleTreePanelPresenter : MonoBehaviour
     {
+        [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private PlayerInputHost inputHost;
         [SerializeField] private ModuleTreeManagerHost moduleTreeManagerHost;
         [SerializeField] private GameObject panelRoot;
@@ -25,15 +27,21 @@ namespace Narthex.Presentation
 
         private bool restoreResultOverlay;
 
+        public bool HasValidSetup => serviceRoot != null && inputHost != null && moduleTreeManagerHost != null &&
+                                     panelRoot != null && titleText != null && pointsText != null && statusText != null &&
+                                     inventoryModuleText != null && equippedSlotText != null && unlockButton != null &&
+                                     equipButton != null && closeButton != null;
+
         private void Awake()
         {
-            if (inputHost == null || moduleTreeManagerHost == null || panelRoot == null || titleText == null || pointsText == null || statusText == null || inventoryModuleText == null || equippedSlotText == null || unlockButton == null || equipButton == null || closeButton == null)
+            if (!HasValidSetup)
             {
-                Debug.LogError("ModuleTreePanelPresenter requires pre-placed input, manager, inventory, slot, text, and button references.", this);
+                Debug.LogError("ModuleTreePanelPresenter requires pre-placed service, input, manager, inventory, slot, text, and button references.", this);
                 enabled = false;
                 return;
             }
 
+            serviceRoot.Initialize();
             if (!moduleTreeManagerHost.Initialize())
             {
                 enabled = false;
@@ -45,6 +53,11 @@ namespace Narthex.Presentation
 
         private void OnEnable()
         {
+            if (serviceRoot != null)
+            {
+                serviceRoot.Initialize();
+                serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            }
             if (inputHost != null) inputHost.ModuleTreeRequested += Toggle;
             if (unlockButton != null) unlockButton.onClick.AddListener(UnlockSelectedModule);
             if (equipButton != null) equipButton.onClick.AddListener(EquipSelectedModule);
@@ -53,6 +66,7 @@ namespace Narthex.Presentation
 
         private void OnDisable()
         {
+            serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             if (inputHost != null) inputHost.ModuleTreeRequested -= Toggle;
             if (unlockButton != null) unlockButton.onClick.RemoveListener(UnlockSelectedModule);
             if (equipButton != null) equipButton.onClick.RemoveListener(EquipSelectedModule);
@@ -68,6 +82,11 @@ namespace Narthex.Presentation
         {
             if (panelRoot.activeSelf) Close();
             else Open();
+        }
+
+        private void HandleObjectiveChanged(TutorialObjectiveChanged message)
+        {
+            if (panelRoot != null && panelRoot.activeSelf) Close();
         }
 
         private void Open()

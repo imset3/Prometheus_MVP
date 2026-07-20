@@ -3,12 +3,39 @@ using Narthex.Content;
 using Narthex.Core;
 using Narthex.Gameplay;
 using Narthex.Save;
+using Narthex.SceneFlow;
+using Narthex.Presentation;
 using UnityEngine;
 
 namespace Narthex.Tests
 {
     public sealed class GameplayPipelineTests
     {
+        [Test]
+        public void TutorialCameraPolicy_UsesVelocityLookAheadAndBossWeightedCenter()
+        {
+            Assert.That(TutorialCameraPolicy.ResolveLookAhead(0.05f, 2f, 0.2f), Is.Zero);
+            Assert.That(TutorialCameraPolicy.ResolveLookAhead(-3f, 2f, 0.2f), Is.EqualTo(-2f));
+            Assert.That(TutorialCameraPolicy.ResolveLookAhead(3f, 2f, 0.2f), Is.EqualTo(2f));
+            Assert.That(TutorialCameraPolicy.ResolveBossCenter(990f, 1000f, 0.45f), Is.EqualTo(994.5f).Within(0.001f));
+        }
+
+        [Test]
+        public void TutorialAccessibilityPolicy_EnforcesMinimumSizeAndContrast()
+        {
+            Assert.That(TutorialAccessibilityPolicy.ResolveFontSize(16, 20), Is.EqualTo(20));
+            Assert.That(TutorialAccessibilityPolicy.ResolveFontSize(24, 20), Is.EqualTo(24));
+            Assert.That(TutorialAccessibilityPolicy.ResolvePanelAlpha(0.4f, 0.88f), Is.EqualTo(0.88f).Within(0.001f));
+        }
+
+        [Test]
+        public void TutorialAimPolicy_KeyboardIgnoresStalePointerDeltaAndGamepadUsesStick()
+        {
+            Assert.That(TutorialAimPolicy.ResolveNonPointerAttackDirection(false, -1f, 1f, -1f), Is.EqualTo(1f));
+            Assert.That(TutorialAimPolicy.ResolveNonPointerAttackDirection(true, -1f, 1f, 1f), Is.EqualTo(-1f));
+            Assert.That(TutorialAimPolicy.ResolveNonPointerAttackDirection(false, -1f, 0f, -1f), Is.EqualTo(-1f));
+        }
+
         [Test]
         public void TutorialQuestSequence_CompletesAllStepsAndPersistsBossCompletion()
         {
@@ -100,6 +127,20 @@ namespace Narthex.Tests
             Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(2));
             run.QuestIds.Add("QST-TUTO-003");
             Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void TutorialProgressRestore_SelectsSavedCheckpointBeforeQuestHostAwake()
+        {
+            var questIds = new[]
+            {
+                "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-002", "QST-TUTO-003", "QST-TUTO-005",
+                "QST-TUTO-006", "QST-TUTO-007", "QST-TUTO-007-A", "QST-TUTO-007-B", "QST-TUTO-008"
+            };
+            var run = new RunSaveData();
+            for (var index = 0; index < 8; index++) run.QuestIds.Add(questIds[index]);
+
+            Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(8));
         }
 
         [Test]
@@ -217,6 +258,70 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void EquipmentQuest_RequiresActualDoubleJumpSignal()
+        {
+            var events = new GameEventBus();
+            var package = CreateCondition("COND-PACKAGE", QuestSignalType.PortalUsed, "CRYON-EQUIPMENT-PACKAGE");
+            var moduleTree = CreateCondition("COND-TREE", QuestSignalType.ModuleTreeOpened, "TREE-BASIC-001");
+            var doubleJump = CreateCondition("COND-DOUBLE-JUMP", QuestSignalType.DoubleJumpPerformed, "PLAYER-001");
+            var quest = ScriptableObject.CreateInstance<QuestDefinition>();
+            quest.ConfigureIdentity("QST-TUTO-006");
+            quest.Conditions = new[] { package, moduleTree, doubleJump };
+            var quests = new QuestManager(events);
+            quests.Register(quest);
+
+            Assert.That(quests.Start(quest.StableId), Is.True);
+            events.Publish(new GameplaySignal(QuestSignalType.PortalUsed, "CRYON-EQUIPMENT-PACKAGE"));
+            events.Publish(new GameplaySignal(QuestSignalType.ModuleTreeOpened, "TREE-BASIC-001"));
+            Assert.That(quests.TryGetState(quest.StableId, out var beforeJump), Is.True);
+            Assert.That(beforeJump.Status, Is.EqualTo(QuestRuntimeStatus.InProgress));
+            Assert.That(quests.GetConditionProgress(quest.StableId, doubleJump.StableId), Is.Zero);
+
+            events.Publish(new GameplaySignal(QuestSignalType.DoubleJumpPerformed, "PLAYER-001"));
+            Assert.That(quests.TryGetState(quest.StableId, out var afterJump), Is.True);
+            Assert.That(afterJump.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+            Assert.That(quests.GetConditionProgress(quest.StableId, doubleJump.StableId), Is.EqualTo(1));
+
+            quests.Dispose();
+            events.Dispose();
+            Object.DestroyImmediate(quest);
+            Object.DestroyImmediate(package);
+            Object.DestroyImmediate(moduleTree);
+            Object.DestroyImmediate(doubleJump);
+        }
+
+        [Test]
+        public void QuestManager_ResetProgress_RestartsAnActiveTrainingRequirement()
+        {
+            var events = new GameEventBus();
+            var condition = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+            condition.ConfigureIdentity("COND-DASH-RESTART");
+            condition.SignalType = QuestSignalType.DashPerformed;
+            condition.TargetId = "PLAYER-001";
+            condition.RequiredAmount = 2;
+            var quest = ScriptableObject.CreateInstance<QuestDefinition>();
+            quest.ConfigureIdentity("QST-TUTO-DASH-RESTART");
+            quest.Conditions = new[] { condition };
+            var quests = new QuestManager(events);
+            quests.Register(quest);
+
+            Assert.That(quests.Start(quest.StableId), Is.True);
+            events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
+            Assert.That(quests.ResetProgress(quest.StableId), Is.True);
+            events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
+
+            Assert.That(quests.TryGetState(quest.StableId, out var state), Is.True);
+            Assert.That(state.Status, Is.EqualTo(QuestRuntimeStatus.InProgress));
+            events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
+            Assert.That(state.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+
+            quests.Dispose();
+            events.Dispose();
+            Object.DestroyImmediate(quest);
+            Object.DestroyImmediate(condition);
+        }
+
+        [Test]
         public void BossQuestCompletion_GrantsModulePointAndPermanentTree()
         {
             var events = new GameEventBus();
@@ -277,18 +382,29 @@ namespace Narthex.Tests
         }
 
         [Test]
-        public void HeltePatternPlanner_UsesTwoBasicPatternsBeforePhaseSpecificSpecials()
+        public void HeltePatternPlanner_UsesOneOrTwoBasicsBeforePhaseSpecificSpecials()
         {
-            var phaseOne = new HeltePatternPlanner();
-            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
-            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
-            Assert.That(phaseOne.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+            var oneBasicPhaseOne = new HeltePatternPlanner(() => 1);
+            Assert.That(oneBasicPhaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(oneBasicPhaseOne.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(oneBasicPhaseOne.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
 
-            var phaseTwo = new HeltePatternPlanner();
-            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
-            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
-            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.SummonSwords));
-            Assert.That(phaseTwo.Next(true), Is.EqualTo(HeltePattern.BlinkDash));
+            var twoBasicsPhaseTwo = new HeltePatternPlanner(() => 2);
+            Assert.That(twoBasicsPhaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(twoBasicsPhaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(twoBasicsPhaseTwo.Next(true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(twoBasicsPhaseTwo.Next(true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(twoBasicsPhaseTwo.Next(true), Is.EqualTo(HeltePattern.BasicCombo));
+        }
+
+        [Test]
+        public void TutorialHudModeResolver_UsesResultDialogueBossPriority()
+        {
+            Assert.That(TutorialHudModeResolver.Resolve(false, false, false, false), Is.EqualTo(TutorialHudMode.Normal));
+            Assert.That(TutorialHudModeResolver.Resolve(false, false, false, true), Is.EqualTo(TutorialHudMode.BossCombat));
+            Assert.That(TutorialHudModeResolver.Resolve(false, true, false, true), Is.EqualTo(TutorialHudMode.Dialogue));
+            Assert.That(TutorialHudModeResolver.Resolve(false, false, true, true), Is.EqualTo(TutorialHudMode.Dialogue));
+            Assert.That(TutorialHudModeResolver.Resolve(true, true, true, true), Is.EqualTo(TutorialHudMode.Result));
         }
 
         private static ModuleDefinition CreateModule(string id, string treeId, AbilityDefinition ability, int cost)
@@ -299,6 +415,16 @@ namespace Narthex.Tests
             module.Ability = ability;
             module.UnlockCost = cost;
             return module;
+        }
+
+        private static QuestConditionDefinition CreateCondition(string id, QuestSignalType signalType, string targetId)
+        {
+            var condition = ScriptableObject.CreateInstance<QuestConditionDefinition>();
+            condition.ConfigureIdentity(id);
+            condition.SignalType = signalType;
+            condition.TargetId = targetId;
+            condition.RequiredAmount = 1;
+            return condition;
         }
     }
 }

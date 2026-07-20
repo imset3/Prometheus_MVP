@@ -10,30 +10,52 @@ namespace Narthex.Gameplay
 
     public sealed class HeltePatternPlanner
     {
-        private const int BasicPatternsBeforeSpecial = 2;
+        private readonly System.Func<int> basicCountSelector;
 
-        private int basicPatternCount;
+        private int basicPatternsRemaining;
         private bool blinkAfterSummon;
+        private bool? previousPhaseTwo;
+
+        public HeltePatternPlanner(System.Func<int> basicCountSelector = null)
+        {
+            this.basicCountSelector = basicCountSelector ?? (() => UnityEngine.Random.Range(1, 3));
+        }
 
         public HeltePattern Next(bool phaseTwo)
         {
+            if (!previousPhaseTwo.HasValue || previousPhaseTwo.Value != phaseTwo)
+            {
+                previousPhaseTwo = phaseTwo;
+                basicPatternsRemaining = SelectBasicPatternCount();
+                blinkAfterSummon = false;
+            }
+
             if (phaseTwo && blinkAfterSummon)
             {
                 blinkAfterSummon = false;
+                basicPatternsRemaining = SelectBasicPatternCount();
                 return HeltePattern.BlinkDash;
             }
 
-            if (basicPatternCount < BasicPatternsBeforeSpecial)
+            if (basicPatternsRemaining > 0)
             {
-                basicPatternCount++;
+                basicPatternsRemaining--;
                 return HeltePattern.BasicCombo;
             }
 
-            basicPatternCount = 0;
-            if (!phaseTwo) return HeltePattern.BlinkDash;
+            if (!phaseTwo)
+            {
+                basicPatternsRemaining = SelectBasicPatternCount();
+                return HeltePattern.BlinkDash;
+            }
 
             blinkAfterSummon = true;
             return HeltePattern.SummonSwords;
+        }
+
+        private int SelectBasicPatternCount()
+        {
+            return UnityEngine.Mathf.Clamp(basicCountSelector(), 1, 2);
         }
     }
 }

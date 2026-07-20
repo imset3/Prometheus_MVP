@@ -16,4 +16,4 @@ MonoBehaviour:
   displayNameTextKey: 
   SignalType: 2
   TargetId: PLAYER-001
-  RequiredAmount: 1
+  RequiredAmount: 3

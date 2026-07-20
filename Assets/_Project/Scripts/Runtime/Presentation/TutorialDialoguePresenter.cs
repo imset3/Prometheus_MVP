@@ -30,8 +30,8 @@ namespace Narthex.Presentation
         [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private DialogueViewModule dialogueView;
         [SerializeField] private DialogueIntroductionCardModule introductionCard;
-        [SerializeField] private string continuePrompt = "F: 다음";
-        [SerializeField] private string closePrompt = "F: 닫기";
+        [SerializeField] private string continuePrompt = "SPACE: 다음";
+        [SerializeField] private string closePrompt = "SPACE: 닫기";
         [SerializeField] private TutorialIntroductionDefinition[] introductionDefinitions = Array.Empty<TutorialIntroductionDefinition>();
 
         private string[] lines;
@@ -40,6 +40,7 @@ namespace Narthex.Presentation
         private bool introductionShowing;
 
         public bool IsShowing => lines != null && lineIndex < lines.Length;
+        public event Action DialogueClosed;
 
         private void Awake()
         {
@@ -98,7 +99,7 @@ namespace Narthex.Presentation
                     introduction.DisplayName,
                     introduction.EnglishName,
                     introduction.Description,
-                    continuePrompt);
+                    ResolvePrompt(false));
                 return;
             }
 
@@ -128,6 +129,7 @@ namespace Narthex.Presentation
             {
                 dialogueView.SetVisible(false);
                 playerInputHost.SetDialogueInputClaimed(false);
+                DialogueClosed?.Invoke();
                 return;
             }
 
@@ -136,8 +138,30 @@ namespace Narthex.Presentation
 
         private void ShowCurrentLine()
         {
-            dialogueView.SetDialogue(lines[lineIndex]);
-            dialogueView.SetContinue(lineIndex + 1 < lines.Length ? continuePrompt : closePrompt);
+            var line = lines[lineIndex] ?? string.Empty;
+            var speakerSeparator = line.IndexOf(':');
+            if (speakerSeparator > 0)
+            {
+                var speaker = line.Substring(0, speakerSeparator).Trim();
+                dialogueView.SetStage(currentStageId);
+                dialogueView.SetSpeaker(speaker);
+                dialogueView.SetDialogue(line.Substring(speakerSeparator + 1).Trim());
+            }
+            else
+            {
+                dialogueView.SetStage(currentStageId);
+                dialogueView.SetSpeaker(string.Empty);
+                dialogueView.SetDialogue(line);
+            }
+            dialogueView.SetContinue(ResolvePrompt(lineIndex + 1 >= lines.Length));
+        }
+
+        private string ResolvePrompt(bool closing)
+        {
+            var fallback = closing ? closePrompt : continuePrompt;
+            if (playerInputHost == null) return fallback;
+            var binding = playerInputHost.GetBindingDisplayName("Jump", "SPACE");
+            return $"{binding}: {(closing ? "닫기" : "다음")}";
         }
 
         private bool TryGetIntroduction(string questId, out TutorialIntroductionDefinition introduction)

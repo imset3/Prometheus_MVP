@@ -15,6 +15,7 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float movementSignalSpeed = 0.1f;
 
         private Vector2 movementInput;
+        private readonly Collider2D[] groundOverlapResults = new Collider2D[8];
         private bool jumpRequested;
         private bool dashRequested;
         private bool glideHeld;
@@ -47,6 +48,18 @@ namespace Narthex.Gameplay
         public void RequestJump() => jumpRequested = true;
         public void RequestDash() => dashRequested = true;
         public void SetGlideHeld(bool held) => glideHeld = held;
+
+        public void ResetTransientInput()
+        {
+            movementInput = Vector2.zero;
+            jumpRequested = false;
+            dashRequested = false;
+            glideHeld = false;
+            movementSignalArmed = false;
+            dashEndsAt = 0f;
+            IsGliding = false;
+        }
+
         public void UnlockDoubleJump()
         {
             doubleJumpUnlocked = true;
@@ -76,13 +89,16 @@ namespace Narthex.Gameplay
                 velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, motorDefinition.GroundAcceleration * Time.fixedDeltaTime);
             }
 
-            var grounded = Physics2D.OverlapCircle(groundProbe.position, motorDefinition.GroundProbeRadius, groundLayers) != null;
+            var grounded = IsStandingOnGround();
             if (grounded) doubleJumpAvailable = doubleJumpUnlocked;
             if (jumpRequested && (grounded || (doubleJumpUnlocked && doubleJumpAvailable)))
             {
+                var performedDoubleJump = !grounded;
                 velocity.y = motorDefinition.JumpVelocity;
                 if (!grounded) doubleJumpAvailable = false;
                 serviceRoot?.Events.Publish(new GameplaySignal(QuestSignalType.JumpPerformed, playerId));
+                if (performedDoubleJump)
+                    serviceRoot?.Events.Publish(new GameplaySignal(QuestSignalType.DoubleJumpPerformed, playerId));
             }
 
             IsGliding = glideHeld && !grounded && velocity.y < 0f;
@@ -98,6 +114,29 @@ namespace Narthex.Gameplay
             jumpRequested = false;
             dashRequested = false;
             body.linearVelocity = velocity;
+        }
+
+        private bool IsStandingOnGround()
+        {
+            var filter = ContactFilter2D.noFilter;
+            filter.SetLayerMask(groundLayers);
+            filter.useTriggers = false;
+            var count = Physics2D.OverlapCircle(
+                groundProbe.position,
+                motorDefinition.GroundProbeRadius,
+                filter,
+                groundOverlapResults);
+
+            for (var index = 0; index < count; index++)
+            {
+                var candidate = groundOverlapResults[index];
+                if (candidate == null || candidate.attachedRigidbody == body ||
+                    candidate.transform == transform || candidate.transform.IsChildOf(transform))
+                    continue;
+                return true;
+            }
+
+            return false;
         }
 
         private void OnDisable()

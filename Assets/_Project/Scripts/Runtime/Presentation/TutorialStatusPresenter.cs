@@ -12,6 +12,7 @@ namespace Narthex.Presentation
         [SerializeField] private Text keyPromptText;
         [SerializeField] private Text stageCaptionText;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
+        [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private string initialMessage = "훈련용 적을 처치하세요.";
         [SerializeField] private string completedMessage = "튜토리얼 완료";
         [SerializeField] private string progressFormat = "튜토리얼 {0}/{1}";
@@ -36,12 +37,14 @@ namespace Narthex.Presentation
             serviceRoot.Initialize();
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             serviceRoot.Events.Subscribe<TutorialCompleted>(HandleTutorialCompleted);
+            if (playerInputHost != null) playerInputHost.BindingDisplayChanged += RefreshBindings;
         }
 
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             serviceRoot?.Events?.Unsubscribe<TutorialCompleted>(HandleTutorialCompleted);
+            if (playerInputHost != null) playerInputHost.BindingDisplayChanged -= RefreshBindings;
         }
 
         private void Start()
@@ -88,16 +91,27 @@ namespace Narthex.Presentation
 
             keyPromptText.text = questId switch
             {
-                "QST-TUTO-001" => "이동  [ A ]  [ D ]",
-                "QST-TUTO-002" => "점프 · 활공  [ SPACE ]",
-                "QST-TUTO-003" => "기본 공격  [ ENTER ]",
-                "QST-TUTO-004" => "대시  [ LEFT SHIFT ]",
-                "QST-TUTO-005" => "나르텍스 펄스  [ 2 ]",
-                "QST-TUTO-006" => "모듈 트리  [ I ]",
-                "QST-TUTO-007" => "상호작용  [ F ]",
-                "QST-TUTO-008" => "공격 [ ENTER ]  ·  펄스 [ 2 ]",
+                "QST-TUTO-001" => $"이동  [ {Binding("Move", "A / D")} ]",
+                "QST-TUTO-002" => $"점프 · 활공  [ {Binding("Jump", "SPACE")} ]",
+                "QST-TUTO-003" => $"기본 공격  [ {Binding("Attack", "LMB")} ]",
+                "QST-TUTO-004" => $"대시  [ {Binding("Sprint", "LEFT SHIFT")} ]",
+                "QST-TUTO-005" => $"나르텍스 펄스  [ {Binding("Next", "2")} ]",
+                "QST-TUTO-006" => $"더블 점프  [ {Binding("Jump", "SPACE")} ×2 ]  ·  모듈 트리  [ {Binding("OpenModuleTree", "I")} ]",
+                "QST-TUTO-007" => $"상호작용  [ {Binding("Interact", "F")} ]",
+                "QST-TUTO-007-A" or "QST-TUTO-007-B" => $"공격 [ {Binding("Attack", "LMB")} ]  ·  펄스 [ {Binding("Next", "2")} ]",
+                "QST-TUTO-008" => $"공격 [ {Binding("Attack", "LMB")} ]  ·  펄스 [ {Binding("Next", "2")} ]",
                 _ => string.Empty
             };
+        }
+
+        private string Binding(string actionName, string fallback)
+        {
+            return playerInputHost != null ? playerInputHost.GetBindingDisplayName(actionName, fallback) : fallback;
+        }
+
+        private void RefreshBindings()
+        {
+            if (questSequenceHost != null) UpdateKeyPrompt(questSequenceHost.CurrentQuestId);
         }
 
         private void ClearKeyPrompt()
@@ -115,7 +129,9 @@ namespace Narthex.Presentation
                 "QST-TUTO-001" => "ADAMAS HQ  /  오리엔테이션",
                 "QST-TUTO-002" or "QST-TUTO-003" or "QST-TUTO-004" or "QST-TUTO-005" => "훈련 구역  /  전투 시뮬레이션",
                 "QST-TUTO-006" => "모듈 제어실  /  시스템 동기화",
-                "QST-TUTO-007" => "외곽 접근로  /  크리온 장비 회수",
+                "QST-TUTO-007" => "외곽 접근로  /  직선 통로",
+                "QST-TUTO-007-A" => "외곽 전투 구역  /  교전 I",
+                "QST-TUTO-007-B" => "외곽 전투 구역  /  교전 II",
                 "QST-TUTO-008" => "광물 저장고  /  헬테 교전",
                 _ => string.Empty
             };
