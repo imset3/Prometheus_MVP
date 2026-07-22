@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Narthex.Core;
 using Narthex.Gameplay;
 using UnityEngine;
@@ -13,11 +14,13 @@ namespace Narthex.Presentation
         [SerializeField] private string displayName;
         [SerializeField] private string englishName;
         [TextArea(2, 4)] [SerializeField] private string description;
+        [SerializeField] private bool showAfterDialogue;
 
         public string QuestId => questId;
         public string DisplayName => displayName;
         public string EnglishName => englishName;
         public string Description => description;
+        public bool ShowAfterDialogue => showAfterDialogue;
     }
 
     /// <summary>
@@ -38,8 +41,13 @@ namespace Narthex.Presentation
         private int lineIndex;
         private string currentStageId;
         private bool introductionShowing;
+        private bool finishAfterIntroduction;
+        private bool completingNarrative;
+        private TutorialIntroductionDefinition pendingIntroduction;
+        private readonly Queue<TutorialNarrativeChanged> pendingNarratives = new Queue<TutorialNarrativeChanged>();
 
-        public bool IsShowing => lines != null && lineIndex < lines.Length;
+        public bool IsShowing => introductionShowing || (lines != null && lineIndex < lines.Length);
+        public int PendingNarrativeCount => pendingNarratives.Count;
         public event Action DialogueClosed;
 
         private void Awake()
@@ -63,24 +71,43 @@ namespace Narthex.Presentation
             serviceRoot.Initialize();
             serviceRoot.Events.Subscribe<TutorialNarrativeChanged>(HandleNarrativeChanged);
             playerInputHost.DialogueAdvanceRequested += ShowNextLine;
+            playerInputHost.AnyDialogueInputRequested += HandleAnyDialogueInput;
+            if (introductionCard != null) introductionCard.Dismissed += HandleIntroductionDismissed;
         }
 
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialNarrativeChanged>(HandleNarrativeChanged);
+            if (introductionCard != null) introductionCard.Dismissed -= HandleIntroductionDismissed;
             if (playerInputHost != null)
             {
                 playerInputHost.DialogueAdvanceRequested -= ShowNextLine;
+                playerInputHost.AnyDialogueInputRequested -= HandleAnyDialogueInput;
                 playerInputHost.SetDialogueInputClaimed(false);
             }
+            pendingNarratives.Clear();
+            completingNarrative = false;
         }
 
         private void HandleNarrativeChanged(TutorialNarrativeChanged message)
+        {
+            if (IsShowing || completingNarrative)
+            {
+                pendingNarratives.Enqueue(message);
+                return;
+            }
+
+            BeginNarrative(message);
+        }
+
+        private void BeginNarrative(TutorialNarrativeChanged message)
         {
             currentStageId = message.StageId;
             lines = message.Lines;
             lineIndex = 0;
             introductionShowing = false;
+            finishAfterIntroduction = false;
+            pendingIntroduction = null;
             if (introductionCard != null) introductionCard.Hide();
             if (lines == null || lines.Length == 0)
             {
@@ -92,15 +119,13 @@ namespace Narthex.Presentation
             TutorialIntroductionDefinition introduction;
             if (introductionCard != null && introductionCard.HasValidSetup && TryGetIntroduction(message.QuestId, out introduction))
             {
-                introductionShowing = true;
-                dialogueView.SetVisible(false);
-                playerInputHost.SetDialogueInputClaimed(true);
-                introductionCard.Show(
-                    introduction.DisplayName,
-                    introduction.EnglishName,
-                    introduction.Description,
-                    ResolvePrompt(false));
-                return;
+                if (introduction.ShowAfterDialogue)
+                    pendingIntroduction = introduction;
+                else
+                {
+                    ShowIntroduction(introduction, false);
+                    return;
+                }
             }
 
             ShowDialogue();
@@ -118,9 +143,7 @@ namespace Narthex.Presentation
         {
             if (introductionShowing)
             {
-                introductionShowing = false;
-                introductionCard.Hide();
-                ShowDialogue();
+                introductionCard?.TryDismiss();
                 return;
             }
 
@@ -128,12 +151,65 @@ namespace Narthex.Presentation
             if (!IsShowing)
             {
                 dialogueView.SetVisible(false);
-                playerInputHost.SetDialogueInputClaimed(false);
-                DialogueClosed?.Invoke();
+                if (pendingIntroduction != null)
+                {
+                    var introduction = pendingIntroduction;
+                    pendingIntroduction = null;
+                    ShowIntroduction(introduction, true);
+                }
+                else CompleteNarrative();
                 return;
             }
 
             ShowCurrentLine();
+        }
+
+        private void ShowIntroduction(TutorialIntroductionDefinition introduction, bool completesNarrative)
+        {
+            introductionShowing = true;
+            finishAfterIntroduction = completesNarrative;
+            dialogueView.SetVisible(false);
+            playerInputHost.SetDialogueInputClaimed(true);
+            introductionCard.Show(
+                introduction.DisplayName,
+                introduction.EnglishName,
+                introduction.Description,
+                "아무 키나 누르세요");
+        }
+
+        private void HandleIntroductionDismissed()
+        {
+            if (!introductionShowing) return;
+            introductionShowing = false;
+            if (finishAfterIntroduction)
+            {
+                finishAfterIntroduction = false;
+                CompleteNarrative();
+            }
+            else ShowDialogue();
+        }
+
+        private void HandleAnyDialogueInput()
+        {
+            if (introductionShowing) introductionCard?.TryDismiss();
+        }
+
+        private void CompleteNarrative()
+        {
+            dialogueView.SetVisible(false);
+            playerInputHost.SetDialogueInputClaimed(false);
+            lines = Array.Empty<string>();
+            lineIndex = 0;
+            completingNarrative = true;
+            DialogueClosed?.Invoke();
+            completingNarrative = false;
+            TryShowPendingNarrative();
+        }
+
+        private void TryShowPendingNarrative()
+        {
+            if (IsShowing || completingNarrative || pendingNarratives.Count == 0) return;
+            BeginNarrative(pendingNarratives.Dequeue());
         }
 
         private void ShowCurrentLine()

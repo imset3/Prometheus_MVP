@@ -21,6 +21,8 @@ namespace Narthex.Gameplay
         [SerializeField] private GameObject[] fallingObjects = new GameObject[0];
         [SerializeField] private Transform[] fallingStartPoints = new Transform[0];
         [SerializeField] private Transform[] fallingLandingPoints = new Transform[0];
+        [SerializeField] private GameObject[] fallingWarnings = new GameObject[0];
+        [SerializeField, Min(0.05f)] private float fallingWarningDuration = 0.45f;
         [SerializeField, Min(0f)] private float fallingStartDelay = 0.15f;
         [SerializeField, Min(0.05f)] private float fallingDuration = 0.55f;
         [SerializeField, Min(0f)] private float fallingStagger = 0.22f;
@@ -53,7 +55,9 @@ namespace Narthex.Gameplay
                                      !string.IsNullOrWhiteSpace(fallingQuestId) && fallingObjects != null &&
                                      fallingStartPoints != null && fallingLandingPoints != null &&
                                      fallingObjects.Length > 0 && fallingObjects.Length == fallingStartPoints.Length &&
-                                     fallingObjects.Length == fallingLandingPoints.Length && dashRestartPoint != null &&
+                                     fallingObjects.Length == fallingLandingPoints.Length &&
+                                     fallingWarnings != null && fallingObjects.Length == fallingWarnings.Length &&
+                                     HasCompleteWarningReferences() && dashRestartPoint != null &&
                                      player != null && playerBody != null && playerMotor != null &&
                                      !string.IsNullOrWhiteSpace(enemyQuestId) && tutorialEnemy != null &&
                                      enemySpawnPoint != null && enemyLandingPoint != null && enemyCollider != null &&
@@ -103,6 +107,7 @@ namespace Narthex.Gameplay
             {
                 fallingObjects[index].transform.position = fallingStartPoints[index].position;
                 fallingObjects[index].SetActive(false);
+                fallingWarnings[index].SetActive(false);
             }
         }
 
@@ -124,6 +129,7 @@ namespace Narthex.Gameplay
             {
                 for (var index = 0; index < fallingObjects.Length; index++)
                 {
+                    yield return ShowFallingWarning(fallingWarnings[index], fallingWarningDuration);
                     StartCoroutine(DropObject(fallingObjects[index], fallingStartPoints[index], fallingLandingPoints[index], fallingDuration));
                     if (index < fallingObjects.Length - 1 && fallingStagger > 0f)
                         yield return new WaitForSeconds(fallingStagger);
@@ -192,6 +198,33 @@ namespace Narthex.Gameplay
             if (hazard != null) hazard.SetArmed(false);
             yield return new WaitForSeconds(0.15f);
             fallingObject.SetActive(false);
+        }
+
+        private static IEnumerator ShowFallingWarning(GameObject warning, float duration)
+        {
+            var originalScale = warning.transform.localScale;
+            warning.SetActive(true);
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var pulse = 1f + Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI * 4f) * 0.18f;
+                warning.transform.localScale = Vector3.Scale(originalScale, new Vector3(pulse, 1f, 1f));
+                yield return null;
+            }
+
+            warning.transform.localScale = originalScale;
+            warning.SetActive(false);
+        }
+
+        private bool HasCompleteWarningReferences()
+        {
+            for (var index = 0; index < fallingWarnings.Length; index++)
+            {
+                if (fallingWarnings[index] == null) return false;
+            }
+
+            return true;
         }
 
         public bool TryRestartDashSection(Collider2D other)

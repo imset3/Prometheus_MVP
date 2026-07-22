@@ -1,7 +1,7 @@
 {
   "name": "Narthex.Presentation",
   "rootNamespace": "Narthex.Presentation",
-  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Gameplay", "UnityEngine.UI"],
+  "references": ["Narthex.Core", "Narthex.Content", "Narthex.Gameplay", "Narthex.Save", "UnityEngine.UI"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

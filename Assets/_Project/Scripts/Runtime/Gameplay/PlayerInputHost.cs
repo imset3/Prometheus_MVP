@@ -39,6 +39,7 @@ namespace Narthex.Gameplay
         public event System.Action ModuleTreeRequested;
         public event System.Action InventoryRequested;
         public event System.Action DialogueAdvanceRequested;
+        public event System.Action AnyDialogueInputRequested;
         public event System.Action<float> AimDirectionChanged;
         public event System.Action BindingDisplayChanged;
         public bool UsesCSharpEvents => playerInput != null && playerInput.notificationBehavior == PlayerNotifications.InvokeCSharpEvents;
@@ -130,10 +131,42 @@ namespace Narthex.Gameplay
             else if (context.action.name == inventoryActionName && context.performed) InventoryRequested?.Invoke();
         }
 
+        private void Update()
+        {
+            if (!dialogueInputClaimed || !AnyDialogueInputPressed()) return;
+            AnyDialogueInputRequested?.Invoke();
+        }
+
+        private static bool AnyDialogueInputPressed()
+        {
+            if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) return true;
+            if (Mouse.current != null &&
+                (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame)) return true;
+            var gamepad = Gamepad.current;
+            return gamepad != null &&
+                   (gamepad.buttonSouth.wasPressedThisFrame || gamepad.buttonNorth.wasPressedThisFrame ||
+                    gamepad.buttonEast.wasPressedThisFrame || gamepad.buttonWest.wasPressedThisFrame ||
+                    gamepad.startButton.wasPressedThisFrame || gamepad.selectButton.wasPressedThisFrame);
+        }
+
         public void SetDialogueInputClaimed(bool claimed)
         {
             dialogueInputClaimed = claimed;
-            if (claimed) motor?.SetGlideHeld(false);
+            if (claimed)
+            {
+                motor?.ResetTransientInput();
+                motor?.StopHorizontalMotion();
+                return;
+            }
+
+            var movementAction = playerInput != null && playerInput.actions != null
+                ? playerInput.actions.FindAction(moveActionName, false)
+                : null;
+            if (movementAction != null)
+            {
+                latestMovementInput = movementAction.ReadValue<Vector2>();
+                motor?.SetMovementInput(latestMovementInput);
+            }
         }
 
         public string GetBindingDisplayName(string actionName, string fallback)

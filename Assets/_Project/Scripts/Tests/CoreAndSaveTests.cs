@@ -40,6 +40,8 @@ namespace Narthex.Tests
             save.Permanent.UnlockedTreeIds.Add("TREE-BASIC-001");
             save.Run.CurrentStageId = "STG-001";
             save.Run.ModulePoints = 3;
+            save.Run.TutorialIntroStageId = "TUTO_B_01";
+            save.Run.CollectedItemIds.Add("ITEM-ZENITH-AIRSHIP-PASSKEY");
 
             var restored = SaveSerializer.FromJson(SaveSerializer.ToJson(save));
 
@@ -47,6 +49,8 @@ namespace Narthex.Tests
             Assert.That(restored.Permanent.UnlockedTreeIds[0], Is.EqualTo("TREE-BASIC-001"));
             Assert.That(restored.Run.CurrentStageId, Is.EqualTo("STG-001"));
             Assert.That(restored.Run.ModulePoints, Is.EqualTo(3));
+            Assert.That(restored.Run.TutorialIntroStageId, Is.EqualTo("TUTO_B_01"));
+            Assert.That(restored.Run.CollectedItemIds, Does.Contain("ITEM-ZENITH-AIRSHIP-PASSKEY"));
         }
 
         [Test]

@@ -29,6 +29,36 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void TutorialSubtitleTimingPolicy_ShortensOnlyWhenBacklogged()
+        {
+            Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 0), Is.EqualTo(4.2f));
+            Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 1), Is.EqualTo(2.8f));
+            Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 4), Is.EqualTo(2.8f));
+        }
+
+        [Test]
+        public void TutorialTriggerSweepPolicy_DetectsFastCrossingAndRejectsMiss()
+        {
+            var bounds = new Bounds(Vector3.zero, new Vector3(2f, 8f, 0f));
+            Assert.That(TutorialTriggerSweepPolicy.Intersects(bounds, new Vector2(-10f, 0f), new Vector2(10f, 0f)), Is.True);
+            Assert.That(TutorialTriggerSweepPolicy.Intersects(bounds, new Vector2(-10f, 10f), new Vector2(10f, 10f)), Is.False);
+        }
+
+        [Test]
+        public void TutorialUpdraftPolicy_CompensatesGravityAndBuildsStableRiseSpeed()
+        {
+            const float fixedDeltaTime = 0.02f;
+            const float gravityMagnitude = 29.43f;
+            var firstStep = TutorialUpdraftPolicy.ResolveVerticalVelocity(
+                -3f, 5.5f, 3.5f, gravityMagnitude, fixedDeltaTime);
+            Assert.That(firstStep - gravityMagnitude * fixedDeltaTime, Is.GreaterThan(0f));
+
+            var cappedStep = TutorialUpdraftPolicy.ResolveVerticalVelocity(
+                3.4f, 5.5f, 3.5f, gravityMagnitude, fixedDeltaTime);
+            Assert.That(cappedStep, Is.EqualTo(3.5f).Within(0.001f));
+        }
+
+        [Test]
         public void TutorialAimPolicy_KeyboardIgnoresStalePointerDeltaAndGamepadUsesStick()
         {
             Assert.That(TutorialAimPolicy.ResolveNonPointerAttackDirection(false, -1f, 1f, -1f), Is.EqualTo(1f));
@@ -141,6 +171,39 @@ namespace Narthex.Tests
             for (var index = 0; index < 8; index++) run.QuestIds.Add(questIds[index]);
 
             Assert.That(TutorialProgressRestore.FindFirstIncompleteQuestIndex(run, questIds), Is.EqualTo(8));
+        }
+
+        [Test]
+        public void TutorialChapter0IntroProgress_RestoresHiddenRoomAndPasskeyReturn()
+        {
+            Assert.That(
+                TutorialChapter0IntroProgress.Resolve(TutorialChapter0IntroProgress.MeetingStageId, false),
+                Is.EqualTo(TutorialChapter0IntroState.SeekHiddenRoom));
+            Assert.That(
+                TutorialChapter0IntroProgress.Resolve(TutorialChapter0IntroProgress.HiddenRoomStageId, false),
+                Is.EqualTo(TutorialChapter0IntroState.HiddenRoomEntryDialogue));
+            Assert.That(
+                TutorialChapter0IntroProgress.Resolve(TutorialChapter0IntroProgress.ReturnStageId, true),
+                Is.EqualTo(TutorialChapter0IntroState.SeekTrainingExit));
+
+            var items = new System.Collections.Generic.List<string>
+            {
+                TutorialChapter0IntroProgress.PasskeyItemId
+            };
+            Assert.That(TutorialChapter0IntroProgress.ContainsPasskey(items), Is.True);
+            Assert.That(TutorialChapter0IntroProgress.ContainsPasskey(null), Is.False);
+
+            var entry = new Vector3(-38f, 1f, 0f);
+            Assert.That(
+                TutorialChapter0IntroProgress.HasReachedHiddenRoomEntry(new Vector3(-36.5f, 1f, 0f), entry, false),
+                Is.True,
+                "The transition must begin before the player can step past the deck edge.");
+            Assert.That(
+                TutorialChapter0IntroProgress.HasReachedHiddenRoomEntry(new Vector3(-35f, 1f, 0f), entry, false),
+                Is.False);
+            Assert.That(
+                TutorialChapter0IntroProgress.HasReachedHiddenRoomEntry(new Vector3(-20f, 20f, 0f), entry, true),
+                Is.True);
         }
 
         [Test]

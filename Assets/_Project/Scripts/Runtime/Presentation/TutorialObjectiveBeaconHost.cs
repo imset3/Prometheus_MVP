@@ -37,6 +37,8 @@ namespace Narthex.Presentation
         [SerializeField, Min(0f)] private float hideDistance = 2.25f;
 
         private Transform currentTarget;
+        private Transform externalTarget;
+        private bool externalTargetActive;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
                                      player != null && beaconVisual != null && equipmentPickupHost != null &&
@@ -80,7 +82,8 @@ namespace Narthex.Presentation
 
         private void LateUpdate()
         {
-            RefreshEquipmentQuestTarget();
+            if (externalTargetActive) currentTarget = externalTarget;
+            else RefreshEquipmentQuestTarget();
             if (currentTarget == null)
             {
                 SetVisualActive(false);
@@ -99,7 +102,23 @@ namespace Narthex.Presentation
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
         {
+            externalTargetActive = false;
+            externalTarget = null;
             SetTarget(message.QuestId);
+        }
+
+        public void SetExternalTarget(Transform target)
+        {
+            externalTarget = target;
+            externalTargetActive = true;
+            currentTarget = target;
+        }
+
+        public void ClearExternalTarget()
+        {
+            externalTarget = null;
+            externalTargetActive = false;
+            SetTarget(questSequenceHost.CurrentQuestId);
         }
 
         private void SetTarget(string questId)

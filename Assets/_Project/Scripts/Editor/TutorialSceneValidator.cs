@@ -42,6 +42,12 @@ namespace Narthex.Tools
             RequireComponent<TutorialQuestSequenceHost>(systems, issues);
             RequireComponent<TutorialNarrativeSequenceHost>(systems, issues);
             RequireComponent<TutorialDialoguePresenter>(systems, issues);
+            RequireComponent<TutorialChapter0IntroFlowHost>(systems, issues);
+            var chapter0Intro = systems != null ? systems.GetComponent<TutorialChapter0IntroFlowHost>() : null;
+            if (chapter0Intro != null && !chapter0Intro.HasValidSetup)
+                issues.Add("Chapter0 A/B intro flow has missing room, passkey, camera, UI, or save references.");
+            if (chapter0Intro != null && !chapter0Intro.HasValidUpdraftSetup)
+                issues.Add("Chapter0 updraft must reach above the passkey while remaining inside the hidden-room camera bounds and use positive lift speeds.");
             RequireComponent<ModuleSystemHost>(systems, issues);
             RequireComponent<ModuleTreeManagerHost>(systems, issues);
             RequireComponent<RewardExecutorHost>(systems, issues);
@@ -82,8 +88,8 @@ namespace Narthex.Tools
             {
                 if (!narrativeSequence.HasValidSetup || narrativeSequence.BeatCount != 10)
                     issues.Add("TutorialNarrativeSequenceHost must contain all ten tutorial beats.");
-                if (narrativeSequence.GetLineCount("QST-TUTO-001") < 9)
-                    issues.Add("HQ narrative must include the restored Prome and companion conversation.");
+                if (narrativeSequence.GetLineCount("QST-TUTO-001") != 10)
+                    issues.Add("HQ narrative must contain the ten confirmed Notion A-scene lines; the departure line is published after the introduction card.");
                 if (!narrativeSequence.HasDeferredBeat("QST-TUTO-006", "TUTORIAL-TRAINING-EXIT") ||
                     !narrativeSequence.HasDeferredBeat("QST-TUTO-007-A", "TUTORIAL-Z03-EXIT") ||
                     !narrativeSequence.HasDeferredBeat("QST-TUTO-007-B", "TUTORIAL-ENCOUNTER-A-EXIT") ||
@@ -168,6 +174,29 @@ namespace Narthex.Tools
             var hqGuideRouteHost = hqGuideRoute != null ? hqGuideRoute.GetComponent<TutorialGuideRouteHost>() : null;
             if (hqGuideRouteHost != null && !hqGuideRouteHost.HasValidSetup)
                 issues.Add("TutorialGuideRouteHost has invalid dialogue, companion, quest, or waypoint references.");
+            if (hqGuideRouteHost != null && hqGuideRouteHost.enabled)
+                issues.Add("Legacy HQ guide route must remain disabled until the hidden-room passkey flow returns to A.");
+
+            var hiddenRoom = RequireObject("Z01B_HiddenGlideRoom", issues);
+            RequireChild(hiddenRoom, "GeometryRoot", issues);
+            RequireChild(hiddenRoom, "NarrativeRoot", issues);
+            var hiddenGameplay = RequireChild(hiddenRoom, "GameplayRoot", issues);
+            var hiddenAnchors = RequireChild(hiddenRoom, "Anchors", issues);
+            RequireChild(hiddenGameplay, "AirshipPasskey_ART_SLOT", issues);
+            RequireChild(hiddenGameplay, "Updraft_ART_SLOT", issues);
+            var passkeyTrigger = RequireChild(hiddenGameplay, "PasskeyPickupTrigger", issues);
+            var ledgeTrigger = RequireChild(hiddenGameplay, "LedgeBriefingTrigger", issues);
+            var returnTrigger = RequireChild(hiddenGameplay, "HiddenRoomReturnTrigger", issues);
+            RequireComponent<BoxCollider2D>(passkeyTrigger, issues);
+            RequireComponent<BoxCollider2D>(ledgeTrigger, issues);
+            RequireComponent<BoxCollider2D>(returnTrigger, issues);
+            RequireChild(hiddenAnchors, "HiddenRoomSpawn", issues);
+            RequireChild(hiddenAnchors, "LedgeStop", issues);
+            RequireChild(hiddenAnchors, "PasskeyTarget", issues);
+            RequireChild(hiddenAnchors, "HiddenReturnTarget", issues);
+            RequireObject("HiddenRoomEntryTrigger", issues);
+            RequireObject("TheusFlashlight_ART_SLOT", issues);
+            RequireObject("TheusWrongWayAlarm_ART_SLOT", issues);
 
             var objectiveBeacon = RequireObject("TutorialObjectiveBeacon", issues);
             RequireComponent<TutorialObjectiveBeaconHost>(objectiveBeacon, issues);
@@ -219,6 +248,7 @@ namespace Narthex.Tools
                 issues.Add("Jump training projectile has no valid trigger or training reference.");
             for (var fallingIndex = 1; fallingIndex <= 3; fallingIndex++)
             {
+                RequireObject($"ART_SLOT_FallingWarning_0{fallingIndex}", issues);
                 var fallingObject = RequireObject($"ART_SLOT_FallingCrate_0{fallingIndex}", issues);
                 RequireComponent<BoxCollider2D>(fallingObject, issues);
                 RequireComponent<Rigidbody2D>(fallingObject, issues);
@@ -445,6 +475,8 @@ namespace Narthex.Tools
             var inventoryOpenButton = RequireChild(hud, "InventoryOpenButton", issues);
             RequireChild(inventoryPanel, "InventoryCloseButton", issues);
             var introductionCard = RequireChild(hud, "TutorialIntroductionCard", issues);
+            var glideInstruction = RequireChild(hud, "HiddenRoomGlideInstruction", issues);
+            RequireChild(glideInstruction, "SpaceKey_ART_SLOT", issues);
             var dialoguePanel = RequireChild(hud, "TutorialDialoguePanel", issues);
             var lorePanel = RequireChild(hud, "TutorialLoreSubtitlePanel", issues);
             var loreText = RequireChild(lorePanel, "SubtitleText", issues);
@@ -481,6 +513,12 @@ namespace Narthex.Tools
             var inventoryCloseButton = inventoryPanel != null ? inventoryPanel.transform.Find("InventoryCloseButton") : null;
             RequireComponent<InventoryPanelButtonHost>(inventoryCloseButton == null ? null : inventoryCloseButton.gameObject, issues);
             RequireComponent<DialogueIntroductionCardModule>(introductionCard, issues);
+            RequireComponent<CanvasGroup>(introductionCard, issues);
+            var introductionCardModule = introductionCard != null
+                ? introductionCard.GetComponent<DialogueIntroductionCardModule>()
+                : null;
+            if (introductionCardModule != null && !introductionCardModule.UsesTimedCollapse)
+                issues.Add("Theus introduction card must wait three seconds and use the vertical collapse close animation.");
 
             var loreTriggers = Resources.FindObjectsOfTypeAll<TutorialLoreSubtitleTriggerHost>()
                 .Where(candidate => candidate != null && candidate.gameObject.scene.IsValid())
@@ -507,6 +545,8 @@ namespace Narthex.Tools
                 {
                     if (zoneTransition != null && !zoneTransition.HasValidSetup)
                         issues.Add($"TutorialZoneTransitionHost '{zoneTransition.name}' has invalid zone, player, camera, or fade references.");
+                    if (zoneTransition != null && !zoneTransition.UsesSweptPlayerDetection)
+                        issues.Add($"TutorialZoneTransitionHost '{zoneTransition.name}' must detect fast player crossings.");
                     if (zoneTransition != null && zoneTransition.UsesLadderSequence)
                     {
                         ladderTransitionCount++;

@@ -53,10 +53,15 @@ namespace Narthex.Presentation
         [SerializeField, Min(0f)] private float fadeOutDuration = 0.35f;
         [SerializeField, Min(0f)] private float blackHoldDuration = 0.15f;
         [SerializeField, Min(0f)] private float fadeInDuration = 0.45f;
+        [SerializeField, Min(0.5f)] private float maximumSweptCrossingDistance = 6f;
 
         private bool transitionRunning;
+        private Collider2D transitionTrigger;
+        private Vector2 previousPlayerPosition;
+        private bool hasPreviousPlayerPosition;
 
         public bool UsesLadderSequence => useLadderSequence;
+        public bool UsesSweptPlayerDetection => true;
         public bool HasValidLadderSetup => !useLadderSequence ||
                                            (ladderEntry != null && ladderExit != null && ladderVisual != null);
 
@@ -66,12 +71,13 @@ namespace Narthex.Presentation
                                      playerBody != null && fadeCanvasGroup != null && currentZoneRoot != null &&
                                      nextZoneRoot != null && destinationSpawn != null &&
                                      !string.IsNullOrWhiteSpace(requiredQuestId) &&
-                                     destinationCameraMinX <= destinationCameraMaxX && HasValidLadderSetup;
+                                     destinationCameraMinX <= destinationCameraMaxX && HasValidLadderSetup &&
+                                     maximumSweptCrossingDistance > 0f;
 
         private void Awake()
         {
-            var trigger = GetComponent<Collider2D>();
-            if (trigger != null) trigger.isTrigger = true;
+            transitionTrigger = GetComponent<Collider2D>();
+            if (transitionTrigger != null) transitionTrigger.isTrigger = true;
 
             if (!HasValidSetup)
             {
@@ -84,6 +90,26 @@ namespace Narthex.Presentation
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
             fadeCanvasGroup.interactable = false;
+            previousPlayerPosition = player.position;
+            hasPreviousPlayerPosition = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (player == null || transitionTrigger == null) return;
+            var currentPlayerPosition = (Vector2)player.position;
+            var displacement = currentPlayerPosition - previousPlayerPosition;
+            if (transitionTrigger.enabled && !transitionRunning && !dialoguePresenter.IsShowing && IsTransitionUnlocked() &&
+                hasPreviousPlayerPosition &&
+                displacement.sqrMagnitude <= maximumSweptCrossingDistance * maximumSweptCrossingDistance &&
+                TutorialTriggerSweepPolicy.Intersects(
+                    transitionTrigger.bounds,
+                    previousPlayerPosition,
+                    currentPlayerPosition))
+                StartCoroutine(TransitionRoutine());
+
+            previousPlayerPosition = currentPlayerPosition;
+            hasPreviousPlayerPosition = true;
         }
 
         private void OnTriggerEnter2D(Collider2D other) => TryBeginTransition(other);
@@ -126,6 +152,7 @@ namespace Narthex.Presentation
             guideCompanion.CancelGuide();
             playerBody.position = destinationSpawn.position;
             player.position = destinationSpawn.position;
+            previousPlayerPosition = destinationSpawn.position;
             playerBody.linearVelocity = Vector2.zero;
             playerBody.simulated = restoreSimulation;
             Physics2D.SyncTransforms();

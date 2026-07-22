@@ -35,6 +35,8 @@ namespace Narthex.Save
         public List<string> EquippedModuleIds = new List<string>();
         public List<EquippedModuleSlotSaveData> EquippedModuleSlots = new List<EquippedModuleSlotSaveData>();
         public List<string> ActivatedTowerIds = new List<string>();
+        public List<string> CollectedItemIds = new List<string>();
+        public string TutorialIntroStageId;
     }
 
     [Serializable]

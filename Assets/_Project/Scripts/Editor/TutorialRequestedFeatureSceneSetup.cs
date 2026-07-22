@@ -55,6 +55,7 @@ namespace Narthex.Tools
             ConfigureLoreSubtitles(Find, stageSystems, player);
             ConfigureAccessibility(Find, stageSystems, cameraObject);
             ConfigureHudStateCoordinator(Find, stageSystems, Require(Find("TutorialHUD"), "TutorialHUD"));
+            TutorialNotionChapter0SceneSetup.Apply();
 
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
@@ -264,6 +265,9 @@ namespace Narthex.Tools
             SetReference(coordinator, "resultOverlay", HudChild("TutorialResultOverlay"));
             SetReference(coordinator, "dialoguePanel", HudChild("TutorialDialoguePanel"));
             SetReference(coordinator, "introductionCard", HudChild("TutorialIntroductionCard"));
+            var inventoryOpenButton = HudChild("InventoryOpenButton");
+            if (inventoryOpenButton.GetComponent<CanvasGroup>() == null)
+                inventoryOpenButton.AddComponent<CanvasGroup>();
 
             var objectiveBeacon = Require(find("TutorialObjectiveBeacon"), "TutorialObjectiveBeacon");
             var objectiveBeaconVisualTransform = objectiveBeacon.transform.Find("Visual");
@@ -276,7 +280,7 @@ namespace Narthex.Tools
                 HudChild("TutorialObjectivePanel"), HudChild("TutorialObjectiveDivider"),
                 HudChild("TutorialStatusText"), HudChild("TutorialKeyPromptText"),
                 HudChild("TutorialInteractionPromptPanel"), HudChild("PlayerHealthText"),
-                HudChild("EnemyHealthText"), HudChild("InventoryOpenButton"),
+                HudChild("EnemyHealthText"), inventoryOpenButton,
                 HudChild("TutorialStageCaptionText"), objectiveBeaconVisual
             };
             var bossSuppression = new[]
@@ -284,14 +288,14 @@ namespace Narthex.Tools
                 HudChild("TutorialObjectivePanel"), HudChild("TutorialObjectiveDivider"),
                 HudChild("TutorialStatusText"), HudChild("TutorialKeyPromptText"),
                 HudChild("TutorialInteractionPromptPanel"), HudChild("EnemyHealthText"),
-                HudChild("InventoryOpenButton"), objectiveBeaconVisual
+                inventoryOpenButton, objectiveBeaconVisual
             };
             var resultSuppression = new[]
             {
                 HudChild("TutorialObjectivePanel"), HudChild("TutorialObjectiveDivider"),
                 HudChild("TutorialStatusText"), HudChild("TutorialKeyPromptText"),
                 HudChild("TutorialInteractionPromptPanel"), HudChild("PlayerHealthText"),
-                HudChild("EnemyHealthText"), HudChild("InventoryOpenButton"),
+                HudChild("EnemyHealthText"), inventoryOpenButton,
                 HudChild("TutorialStageCaptionText"), HudChild("TutorialDialoguePanel"),
                 HudChild("TutorialIntroductionCard"), HudChild("InventoryPanel"),
                 HudChild("ModuleTreePanel"), HudChild("TutorialLoreSubtitlePanel"),
@@ -559,6 +563,7 @@ namespace Narthex.Tools
             if (presenter == null) presenter = panel.AddComponent<TutorialLoreSubtitlePresenter>();
             SetReference(presenter, "canvasGroup", panel.GetComponent<CanvasGroup>());
             SetReference(presenter, "subtitleText", subtitleText);
+            SetReference(presenter, "dialoguePresenter", stageSystems.GetComponent<TutorialDialoguePresenter>());
 
             var questSequence = stageSystems.GetComponent<TutorialQuestSequenceHost>();
             CreateLoreTrigger(find, "Z03_CryonReward", "LoreTrigger_01_Demiurgos", new Vector3(405f, 3f, 0f), "QST-TUTO-007",
@@ -953,6 +958,7 @@ namespace Narthex.Tools
             SetReference(training, "playerMotor", playerMotor);
             var serialized = new SerializedObject(training);
             serialized.FindProperty("fallingStartDelay").floatValue = 0.25f;
+            serialized.FindProperty("fallingWarningDuration").floatValue = 0.45f;
             serialized.FindProperty("fallingDuration").floatValue = 1.25f;
             serialized.FindProperty("fallingStagger").floatValue = 0.55f;
             serialized.FindProperty("fallingWaveDelay").floatValue = 0.8f;
@@ -960,6 +966,10 @@ namespace Narthex.Tools
             serialized.FindProperty("dashRestartDelay").floatValue = 0.45f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
+            var warningMaterial = AssetDatabase.LoadAssetAtPath<Material>(
+                "Assets/_Project/Art/Materials/TutorialAttackWarning.mat");
+            var landingPoints = new SerializedObject(training).FindProperty("fallingLandingPoints");
+            var fallingWarnings = new GameObject[landingPoints.arraySize];
             for (var index = 1; index <= 3; index++)
             {
                 var crate = Require(find($"ART_SLOT_FallingCrate_0{index}"), $"falling crate {index}");
@@ -977,7 +987,25 @@ namespace Narthex.Tools
                 var hazard = crate.GetComponent<TutorialFallingHazardHost>();
                 if (hazard == null) hazard = crate.AddComponent<TutorialFallingHazardHost>();
                 SetReference(hazard, "trainingHost", training);
+
+                var warning = find($"ART_SLOT_FallingWarning_0{index}");
+                if (warning == null) warning = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                warning.name = $"ART_SLOT_FallingWarning_0{index}";
+                warning.transform.SetParent(trainingObject.transform, true);
+                var landingPoint = (Transform)landingPoints.GetArrayElementAtIndex(index - 1).objectReferenceValue;
+                warning.transform.position = landingPoint.position + Vector3.up * 0.08f;
+                warning.transform.rotation = Quaternion.identity;
+                warning.transform.localScale = new Vector3(1.9f, 0.12f, 0.22f);
+                var warningCollider = warning.GetComponent<Collider>();
+                if (warningCollider != null) UnityEngine.Object.DestroyImmediate(warningCollider);
+                var warningRenderer = warning.GetComponent<Renderer>();
+                if (warningRenderer != null && warningMaterial != null)
+                    warningRenderer.sharedMaterial = warningMaterial;
+                warning.SetActive(false);
+                fallingWarnings[index - 1] = warning;
             }
+
+            SetObjectArray(training, "fallingWarnings", fallingWarnings);
         }
 
         private static void ConfigurePulse(Func<string, GameObject> find, GameObject pulseObject)

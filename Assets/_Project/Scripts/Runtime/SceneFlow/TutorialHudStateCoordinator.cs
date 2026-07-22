@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Narthex.Core;
 using Narthex.Gameplay;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Narthex.SceneFlow
 {
@@ -45,13 +46,32 @@ namespace Narthex.SceneFlow
         [SerializeField] private GameObject[] suppressDuringResult = Array.Empty<GameObject>();
 
         private readonly Dictionary<GameObject, bool> recordedActiveStates = new Dictionary<GameObject, bool>();
+        private readonly Dictionary<CanvasGroup, CanvasGroupState> recordedCanvasGroupStates =
+            new Dictionary<CanvasGroup, CanvasGroupState>();
         private TutorialHudMode currentMode = TutorialHudMode.Normal;
+
+        private readonly struct CanvasGroupState
+        {
+            public readonly float Alpha;
+            public readonly bool Interactable;
+            public readonly bool BlocksRaycasts;
+
+            public CanvasGroupState(CanvasGroup canvasGroup)
+            {
+                Alpha = canvasGroup.alpha;
+                Interactable = canvasGroup.interactable;
+                BlocksRaycasts = canvasGroup.blocksRaycasts;
+            }
+        }
 
         public bool HasValidSetup => serviceRoot != null && bossArenaHost != null && resultOverlay != null &&
                                      dialoguePanel != null && introductionCard != null &&
                                      HasCompleteGroup(suppressDuringDialogue) &&
                                      HasCompleteGroup(suppressDuringBossCombat) &&
-                                     HasCompleteGroup(suppressDuringResult);
+                                     HasCompleteGroup(suppressDuringResult) &&
+                                     HasSafeSelectableSuppression(suppressDuringDialogue) &&
+                                     HasSafeSelectableSuppression(suppressDuringBossCombat) &&
+                                     HasSafeSelectableSuppression(suppressDuringResult);
         public TutorialHudMode CurrentMode => currentMode;
         public int DialogueSuppressionCount => suppressDuringDialogue?.Length ?? 0;
         public int BossSuppressionCount => suppressDuringBossCombat?.Length ?? 0;
@@ -100,7 +120,14 @@ namespace Narthex.SceneFlow
             var group = GetSuppressionGroup(currentMode);
             for (var index = 0; index < group.Length; index++)
             {
-                if (group[index].activeSelf) group[index].SetActive(false);
+                var item = group[index];
+                if (TryGetSelectableCanvasGroup(item, out var canvasGroup))
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.interactable = false;
+                    canvasGroup.blocksRaycasts = false;
+                }
+                else if (item.activeSelf) item.SetActive(false);
             }
 
             if (currentMode == TutorialHudMode.Result && !resultOverlay.activeSelf)
@@ -112,7 +139,12 @@ namespace Narthex.SceneFlow
             for (var index = 0; index < group.Length; index++)
             {
                 var item = group[index];
-                if (!recordedActiveStates.ContainsKey(item)) recordedActiveStates.Add(item, item.activeSelf);
+                if (TryGetSelectableCanvasGroup(item, out var canvasGroup))
+                {
+                    if (!recordedCanvasGroupStates.ContainsKey(canvasGroup))
+                        recordedCanvasGroupStates.Add(canvasGroup, new CanvasGroupState(canvasGroup));
+                }
+                else if (!recordedActiveStates.ContainsKey(item)) recordedActiveStates.Add(item, item.activeSelf);
             }
         }
 
@@ -123,6 +155,14 @@ namespace Narthex.SceneFlow
                 if (pair.Key != null) pair.Key.SetActive(pair.Value);
             }
             recordedActiveStates.Clear();
+            foreach (var pair in recordedCanvasGroupStates)
+            {
+                if (pair.Key == null) continue;
+                pair.Key.alpha = pair.Value.Alpha;
+                pair.Key.interactable = pair.Value.Interactable;
+                pair.Key.blocksRaycasts = pair.Value.BlocksRaycasts;
+            }
+            recordedCanvasGroupStates.Clear();
         }
 
         private GameObject[] GetSuppressionGroup(TutorialHudMode mode)
@@ -144,6 +184,26 @@ namespace Narthex.SceneFlow
                 if (group[index] == null) return false;
             }
             return true;
+        }
+
+        private static bool HasSafeSelectableSuppression(GameObject[] group)
+        {
+            if (group == null) return false;
+            for (var index = 0; index < group.Length; index++)
+            {
+                var item = group[index];
+                if (item != null && item.TryGetComponent<Selectable>(out _) &&
+                    !item.TryGetComponent<CanvasGroup>(out _))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool TryGetSelectableCanvasGroup(GameObject item, out CanvasGroup canvasGroup)
+        {
+            canvasGroup = null;
+            return item != null && item.TryGetComponent<Selectable>(out _) &&
+                   item.TryGetComponent(out canvasGroup);
         }
     }
 }

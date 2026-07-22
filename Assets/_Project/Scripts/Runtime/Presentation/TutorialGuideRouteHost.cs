@@ -17,6 +17,7 @@ namespace Narthex.Presentation
 
         public bool HasValidSetup => dialoguePresenter != null && guideCompanion != null &&
                                      questSequenceHost != null && waypoints != null && waypoints.Length > 0;
+        public Transform[] Waypoints => waypoints;
 
         private void Awake()
         {

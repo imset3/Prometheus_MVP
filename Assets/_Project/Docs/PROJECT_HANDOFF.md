@@ -23,7 +23,7 @@
 
 | Quest | Objective | Main implementation |
 | --- | --- | --- |
-| `QST-TUTO-001` | Opening / movement | Theus introduction card, opening dialogue |
+| `QST-TUTO-001` | Opening / movement | Revised A meeting dialogue, delayed Theus card, B hidden glide room, airship passkey, return route |
 | `QST-TUTO-002` | Jump and glide | Player movement and glide |
 | `QST-TUTO-003` | Basic attack | Melee combat training |
 | `QST-TUTO-004` | Dash | Dash training |
@@ -32,7 +32,9 @@
 | `QST-TUTO-007` | Relay / exterior | Cryon introduction, boots pickup, double jump, relay activation |
 | `QST-TUTO-008` | Helte fight | Helte introduction, boss combat, tutorial completion |
 
-Opening, Cryon, Pulse, and Helte all use the same introduction-card system. `F` closes an introduction card and resumes its original dialogue without advancing the quest.
+Opening, Cryon, Pulse, and Helte use the same introduction-card system. Dialogue advances with `Space`. The opening Theus card appears after the A-scene conversation, waits three seconds, then accepts keyboard, mouse, or gamepad input and closes with a vertical compression animation.
+
+`TUTO_A_01`, `TUTO_B_01`, and `TUTO_A_RETURN` are internal checkpoints of `QST-TUTO-001`, not replacement quest IDs. The passkey is stored as `ITEM-ZENITH-AIRSHIP-PASSKEY`; keep these identifiers stable for save compatibility.
 
 ## 4. Scene Layout
 
@@ -60,6 +62,8 @@ Opening, Cryon, Pulse, and Helte all use the same introduction-card system. `F` 
   - `InventoryPanel`
   - `InventoryOpenButton`
   - `TutorialResultOverlay`
+- `TutorialLevelRoot/Z01B_HiddenGlideRoom`
+  - Pre-placed geometry, ledge briefing trigger, updraft recovery visuals, passkey and A-return anchors
 
 ### Important Pre-Placed Interactions
 
@@ -73,13 +77,13 @@ Opening, Cryon, Pulse, and Helte all use the same introduction-card system. `F` 
 | Input | Function |
 | --- | --- |
 | `A / D` | Move |
-| `Space` | Jump; hold in air to glide |
-| `Enter` | Basic attack |
+| `Space` | Advance dialogue; jump; hold in air to glide |
+| `Mouse Left / Enter` | Basic attack |
 | `Left Shift` | Dash |
 | `2` | Narthex Pulse module |
 | `I` | Open/close module tree |
 | `Tab` | Open/close inventory |
-| `F` | Interact; advance dialogue while dialogue/card is active |
+| `F` | Interact with pickups and relays |
 
 Input asset: `Assets/InputSystem_Actions.inputactions`.
 
@@ -137,10 +141,10 @@ For production persistence, disable the component or uncheck `Reset Progress On 
 
 ### Automated Tests
 
-- Latest confirmed Unity EditMode test run: `21/21 passed`.
+- Unity EditMode suite covers progression, save, combat, high-speed trigger crossing, and updraft policies.
+- `TutorialSceneRuntimeSmokeTests` loads the real tutorial scene in PlayMode. Its smoke test verifies the opening dialogue, core hosts, updraft contract, input, and swept zone transitions. The Chapter 0 route test advances through the hidden glide room, passkey, meeting-room return, HQ ladder, and training handoff. The full-flow test then drives dash hazards, jump projectile training, attack and pulse lessons, Cryon equipment, module-tree and double-jump requirements, relay activation, both exterior encounters, Helte combat and health UI, boss completion save data, and the result overlay through live scene systems.
 - Save reset has a focused test in `Assets/_Project/Scripts/Tests/CoreAndSaveTests.cs`.
-- Last local assembly build completed successfully for `Narthex.Tools.csproj` and dependencies.
-- The build emitted existing warnings from Unity Input System package sources only; no project compile errors.
+- Latest confirmed run: EditMode `34/34 passed`, PlayMode runtime/integration `3/3 passed`, and active tutorial scene validation passed.
 
 ### Scene Validator
 
@@ -154,9 +158,9 @@ Run this validator and the EditMode suite after moving or recreating the tutoria
 
 ### Highest Priority
 
-1. Import or recreate the tutorial scene in the new project while preserving all serialized references.
-2. Run the scene validator, then complete an end-to-end manual tutorial playthrough.
-3. Confirm the development save-reset manager is enabled only while repeated tutorial testing is desired.
+1. Complete an end-to-end manual tutorial playthrough after any scene-layout or quest-order change.
+2. Confirm the development save-reset manager is enabled only while repeated tutorial testing is desired.
+3. Turn the development reset off before testing `TUTO_A_01`, `TUTO_B_01`, and `TUTO_A_RETURN` persistence.
 
 ### Visual Pass (Deferred by Current Direction)
 
@@ -184,4 +188,4 @@ Run this validator and the EditMode suite after moving or recreating the tutoria
 
 ## 11. Known Operational Note
 
-The Unity MCP connection was unavailable to the current Codex session at the final handoff stage. The project itself compiled through its generated `.csproj` files, but after opening this project in a new Unity session, reconnect Unity MCP and rerun the Unity scene validator plus EditMode tests.
+Unity MCP is connected for the current tutorial work. After opening the project in another Unity session, rerun the scene validator, EditMode suite, and `TutorialSceneRuntimeSmokeTests` before editing serialized scene references.

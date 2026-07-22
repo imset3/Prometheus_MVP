@@ -13,7 +13,7 @@ Add a short character or system introduction card during tutorial dialogue, foll
 
 ### Initial Content
 
-1. [x] Theus introduction: after the Adamas headquarters opening dialogue. Implemented as the pre-placed `TutorialHUD/TutorialIntroductionCard`; `F` closes the card and resumes the opening dialogue.
+1. [x] Theus introduction: after the Adamas headquarters opening dialogue. Implemented as the pre-placed `TutorialHUD/TutorialIntroductionCard`; after its three-second lock, any keyboard, mouse, or gamepad input closes the card and resumes the opening flow.
 2. [x] Cryon introduction: at the exterior-area transition immediately before the boots pickup objective. Uses the shared card definition list on `TutorialDialoguePresenter`.
 3. [x] Narthex pulse module introduction: at the start of `QST-TUTO-005`, before the pulse training beat.
 4. [x] Helte introduction: at the start of `QST-TUTO-008`, before the ore-storage encounter.

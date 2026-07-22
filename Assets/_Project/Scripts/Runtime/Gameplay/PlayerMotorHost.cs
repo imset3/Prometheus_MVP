@@ -60,6 +60,15 @@ namespace Narthex.Gameplay
             IsGliding = false;
         }
 
+        public void StopHorizontalMotion()
+        {
+            if (body == null) return;
+            var velocity = body.linearVelocity;
+            velocity.x = 0f;
+            body.linearVelocity = velocity;
+            dashEndsAt = 0f;
+        }
+
         public void UnlockDoubleJump()
         {
             doubleJumpUnlocked = true;

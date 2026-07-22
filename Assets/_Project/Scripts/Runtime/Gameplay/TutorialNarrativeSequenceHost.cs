@@ -33,6 +33,7 @@ namespace Narthex.Gameplay
         [SerializeField] private TutorialNarrativeBeat[] beats = Array.Empty<TutorialNarrativeBeat>();
 
         private TutorialNarrativeBeat pendingBeat;
+        private string presentedQuestId;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && beats != null && beats.Length > 0;
         public int BeatCount => beats?.Length ?? 0;
@@ -104,8 +105,9 @@ namespace Narthex.Gameplay
 
         private void Present(string questId)
         {
-            if (string.IsNullOrWhiteSpace(questId)) return;
+            if (string.IsNullOrWhiteSpace(questId) || presentedQuestId == questId) return;
 
+            presentedQuestId = questId;
             pendingBeat = null;
 
             foreach (var beat in beats)
