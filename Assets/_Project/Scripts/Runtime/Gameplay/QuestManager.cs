@@ -18,6 +18,7 @@ namespace Narthex.Gameplay
         private readonly GameEventBus events;
         private readonly Dictionary<string, QuestDefinition> definitions = new Dictionary<string, QuestDefinition>();
         private readonly Dictionary<string, QuestRuntimeState> states = new Dictionary<string, QuestRuntimeState>();
+        private Func<string, GameplaySignal, bool> progressSignalFilter;
 
         public QuestManager(GameEventBus events)
         {
@@ -57,12 +58,23 @@ namespace Narthex.Gameplay
             return true;
         }
 
+        public void SetProgressSignalFilter(Func<string, GameplaySignal, bool> filter)
+        {
+            progressSignalFilter = filter;
+        }
+
+        public void ClearProgressSignalFilter(Func<string, GameplaySignal, bool> filter)
+        {
+            if (progressSignalFilter == filter) progressSignalFilter = null;
+        }
+
         private void OnSignal(GameplaySignal signal)
         {
             foreach (var pair in definitions)
             {
                 var state = states[pair.Key];
                 if (state.Status != QuestRuntimeStatus.InProgress) continue;
+                if (progressSignalFilter != null && !progressSignalFilter(pair.Key, signal)) continue;
                 var definition = pair.Value;
                 var allComplete = true;
                 foreach (var condition in definition.Conditions)

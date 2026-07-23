@@ -26,6 +26,7 @@ namespace Narthex.Tests
             Assert.That(TutorialAccessibilityPolicy.ResolveFontSize(16, 20), Is.EqualTo(20));
             Assert.That(TutorialAccessibilityPolicy.ResolveFontSize(24, 20), Is.EqualTo(24));
             Assert.That(TutorialAccessibilityPolicy.ResolvePanelAlpha(0.4f, 0.88f), Is.EqualTo(0.88f).Within(0.001f));
+            Assert.That(TutorialAccessibilityPolicy.ResolvePanelAlpha(0f, 0.88f), Is.Zero);
         }
 
         [Test]
@@ -47,6 +48,13 @@ namespace Narthex.Tests
         [Test]
         public void TutorialUpdraftPolicy_CompensatesGravityAndBuildsStableRiseSpeed()
         {
+            var minimum = new Vector2(-4f, -2f);
+            var maximum = new Vector2(4f, 3f);
+            Assert.That(TutorialUpdraftPolicy.ShouldApply(false, Vector2.zero, minimum, maximum), Is.False,
+                "Updraft recovery must not activate without held glide input.");
+            Assert.That(TutorialUpdraftPolicy.ShouldApply(true, Vector2.zero, minimum, maximum), Is.True);
+            Assert.That(TutorialUpdraftPolicy.ShouldApply(true, new Vector2(8f, 0f), minimum, maximum), Is.False);
+
             const float fixedDeltaTime = 0.02f;
             const float gravityMagnitude = 29.43f;
             var firstStep = TutorialUpdraftPolicy.ResolveVerticalVelocity(
@@ -309,6 +317,15 @@ namespace Narthex.Tests
             quests.Register(quest);
 
             Assert.That(quests.Start(quest.StableId), Is.True);
+            quests.SetProgressSignalFilter((questId, signal) => false);
+            events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
+
+            Assert.That(quests.TryGetState(quest.StableId, out var blockedState), Is.True);
+            Assert.That(blockedState.Status, Is.EqualTo(QuestRuntimeStatus.InProgress));
+            Assert.That(quests.GetConditionProgress(quest.StableId, condition.StableId), Is.Zero,
+                "A matching action outside its authored lesson area must not count.");
+
+            quests.SetProgressSignalFilter((questId, signal) => true);
             events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, "PLAYER-001"));
 
             Assert.That(quests.TryGetState(quest.StableId, out var state), Is.True);

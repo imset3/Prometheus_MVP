@@ -40,6 +40,7 @@ namespace Narthex.Tools
             ConfigurePlayerCombat(player, input, melee);
 
             ConfigureRestart(Find, stageSystems, input, motor);
+            ConfigureTrainingActionScopes(stageSystems, trainingObject, player);
             ConfigureTraining(Find, stageSystems, trainingObject, player, body, motor);
             ConfigureJumpTraining(Find, stageSystems, trainingObject, player, body, motor);
             ConfigureLadderTransition(Find, stageSystems);
@@ -56,11 +57,94 @@ namespace Narthex.Tools
             ConfigureAccessibility(Find, stageSystems, cameraObject);
             ConfigureHudStateCoordinator(Find, stageSystems, Require(Find("TutorialHUD"), "TutorialHUD"));
             TutorialNotionChapter0SceneSetup.Apply();
+            ConfigureWhiteBlockoutPresentation(cameraObject);
+            ConfigureHudWithoutHologramBackgrounds(Require(Find("TutorialHUD"), "TutorialHUD"));
 
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
             Debug.Log("Applied tutorial gameplay features, including double-jump confirmation and non-blocking Teus lore subtitles.");
+        }
+
+        private static void ConfigureWhiteBlockoutPresentation(GameObject cameraObject)
+        {
+            var levelRoot = Resources.FindObjectsOfTypeAll<GameObject>()
+                .FirstOrDefault(candidate => candidate != null &&
+                                             candidate.scene.IsValid() &&
+                                             candidate.name == "TutorialLevelRoot");
+            if (levelRoot == null) throw new InvalidOperationException("TutorialLevelRoot is missing.");
+
+            var obsoleteBackgrounds = Resources.FindObjectsOfTypeAll<GameObject>()
+                .Where(candidate => candidate != null &&
+                                    candidate.scene.IsValid() &&
+                                    (candidate.name.IndexOf("Backdrop", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     candidate.name.IndexOf("Hologram", StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToArray();
+            foreach (var background in obsoleteBackgrounds)
+                if (background != null)
+                    UnityEngine.Object.DestroyImmediate(background);
+
+            var sourceMaterial = levelRoot.GetComponentsInChildren<Renderer>(true)
+                .SelectMany(renderer => renderer.sharedMaterials)
+                .FirstOrDefault(material => material != null);
+            if (sourceMaterial == null)
+                throw new InvalidOperationException("TutorialLevelRoot has no renderer material for the white blockout.");
+
+            const string materialPath = "Assets/_Project/Art/Materials/TutorialWhiteBlockout.mat";
+            var whiteMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (whiteMaterial == null)
+            {
+                whiteMaterial = new Material(sourceMaterial) { name = "TutorialWhiteBlockout" };
+                AssetDatabase.CreateAsset(whiteMaterial, materialPath);
+            }
+
+            if (whiteMaterial.HasProperty("_BaseColor")) whiteMaterial.SetColor("_BaseColor", Color.white);
+            if (whiteMaterial.HasProperty("_Color")) whiteMaterial.SetColor("_Color", Color.white);
+            EditorUtility.SetDirty(whiteMaterial);
+
+            foreach (var renderer in levelRoot.GetComponentsInChildren<Renderer>(true))
+            {
+                var materialCount = Mathf.Max(1, renderer.sharedMaterials.Length);
+                renderer.sharedMaterials = Enumerable.Repeat(whiteMaterial, materialCount).ToArray();
+            }
+
+            var camera = cameraObject.GetComponent<Camera>();
+            if (camera == null) throw new InvalidOperationException("Main Camera is missing Camera.");
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.clear;
+        }
+
+        private static void ConfigureHudWithoutHologramBackgrounds(GameObject hud)
+        {
+            var backgroundNames = new[]
+            {
+                "TutorialObjectivePanel",
+                "TutorialResultOverlay",
+                "ModuleTreePanel",
+                "TutorialDialoguePanel",
+                "DialogueSpeakerLeft",
+                "DialogueSpeakerRight",
+                "InventoryPanel",
+                "TutorialIntroductionCard",
+                "TutorialInteractionPromptPanel",
+                "TutorialLoreSubtitlePanel",
+                "BossHealthBarPanel",
+                "HiddenRoomGlideInstruction",
+                "TutorialObjectiveDivider",
+                "AccentBar"
+            };
+
+            var images = hud.GetComponentsInChildren<Image>(true);
+            foreach (var backgroundName in backgroundNames)
+            {
+                var image = images.FirstOrDefault(candidate => candidate != null &&
+                                                               candidate.name == backgroundName);
+                if (image == null)
+                    throw new InvalidOperationException($"Tutorial HUD background '{backgroundName}' is missing.");
+                image.color = Color.clear;
+                image.raycastTarget = false;
+            }
         }
 
         private static void ConfigureCameraReview(
@@ -1008,6 +1092,53 @@ namespace Narthex.Tools
             SetObjectArray(training, "fallingWarnings", fallingWarnings);
         }
 
+        private static void ConfigureTrainingActionScopes(
+            GameObject stageSystems,
+            GameObject trainingObject,
+            GameObject player)
+        {
+            var rootTransform = trainingObject.transform.Find("TrainingActionScopes");
+            var root = rootTransform != null ? rootTransform.gameObject : new GameObject("TrainingActionScopes");
+            root.transform.SetParent(trainingObject.transform, true);
+            root.transform.position = Vector3.zero;
+            root.transform.rotation = Quaternion.identity;
+            root.transform.localScale = Vector3.one;
+
+            var questIds = new[] { "QST-TUTO-004", "QST-TUTO-002", "QST-TUTO-003", "QST-TUTO-005" };
+            var names = new[] { "Dash", "Jump", "Attack", "Pulse" };
+            var centers = new[]
+            {
+                new Vector3(185f, 0f, 0f),
+                new Vector3(206.5f, 0f, 0f),
+                new Vector3(228f, 0f, 0f),
+                new Vector3(248.5f, 0f, 0f)
+            };
+            var widths = new[] { 20f, 21f, 20f, 19f };
+            var areas = new Collider2D[questIds.Length];
+            for (var index = 0; index < questIds.Length; index++)
+            {
+                var child = root.transform.Find($"TrainingScope_{names[index]}");
+                var areaObject = child != null ? child.gameObject : new GameObject($"TrainingScope_{names[index]}");
+                areaObject.transform.SetParent(root.transform, true);
+                areaObject.transform.position = centers[index];
+                areaObject.transform.rotation = Quaternion.identity;
+                areaObject.transform.localScale = Vector3.one;
+                var area = areaObject.GetComponent<BoxCollider2D>();
+                if (area == null) area = areaObject.AddComponent<BoxCollider2D>();
+                area.isTrigger = true;
+                area.offset = Vector2.zero;
+                area.size = new Vector2(widths[index], 10f);
+                areas[index] = area;
+            }
+
+            var host = root.GetComponent<TutorialTrainingActionScopeHost>();
+            if (host == null) host = root.AddComponent<TutorialTrainingActionScopeHost>();
+            SetReference(host, "questManagerHost", stageSystems.GetComponent<QuestManagerHost>());
+            SetReference(host, "player", player.transform);
+            SetStringArray(host, "scopedQuestIds", questIds);
+            SetReferenceArray(host, "scopeAreas", areas);
+        }
+
         private static void ConfigurePulse(Func<string, GameObject> find, GameObject pulseObject)
         {
             var pulse = pulseObject.GetComponent<ModulePulseHost>();
@@ -1255,6 +1386,18 @@ namespace Narthex.Tools
             var property = serialized.FindProperty(propertyName);
             if (property == null) throw new InvalidOperationException($"{target.name} is missing string field {propertyName}.");
             property.stringValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetStringArray(UnityEngine.Object target, string propertyName, string[] values)
+        {
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(propertyName);
+            if (property == null || !property.isArray)
+                throw new InvalidOperationException($"{target.name} is missing string array {propertyName}.");
+            property.arraySize = values.Length;
+            for (var index = 0; index < values.Length; index++)
+                property.GetArrayElementAtIndex(index).stringValue = values[index];
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

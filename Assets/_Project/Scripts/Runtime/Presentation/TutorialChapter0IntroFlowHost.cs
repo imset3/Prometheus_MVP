@@ -51,6 +51,12 @@ namespace Narthex.Presentation
 
     public static class TutorialUpdraftPolicy
     {
+        public static bool ShouldApply(bool glideHeld, Vector2 position, Vector2 minimum, Vector2 maximum)
+        {
+            return glideHeld && position.x >= minimum.x && position.x <= maximum.x &&
+                   position.y >= minimum.y && position.y <= maximum.y;
+        }
+
         public static float ResolveVerticalVelocity(
             float currentVelocity,
             float liftAcceleration,
@@ -466,8 +472,8 @@ namespace Narthex.Presentation
         private void ApplyUpdraftRecovery()
         {
             var position = player.position;
-            if (position.x < updraftMin.x || position.x > updraftMax.x ||
-                position.y < updraftMin.y || position.y > updraftMax.y) return;
+            if (!TutorialUpdraftPolicy.ShouldApply(playerMotorHost.IsGlideHeld, position, updraftMin, updraftMax))
+                return;
             var velocity = playerBody.linearVelocity;
             var gravityMagnitude = Mathf.Abs(Physics2D.gravity.y * playerBody.gravityScale);
             velocity.y = TutorialUpdraftPolicy.ResolveVerticalVelocity(

@@ -12,6 +12,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace Narthex.PlayModeTests
 {
@@ -43,6 +44,31 @@ namespace Narthex.PlayModeTests
             Assert.That(playerInput.UsesCSharpEvents, Is.True);
             Assert.That(resetManager, Is.Not.Null);
             Assert.That(resetManager.HasValidSetup, Is.True);
+
+            var transparentHudBackgrounds = new[]
+            {
+                "TutorialObjectivePanel",
+                "TutorialResultOverlay",
+                "ModuleTreePanel",
+                "TutorialDialoguePanel",
+                "DialogueSpeakerLeft",
+                "DialogueSpeakerRight",
+                "InventoryPanel",
+                "TutorialIntroductionCard",
+                "TutorialInteractionPromptPanel",
+                "TutorialLoreSubtitlePanel",
+                "BossHealthBarPanel",
+                "HiddenRoomGlideInstruction",
+                "TutorialObjectiveDivider",
+                "AccentBar"
+            };
+            foreach (var backgroundName in transparentHudBackgrounds)
+            {
+                var image = FindSceneTransform(tutorialScene, backgroundName).GetComponent<Image>();
+                Assert.That(image, Is.Not.Null, $"{backgroundName} must retain its UI Image contract.");
+                Assert.That(image.color.a, Is.Zero.Within(0.001f),
+                    $"{backgroundName} must not restore a hologram background at runtime.");
+            }
 
             var transitions = Resources.FindObjectsOfTypeAll<TutorialZoneTransitionHost>()
                 .Where(candidate => candidate != null && candidate.gameObject.scene == tutorialScene)
@@ -197,6 +223,12 @@ namespace Narthex.PlayModeTests
                 () => fallingWarnings.Any(warning => warning.activeInHierarchy),
                 2f,
                 "Dash training must telegraph each falling object's landing lane before the drop.");
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
+            PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-004"),
+                "Dash actions before the authored dash lane must not count.");
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
             PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
             yield return WaitForQuest(questSequence, "QST-TUTO-002");
 
@@ -207,6 +239,11 @@ namespace Narthex.PlayModeTests
                 2f,
                 "Jump training projectile did not become visible.");
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"),
+                "Jump actions outside the authored jump lane must not count.");
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
+            PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
             yield return WaitForQuest(questSequence, "QST-TUTO-003");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
@@ -215,9 +252,19 @@ namespace Narthex.PlayModeTests
                 2f,
                 "Attack-training enemy arrival did not start.");
             PublishSignals(serviceRoot, QuestSignalType.AttackPerformed, "PLAYER-001", 3);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-003"),
+                "Attack actions outside the authored attack lane must not count.");
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Attack").position);
+            PublishSignals(serviceRoot, QuestSignalType.AttackPerformed, "PLAYER-001", 3);
             yield return WaitForQuest(questSequence, "QST-TUTO-005");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            serviceRoot.Events.Publish(new GameplaySignal(QuestSignalType.ModuleUsed, "MOD-TUTO-001"));
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-005"),
+                "Pulse use outside the authored pulse lane must not count.");
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Pulse").position);
             Assert.That(moduleSystem.System.TryUse("PLAYER-001", "MOD-TUTO-001"), Is.True,
                 "The equipped tutorial pulse module must be usable during pulse training.");
             yield return WaitForQuest(questSequence, "QST-TUTO-006");

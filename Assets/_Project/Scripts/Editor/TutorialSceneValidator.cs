@@ -8,6 +8,7 @@ using Narthex.Save;
 using Narthex.SceneFlow;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Narthex.Tools
 {
@@ -19,6 +20,41 @@ namespace Narthex.Tools
             var issues = new List<string>();
 
             var systems = RequireObject("StageSystems", issues);
+            var levelRoot = RequireObject("TutorialLevelRoot", issues);
+            var tutorialHudRoot = RequireObject("TutorialHUD", issues);
+            RequireTransparentHudBackgrounds(tutorialHudRoot, issues);
+            var obsoleteBackgrounds = Resources.FindObjectsOfTypeAll<GameObject>()
+                .Where(candidate => candidate != null &&
+                                    candidate.scene.IsValid() &&
+                                    (candidate.name.IndexOf("Backdrop", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     candidate.name.IndexOf("Hologram", System.StringComparison.OrdinalIgnoreCase) >= 0))
+                .Select(candidate => candidate.name)
+                .ToArray();
+            if (obsoleteBackgrounds.Length > 0)
+                issues.Add("Tutorial blockout must not contain backdrop or hologram objects: " +
+                           string.Join(", ", obsoleteBackgrounds));
+            if (levelRoot != null)
+            {
+                foreach (var renderer in levelRoot.GetComponentsInChildren<Renderer>(true))
+                {
+                    foreach (var material in renderer.sharedMaterials)
+                    {
+                        if (material == null) continue;
+                        var color = material.HasProperty("_BaseColor")
+                            ? material.GetColor("_BaseColor")
+                            : material.HasProperty("_Color")
+                                ? material.GetColor("_Color")
+                                : Color.white;
+                        if (Mathf.Approximately(color.r, 1f) &&
+                            Mathf.Approximately(color.g, 1f) &&
+                            Mathf.Approximately(color.b, 1f) &&
+                            Mathf.Approximately(color.a, 1f))
+                            continue;
+                        issues.Add($"Tutorial blockout renderer '{renderer.name}' must use a pure white material.");
+                        break;
+                    }
+                }
+            }
             RequireComponent<ServiceRoot>(systems, issues);
             RequireComponent<CombatSystemHost>(systems, issues);
             RequireComponent<SaveSystemHost>(systems, issues);
@@ -234,6 +270,22 @@ namespace Narthex.Tools
                 : null;
             if (trainingSpawnHost != null && !trainingSpawnHost.HasValidSetup)
                 issues.Add("TutorialTrainingSpawnHost has invalid falling prop or enemy arrival references.");
+            var actionScopes = RequireChild(trainingSpawnController, "TrainingActionScopes", issues);
+            RequireComponent<TutorialTrainingActionScopeHost>(actionScopes, issues);
+            var actionScopeHost = actionScopes != null
+                ? actionScopes.GetComponent<TutorialTrainingActionScopeHost>()
+                : null;
+            if (actionScopeHost != null && !actionScopeHost.HasValidSetup)
+                issues.Add("TutorialTrainingActionScopeHost requires four valid lesson-lane trigger areas.");
+            var scopeNames = new[] { "Dash", "Jump", "Attack", "Pulse" };
+            for (var scopeIndex = 0; scopeIndex < scopeNames.Length; scopeIndex++)
+            {
+                var scopeObject = RequireChild(actionScopes, $"TrainingScope_{scopeNames[scopeIndex]}", issues);
+                RequireComponent<BoxCollider2D>(scopeObject, issues);
+                var scopeCollider = scopeObject != null ? scopeObject.GetComponent<BoxCollider2D>() : null;
+                if (scopeCollider != null && !scopeCollider.isTrigger)
+                    issues.Add($"TrainingScope_{scopeNames[scopeIndex]} must be a trigger area.");
+            }
             var jumpController = RequireChild(trainingSpawnController, "JumpProjectileController", issues);
             RequireComponent<TutorialJumpTrainingHost>(jumpController, issues);
             var jumpTrainingHost = jumpController != null ? jumpController.GetComponent<TutorialJumpTrainingHost>() : null;
@@ -400,6 +452,11 @@ namespace Narthex.Tools
 
             var mainCamera = RequireObject("Main Camera", issues);
             RequireComponent<CameraFollowHost>(mainCamera, issues);
+            var sceneCamera = mainCamera != null ? mainCamera.GetComponent<Camera>() : null;
+            if (sceneCamera != null &&
+                (sceneCamera.clearFlags != CameraClearFlags.SolidColor ||
+                 !Mathf.Approximately(sceneCamera.backgroundColor.a, 0f)))
+                issues.Add("Tutorial blockout camera must clear to a transparent background.");
             var cameraFollow = mainCamera != null ? mainCamera.GetComponent<CameraFollowHost>() : null;
             if (cameraFollow != null && !cameraFollow.HasValidSetup)
                 issues.Add("CameraFollowHost has no valid target or horizontal bounds.");
@@ -652,6 +709,41 @@ namespace Narthex.Tools
 
             if (GetWorldRect(firstRect).Overlaps(GetWorldRect(secondRect)))
                 issues.Add(issue);
+        }
+
+        private static void RequireTransparentHudBackgrounds(GameObject hud, List<string> issues)
+        {
+            if (hud == null) return;
+            var requiredTransparentImages = new[]
+            {
+                "TutorialObjectivePanel",
+                "TutorialResultOverlay",
+                "ModuleTreePanel",
+                "TutorialDialoguePanel",
+                "DialogueSpeakerLeft",
+                "DialogueSpeakerRight",
+                "InventoryPanel",
+                "TutorialIntroductionCard",
+                "TutorialInteractionPromptPanel",
+                "TutorialLoreSubtitlePanel",
+                "BossHealthBarPanel",
+                "HiddenRoomGlideInstruction",
+                "TutorialObjectiveDivider",
+                "AccentBar"
+            };
+            var images = hud.GetComponentsInChildren<Image>(true);
+            foreach (var imageName in requiredTransparentImages)
+            {
+                var image = images.FirstOrDefault(candidate => candidate != null &&
+                                                               candidate.name == imageName);
+                if (image == null)
+                {
+                    issues.Add($"Tutorial HUD background '{imageName}' is missing.");
+                    continue;
+                }
+                if (!Mathf.Approximately(image.color.a, 0f))
+                    issues.Add($"Tutorial HUD background '{imageName}' must remain transparent.");
+            }
         }
 
         private static Rect GetWorldRect(RectTransform rectTransform)

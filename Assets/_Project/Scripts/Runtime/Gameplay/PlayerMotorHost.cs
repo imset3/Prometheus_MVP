@@ -28,6 +28,7 @@ namespace Narthex.Gameplay
 
         public bool HasServiceRoot => serviceRoot != null;
         public bool IsGliding { get; private set; }
+        public bool IsGlideHeld => glideHeld;
         public bool IsDoubleJumpUnlocked => doubleJumpUnlocked;
 
         private void Awake()

@@ -37,19 +37,19 @@ namespace Narthex.Tools
             var roomMaterial = GetOrCreateMaterial(
                 "Assets/_Project/Art/Materials/TutorialHiddenRoom.mat",
                 sourceMaterial,
-                new Color(0.09f, 0.11f, 0.15f, 1f));
+                Color.white);
             var edgeMaterial = GetOrCreateMaterial(
                 "Assets/_Project/Art/Materials/TutorialHiddenRoomEdge.mat",
                 sourceMaterial,
-                new Color(0.18f, 0.76f, 0.86f, 1f));
+                Color.white);
             var passkeyMaterial = GetOrCreateMaterial(
                 "Assets/_Project/Art/Materials/TutorialPasskey.mat",
                 sourceMaterial,
-                new Color(1f, 0.78f, 0.2f, 1f));
+                Color.white);
             var alarmMaterial = GetOrCreateMaterial(
                 "Assets/_Project/Art/Materials/TutorialTheusAlarm.mat",
                 sourceMaterial,
-                new Color(1f, 0.12f, 0.12f, 1f));
+                Color.white);
 
             var hiddenRoot = GetOrCreate(tutorialLevelRoot.transform, "Z01B_HiddenGlideRoom");
             hiddenRoot.transform.position = Vector3.zero;
@@ -267,7 +267,8 @@ namespace Narthex.Tools
             rect.anchoredPosition = new Vector2(0f, -120f);
             rect.sizeDelta = new Vector2(600f, 92f);
             var image = GetOrAdd<Image>(root);
-            image.color = new Color(0.035f, 0.055f, 0.08f, 0.94f);
+            image.color = Color.clear;
+            image.raycastTarget = false;
 
             var title = GetOrCreateUi(root.transform, "InstructionText");
             var titleRect = (RectTransform)title.transform;
@@ -309,12 +310,16 @@ namespace Narthex.Tools
 
         private static Material GetOrCreateMaterial(string path, Material source, Color color)
         {
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (existing != null) return existing;
-            var material = new Material(source) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(source) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+                AssetDatabase.CreateAsset(material, path);
+            }
+
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);
-            AssetDatabase.CreateAsset(material, path);
+            EditorUtility.SetDirty(material);
             return material;
         }
 

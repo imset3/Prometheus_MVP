@@ -9,7 +9,7 @@ namespace Narthex.Presentation
     {
         public static int ResolveFontSize(int currentSize, int minimumSize) => Mathf.Max(currentSize, minimumSize);
         public static float ResolvePanelAlpha(float currentAlpha, float minimumAlpha) =>
-            Mathf.Max(currentAlpha, Mathf.Clamp01(minimumAlpha));
+            currentAlpha <= 0f ? 0f : Mathf.Max(currentAlpha, Mathf.Clamp01(minimumAlpha));
     }
 
     /// <summary>
