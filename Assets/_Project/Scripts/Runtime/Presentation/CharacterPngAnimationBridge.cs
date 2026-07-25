@@ -147,6 +147,7 @@ namespace Narthex.Presentation
 
         private void Awake()
         {
+            ResolveMissingParentReferences();
             if (!HasValidSetup)
             {
                 Debug.LogError("CharacterPngAnimationBridge requires an Animator and SpriteRenderer.", this);
@@ -156,6 +157,7 @@ namespace Narthex.Presentation
 
         private void OnEnable()
         {
+            ResolveMissingParentReferences();
             if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
             if (meleeAttack != null) meleeAttack.ComboStageChanged += HandleComboStageChanged;
             if (heltePattern != null) heltePattern.StateChanged += HandleHelteStateChanged;
@@ -302,6 +304,16 @@ namespace Narthex.Presentation
                 0,
                 0f);
             currentState = stateName;
+        }
+
+        private void ResolveMissingParentReferences()
+        {
+            if (movementBody == null) movementBody = GetComponentInParent<Rigidbody2D>(true);
+            if (playerMotor == null) playerMotor = GetComponentInParent<PlayerMotorHost>(true);
+            if (playerInput == null) playerInput = GetComponentInParent<PlayerInputHost>(true);
+            if (meleeAttack == null) meleeAttack = GetComponentInParent<MeleeAttackHost>(true);
+            if (actor == null) actor = GetComponentInParent<CombatActorHost>(true);
+            if (heltePattern == null) heltePattern = GetComponentInParent<HelteBossPatternHost>(true);
         }
     }
 }

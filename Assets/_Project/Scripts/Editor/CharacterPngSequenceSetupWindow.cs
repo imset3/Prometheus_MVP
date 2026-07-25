@@ -167,9 +167,9 @@ namespace Narthex.Tools
         private void ApplyPresetDefaults()
         {
             if (targetActor == null) return;
-            if (targetActor.GetComponent<HelteBossPatternHost>() != null)
+            if (GetActorComponent<HelteBossPatternHost>(targetActor) != null)
                 preset = CharacterPngAnimationPreset.Helte;
-            else if (targetActor.GetComponent<PlayerMotorHost>() != null)
+            else if (GetActorComponent<PlayerMotorHost>(targetActor) != null)
                 preset = CharacterPngAnimationPreset.Prome;
         }
 
@@ -376,7 +376,7 @@ namespace Narthex.Tools
             var originalRendererStates = originalRenderers
                 .Select(renderer => setupAlreadyApplied || renderer.enabled)
                 .ToArray();
-            var oldMotion = targetActor.GetComponent<CombatVisualMotionHost>();
+            var oldMotion = GetActorComponent<CombatVisualMotionHost>(targetActor);
             var hasReferenceBounds =
                 TryGetReferenceVisualBounds(targetActor, visualBind, generatedVisual, out var referenceBounds);
             if (generatedVisual == null)
@@ -434,12 +434,12 @@ namespace Narthex.Tools
                 EditorUtility.SetDirty(oldMotion);
             }
 
-            var playerMotor = targetActor.GetComponent<PlayerMotorHost>();
-            var playerInput = targetActor.GetComponent<PlayerInputHost>();
-            var melee = targetActor.GetComponent<MeleeAttackHost>();
-            var actor = targetActor.GetComponent<CombatActorHost>();
-            var helte = targetActor.GetComponent<HelteBossPatternHost>();
-            var body = targetActor.GetComponent<Rigidbody2D>();
+            var playerMotor = GetActorComponent<PlayerMotorHost>(targetActor);
+            var playerInput = GetActorComponent<PlayerInputHost>(targetActor);
+            var melee = GetActorComponent<MeleeAttackHost>(targetActor);
+            var actor = GetActorComponent<CombatActorHost>(targetActor);
+            var helte = GetActorComponent<HelteBossPatternHost>(targetActor);
+            var body = GetActorComponent<Rigidbody2D>(targetActor);
             var facingTarget = preset == CharacterPngAnimationPreset.Helte
                 ? GameObject.FindGameObjectWithTag("Player")?.transform
                 : null;
@@ -516,7 +516,7 @@ namespace Narthex.Tools
                         EditorUtility.SetDirty(renderer);
                     }
 
-                    var oldMotion = targetActor.GetComponent<CombatVisualMotionHost>();
+                    var oldMotion = GetActorComponent<CombatVisualMotionHost>(targetActor);
                     if (oldMotion != null)
                     {
                         oldMotion.enabled = true;
@@ -639,7 +639,7 @@ namespace Narthex.Tools
             Transform visualBind,
             IReadOnlyList<Renderer> replacementRenderers)
         {
-            var contract = actorObject.GetComponent<ArtReplacementContractHost>();
+            var contract = GetActorComponent<ArtReplacementContractHost>(actorObject);
             if (contract == null) return;
             Undo.RecordObject(contract, "Update Art Replacement Contract");
             var serialized = new SerializedObject(contract);
@@ -783,6 +783,12 @@ namespace Narthex.Tools
             if (!normalized.StartsWith(normalizedDataPath, StringComparison.Ordinal))
                 throw new InvalidOperationException("폴더는 프로젝트 Assets 내부에 있어야 합니다.");
             return "Assets" + normalized.Substring(normalizedDataPath.Length);
+        }
+
+        private static T GetActorComponent<T>(GameObject selectedObject) where T : Component
+        {
+            if (selectedObject == null) return null;
+            return selectedObject.GetComponent<T>() ?? selectedObject.GetComponentInParent<T>(true);
         }
 
         private static Transform FindDescendant(Transform root, string targetName)
