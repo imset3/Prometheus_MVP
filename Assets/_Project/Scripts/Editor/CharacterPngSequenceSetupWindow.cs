@@ -37,6 +37,8 @@ namespace Narthex.Tools
         [SerializeField] private Vector2 pivot = new Vector2(0.5f, 0f);
         [SerializeField] private FilterMode filterMode = FilterMode.Bilinear;
         [SerializeField] private TextureImporterCompression compression = TextureImporterCompression.Uncompressed;
+        [SerializeField] private bool fitExistingVisualBounds = true;
+        [SerializeField] private float visualBoundsFillRatio = 0.95f;
         [SerializeField] private bool fitStableBodyCollider = true;
         [SerializeField] private float colliderWidthRatio = 0.55f;
         [SerializeField] private float colliderHeightRatio = 0.9f;
@@ -108,6 +110,13 @@ namespace Narthex.Tools
                 filterMode = (FilterMode)EditorGUILayout.EnumPopup("Filter Mode", filterMode);
                 compression = (TextureImporterCompression)EditorGUILayout.EnumPopup("Compression", compression);
                 outputFolder = EditorGUILayout.TextField("Output Folder", outputFolder);
+                fitExistingVisualBounds =
+                    EditorGUILayout.Toggle("Fit Existing Visual Bounds", fitExistingVisualBounds);
+                using (new EditorGUI.DisabledScope(!fitExistingVisualBounds))
+                {
+                    visualBoundsFillRatio =
+                        EditorGUILayout.Slider("Visual Bounds Fill Ratio", visualBoundsFillRatio, 0.1f, 1f);
+                }
                 fitStableBodyCollider = EditorGUILayout.Toggle("Fit Stable Body Collider", fitStableBodyCollider);
                 using (new EditorGUI.DisabledScope(!fitStableBodyCollider))
                 {
@@ -354,6 +363,8 @@ namespace Narthex.Tools
 
             var visualBind = FindDescendant(targetActor.transform, "Visual_ART_BIND") ?? targetActor.transform;
             var generatedVisual = FindDirectChild(visualBind, GeneratedVisualName);
+            var hasReferenceBounds =
+                TryGetReferenceVisualBounds(targetActor, visualBind, generatedVisual, out var referenceBounds);
             if (generatedVisual == null)
             {
                 var generatedObject = new GameObject(GeneratedVisualName);
@@ -374,6 +385,9 @@ namespace Narthex.Tools
                 var idleSprite = GetFirstSprite(idleClip);
                 if (idleSprite != null) spriteRenderer.sprite = idleSprite;
             }
+
+            if (fitExistingVisualBounds && hasReferenceBounds && spriteRenderer.sprite != null)
+                FitVisualToReferenceBounds(generatedVisual, spriteRenderer.sprite, referenceBounds);
 
             foreach (var renderer in visualBind.GetComponentsInChildren<Renderer>(true))
             {
@@ -427,6 +441,62 @@ namespace Narthex.Tools
             if (saveSceneAfterApply) EditorSceneManager.SaveScene(targetActor.scene);
             Selection.activeGameObject = generatedVisual.gameObject;
             EditorGUIUtility.PingObject(generatedVisual.gameObject);
+        }
+
+        private static bool TryGetReferenceVisualBounds(
+            GameObject actorObject,
+            Transform visualBind,
+            Transform generatedVisual,
+            out Bounds bounds)
+        {
+            bounds = default;
+            var foundRenderer = false;
+            foreach (var renderer in visualBind.GetComponentsInChildren<Renderer>(true))
+            {
+                if (generatedVisual != null && renderer.transform.IsChildOf(generatedVisual)) continue;
+                if (renderer.bounds.size.sqrMagnitude <= Mathf.Epsilon) continue;
+
+                if (!foundRenderer)
+                {
+                    bounds = renderer.bounds;
+                    foundRenderer = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (foundRenderer) return true;
+
+            var bodyCollider = actorObject.GetComponent<Collider2D>();
+            if (bodyCollider == null || bodyCollider.bounds.size.sqrMagnitude <= Mathf.Epsilon) return false;
+            bounds = bodyCollider.bounds;
+            return true;
+        }
+
+        private void FitVisualToReferenceBounds(Transform visual, Sprite sprite, Bounds referenceBounds)
+        {
+            var parentMatrix = visual.parent != null
+                ? visual.parent.localToWorldMatrix
+                : Matrix4x4.identity;
+            var rotationMatrix = Matrix4x4.Rotate(visual.localRotation);
+            var worldWidthAtUnitScale = parentMatrix
+                .MultiplyVector(rotationMatrix.MultiplyVector(Vector3.right * sprite.bounds.size.x))
+                .magnitude;
+            var worldHeightAtUnitScale = parentMatrix
+                .MultiplyVector(rotationMatrix.MultiplyVector(Vector3.up * sprite.bounds.size.y))
+                .magnitude;
+            if (worldWidthAtUnitScale <= Mathf.Epsilon || worldHeightAtUnitScale <= Mathf.Epsilon) return;
+
+            var fillRatio = Mathf.Clamp01(visualBoundsFillRatio);
+            var widthScale = referenceBounds.size.x * fillRatio / worldWidthAtUnitScale;
+            var heightScale = referenceBounds.size.y * fillRatio / worldHeightAtUnitScale;
+            var uniformScale = Mathf.Max(0.0001f, Mathf.Min(widthScale, heightScale));
+
+            Undo.RecordObject(visual, "Fit Character Sprite To Existing Visual");
+            visual.localScale = new Vector3(uniformScale, uniformScale, 1f);
+            EditorUtility.SetDirty(visual);
         }
 
         private void FitStableCollider(GameObject actorObject, Transform visual, Sprite sprite)
