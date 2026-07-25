@@ -22,7 +22,7 @@ namespace Narthex.Tools
         [SerializeField] private string outputFolder = DefaultOutputFolder;
         [SerializeField] private string clipName = string.Empty;
 
-        [MenuItem("Narthex/Art/Sprite Sheet Animation Builder")]
+        [MenuItem("sragon000/Art/Sprite Sheet Animation Builder")]
         public static void Open()
         {
             GetWindow<SpriteSheetAnimationBuilderWindow>("Sprite Sheet Animator");

@@ -12,7 +12,7 @@ namespace Narthex.Tools
 {
     public static class TutorialNotionChapter0SceneSetup
     {
-        private const string MenuPath = "Narthex/Tutorial/Apply Notion Chapter0 A-B Revision";
+        private const string MenuPath = "sragon000/Tutorial/Apply Notion Chapter0 A-B Revision";
 
         [MenuItem(MenuPath)]
         public static void Apply()

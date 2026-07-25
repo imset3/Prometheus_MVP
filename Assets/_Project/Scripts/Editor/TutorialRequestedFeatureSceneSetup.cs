@@ -14,7 +14,7 @@ namespace Narthex.Tools
 {
     public static class TutorialRequestedFeatureSceneSetup
     {
-        [MenuItem("Narthex/Tutorial/Apply Requested Gameplay Features")]
+        [MenuItem("sragon000/Tutorial/Apply Requested Gameplay Features")]
         public static void Apply()
         {
             var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>()
