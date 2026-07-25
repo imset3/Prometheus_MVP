@@ -43,21 +43,23 @@ namespace Narthex.Tools
         [SerializeField] private bool saveSceneAfterApply = true;
         [SerializeField] private bool showAdvanced;
 
-        private Vector2 scroll;
+        private Vector2 windowScroll;
         private SequenceScanResult scanResult;
         private Texture2D previewTexture;
 
         [MenuItem("Narthex/Art/Character PNG Sequence Setup")]
         public static void Open()
         {
-            GetWindow<CharacterPngSequenceSetupWindow>("PNG Sequence Setup");
+            var window = GetWindow<CharacterPngSequenceSetupWindow>("PNG Sequence Setup");
+            window.minSize = new Vector2(360f, 280f);
         }
 
         private void OnGUI()
         {
+            windowScroll = EditorGUILayout.BeginScrollView(windowScroll);
             EditorGUILayout.LabelField("Character PNG Sequence Setup", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "캐릭터와 PNG 상위 폴더를 선택한 뒤 검사하고 적용하세요. 씬은 적용 버튼을 누를 때만 변경됩니다.",
+                "캐릭터와 PNG 상위 폴더를 선택한 뒤 검사하고 적용하세요. 준비된 모션만 부분 적용할 수 있으며, 씬은 적용 버튼을 누를 때만 변경됩니다.",
                 MessageType.Info);
 
             EditorGUI.BeginChangeCheck();
@@ -92,6 +94,8 @@ namespace Narthex.Tools
                 if (GUILayout.Button("계층에 생성 및 적용", GUILayout.Height(38f)))
                     BuildAndApply();
             }
+            EditorGUILayout.Space();
+            EditorGUILayout.EndScrollView();
         }
 
         private void DrawAdvancedSettings()
@@ -120,7 +124,6 @@ namespace Narthex.Tools
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("검사 결과", EditorStyles.boldLabel);
-            scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MinHeight(120f), GUILayout.MaxHeight(280f));
             foreach (var motion in scanResult.Motions)
             {
                 var icon = motion.Errors.Count > 0 ? "✕" : motion.Warnings.Count > 0 ? "!" : "✓";
@@ -134,7 +137,6 @@ namespace Narthex.Tools
                 EditorGUILayout.HelpBox(error, MessageType.Error);
             foreach (var warning in scanResult.Warnings)
                 EditorGUILayout.HelpBox(warning, MessageType.Warning);
-            EditorGUILayout.EndScrollView();
 
             previewTexture = scanResult.Motions.SelectMany(motion => motion.Frames)
                 .Select(frame => AssetDatabase.LoadAssetAtPath<Texture2D>(frame.AssetPath))
@@ -583,7 +585,10 @@ namespace Narthex.Tools
                 StringComparer.OrdinalIgnoreCase);
             foreach (var requiredMotion in required)
                 if (!available.Contains(requiredMotion))
-                    result.Errors.Add($"필수 모션 폴더가 없습니다: {requiredMotion}");
+                    result.Warnings.Add($"아직 준비되지 않은 권장 모션: {requiredMotion}");
+
+            if (!result.Motions.Any(motion => motion.Frames.Count > 0 && motion.Errors.Count == 0))
+                result.Errors.Add("적용할 수 있는 PNG 모션이 하나 이상 필요합니다.");
         }
 
         private static string GetAssetFolderPath(DefaultAsset folderAsset)
