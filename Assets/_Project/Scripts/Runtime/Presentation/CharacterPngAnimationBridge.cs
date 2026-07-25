@@ -25,6 +25,7 @@ namespace Narthex.Presentation
         [SerializeField] private MeleeAttackHost meleeAttack;
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private HelteBossPatternHost heltePattern;
+        [SerializeField] private CombatVisualMotionHost proceduralVisualMotion;
         [SerializeField] private Transform facingTarget;
         [SerializeField, Min(0f)] private float crossFadeSeconds = 0.04f;
         [SerializeField, Min(0f)] private float airborneVelocityThreshold = 0.15f;
@@ -125,6 +126,7 @@ namespace Narthex.Presentation
             MeleeAttackHost configuredMelee,
             CombatActorHost configuredActor,
             HelteBossPatternHost configuredHeltePattern,
+            CombatVisualMotionHost configuredProceduralVisualMotion,
             Transform configuredFacingTarget,
             float configuredAttackOneDuration,
             float configuredAttackTwoDuration,
@@ -139,6 +141,7 @@ namespace Narthex.Presentation
             meleeAttack = configuredMelee;
             actor = configuredActor;
             heltePattern = configuredHeltePattern;
+            proceduralVisualMotion = configuredProceduralVisualMotion;
             facingTarget = configuredFacingTarget;
             attackOneDuration = Mathf.Max(0.01f, configuredAttackOneDuration);
             attackTwoDuration = Mathf.Max(0.01f, configuredAttackTwoDuration);
@@ -148,6 +151,7 @@ namespace Narthex.Presentation
         private void Awake()
         {
             ResolveMissingParentReferences();
+            DisableProceduralVisualMotion();
             if (!HasValidSetup)
             {
                 Debug.LogError("CharacterPngAnimationBridge requires an Animator and SpriteRenderer.", this);
@@ -158,6 +162,7 @@ namespace Narthex.Presentation
         private void OnEnable()
         {
             ResolveMissingParentReferences();
+            DisableProceduralVisualMotion();
             if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
             if (meleeAttack != null) meleeAttack.ComboStageChanged += HandleComboStageChanged;
             if (heltePattern != null) heltePattern.StateChanged += HandleHelteStateChanged;
@@ -265,7 +270,19 @@ namespace Narthex.Presentation
 
         private void UpdateFacing()
         {
-            if (preset != CharacterPngAnimationPreset.Helte || spriteRenderer == null || facingTarget == null) return;
+            if (spriteRenderer == null) return;
+
+            if (preset == CharacterPngAnimationPreset.Prome)
+            {
+                if (meleeAttack != null && meleeAttack.IsAttackDirectionLocked) return;
+                if (movementBody == null) return;
+                var horizontalVelocity = movementBody.linearVelocity.x;
+                if (Mathf.Abs(horizontalVelocity) > runVelocityThreshold)
+                    spriteRenderer.flipX = horizontalVelocity < 0f;
+                return;
+            }
+
+            if (preset != CharacterPngAnimationPreset.Helte || facingTarget == null) return;
             var delta = facingTarget.position.x - transform.position.x;
             if (!Mathf.Approximately(delta, 0f)) spriteRenderer.flipX = delta < 0f;
         }
@@ -314,6 +331,14 @@ namespace Narthex.Presentation
             if (meleeAttack == null) meleeAttack = GetComponentInParent<MeleeAttackHost>(true);
             if (actor == null) actor = GetComponentInParent<CombatActorHost>(true);
             if (heltePattern == null) heltePattern = GetComponentInParent<HelteBossPatternHost>(true);
+            if (proceduralVisualMotion == null)
+                proceduralVisualMotion = GetComponentInParent<CombatVisualMotionHost>(true);
+        }
+
+        private void DisableProceduralVisualMotion()
+        {
+            if (proceduralVisualMotion != null)
+                proceduralVisualMotion.enabled = false;
         }
     }
 }

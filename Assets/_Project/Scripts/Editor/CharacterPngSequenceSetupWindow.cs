@@ -453,6 +453,7 @@ namespace Narthex.Tools
                 melee,
                 actor,
                 helte,
+                oldMotion,
                 facingTarget,
                 GetClipDuration(clips, "Attack01"),
                 GetClipDuration(clips, "Attack02"),
