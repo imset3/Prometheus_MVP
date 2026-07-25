@@ -127,7 +127,7 @@ namespace Narthex.Tools
                         EditorGUILayout.Slider("Visual Bounds Fill Ratio", visualBoundsFillRatio, 0.1f, 1f);
                 }
                 alignFeetToVisualBottom =
-                    EditorGUILayout.Toggle("Align Feet To Visual Bottom", alignFeetToVisualBottom);
+                    EditorGUILayout.Toggle("Align Feet To Body Collider", alignFeetToVisualBottom);
                 fitStableBodyCollider = EditorGUILayout.Toggle("Fit Stable Body Collider", fitStableBodyCollider);
                 using (new EditorGUI.DisabledScope(!fitStableBodyCollider))
                 {
@@ -410,8 +410,6 @@ namespace Narthex.Tools
             {
                 if (fitExistingVisualBounds)
                     FitVisualToReferenceBounds(generatedVisual, spriteRenderer.sprite, referenceBounds);
-                if (alignFeetToVisualBottom)
-                    AlignVisualToReferenceBottom(generatedVisual, spriteRenderer, referenceBounds);
             }
 
             var bridge = existingBridge;
@@ -473,6 +471,8 @@ namespace Narthex.Tools
             EditorUtility.SetDirty(bridge);
 
             UpdateArtReplacementContract(targetActor, visualBind, new Renderer[] { spriteRenderer });
+            if (alignFeetToVisualBottom && hasReferenceBounds && spriteRenderer.sprite != null)
+                AlignVisualToGroundContact(targetActor, generatedVisual, spriteRenderer, referenceBounds);
             if (fitStableBodyCollider && spriteRenderer.sprite != null)
                 FitStableCollider(targetActor, generatedVisual, spriteRenderer.sprite);
 
@@ -619,15 +619,19 @@ namespace Narthex.Tools
             EditorUtility.SetDirty(visual);
         }
 
-        private static void AlignVisualToReferenceBottom(
+        private static void AlignVisualToGroundContact(
+            GameObject actorObject,
             Transform visual,
             SpriteRenderer spriteRenderer,
-            Bounds referenceBounds)
+            Bounds fallbackBounds)
         {
+            var bodyCollider = GetActorComponent<Collider2D>(actorObject);
+            var groundY = bodyCollider != null ? bodyCollider.bounds.min.y : fallbackBounds.min.y;
+            var centerX = bodyCollider != null ? bodyCollider.bounds.center.x : fallbackBounds.center.x;
             var spriteWorldBounds = spriteRenderer.bounds;
             var worldOffset = new Vector3(
-                referenceBounds.center.x - spriteWorldBounds.center.x,
-                referenceBounds.min.y - spriteWorldBounds.min.y,
+                centerX - spriteWorldBounds.center.x,
+                groundY - spriteWorldBounds.min.y,
                 0f);
             if (worldOffset.sqrMagnitude <= Mathf.Epsilon) return;
 

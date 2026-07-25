@@ -67,6 +67,36 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void TutorialGlideRetryPolicy_RetriesOnlyActiveGlideCrossingsBelowFailHeight()
+        {
+            const float failHeight = -5.25f;
+            Assert.That(
+                TutorialGlideRetryPolicy.ShouldRetry(
+                    TutorialChapter0IntroState.SeekPasskey,
+                    -5.3f,
+                    failHeight),
+                Is.True);
+            Assert.That(
+                TutorialGlideRetryPolicy.ShouldRetry(
+                    TutorialChapter0IntroState.ReturnToMeeting,
+                    -6f,
+                    failHeight),
+                Is.True);
+            Assert.That(
+                TutorialGlideRetryPolicy.ShouldRetry(
+                    TutorialChapter0IntroState.SeekPasskey,
+                    -5f,
+                    failHeight),
+                Is.False);
+            Assert.That(
+                TutorialGlideRetryPolicy.ShouldRetry(
+                    TutorialChapter0IntroState.SeekLedge,
+                    -6f,
+                    failHeight),
+                Is.False);
+        }
+
+        [Test]
         public void TutorialAimPolicy_KeyboardIgnoresStalePointerDeltaAndGamepadUsesStick()
         {
             Assert.That(TutorialAimPolicy.ResolveNonPointerAttackDirection(false, -1f, 1f, -1f), Is.EqualTo(1f));

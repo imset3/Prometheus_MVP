@@ -74,6 +74,19 @@ namespace Narthex.Presentation
         }
     }
 
+    public static class TutorialGlideRetryPolicy
+    {
+        public static bool ShouldRetry(
+            TutorialChapter0IntroState state,
+            float playerY,
+            float retryBelowY)
+        {
+            return (state == TutorialChapter0IntroState.SeekPasskey ||
+                    state == TutorialChapter0IntroState.ReturnToMeeting) &&
+                   playerY <= retryBelowY;
+        }
+    }
+
     /// <summary>
     /// Owns the revised Notion A/B introduction inside the existing single TutorialScene.
     /// Every referenced visual and trigger is authored by the editor setup; runtime only toggles state.
@@ -139,6 +152,7 @@ namespace Narthex.Presentation
         [SerializeField] private Vector2 updraftMax = new(-190f, 3.8f);
         [SerializeField, Min(0f)] private float updraftLiftSpeed = 5.5f;
         [SerializeField, Min(0f)] private float updraftMaxRiseSpeed = 3.5f;
+        [SerializeField] private float glideRetryBelowY = -5.25f;
 
         private static readonly string[][] WrongWayResponses =
         {
@@ -268,6 +282,11 @@ namespace Narthex.Presentation
             if (state == TutorialChapter0IntroState.MeetingDialogue)
                 objectiveBeacon.SetExternalTarget(null);
             if (transitionRunning || dialoguePresenter.IsShowing) return;
+            if (TutorialGlideRetryPolicy.ShouldRetry(state, player.position.y, glideRetryBelowY))
+            {
+                StartCoroutine(RetryGlideSection());
+                return;
+            }
 
             switch (state)
             {
@@ -410,6 +429,24 @@ namespace Narthex.Presentation
                     "테우스: 패스키 확보 완료! 이제 출구의 사다리를 타고 훈련장으로 내려가자.",
                     "프로메: 좋아. 마지막 훈련을 끝내고 바로 출발하자."
                 }));
+        }
+
+        private IEnumerator RetryGlideSection()
+        {
+            transitionRunning = true;
+            LockPlayer();
+            objectiveBeacon.SetExternalTarget(null);
+            yield return FadeTo(1f, transitionFadeOut);
+
+            var returningToMeeting = state == TutorialChapter0IntroState.ReturnToMeeting;
+            var retryPoint = returningToMeeting ? passkeyTarget : ledgeTarget;
+            MovePlayer(retryPoint.position);
+            if (transitionBlackHold > 0f) yield return new WaitForSecondsRealtime(transitionBlackHold);
+            yield return FadeTo(0f, transitionFadeIn);
+
+            objectiveBeacon.SetExternalTarget(returningToMeeting ? hiddenRoomReturnTarget : passkeyTarget);
+            UnlockPlayer();
+            transitionRunning = false;
         }
 
         private void CollectPasskey()
