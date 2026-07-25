@@ -37,8 +37,10 @@ namespace Narthex.Tools
         [SerializeField] private Vector2 pivot = new Vector2(0.5f, 0f);
         [SerializeField] private FilterMode filterMode = FilterMode.Bilinear;
         [SerializeField] private TextureImporterCompression compression = TextureImporterCompression.Uncompressed;
+        [SerializeField] private bool sourceFramesFaceRight;
         [SerializeField] private bool fitExistingVisualBounds = true;
         [SerializeField] private float visualBoundsFillRatio = 0.95f;
+        [SerializeField] private bool alignFeetToVisualBottom = true;
         [SerializeField] private bool fitStableBodyCollider = true;
         [SerializeField] private float colliderWidthRatio = 0.55f;
         [SerializeField] private float colliderHeightRatio = 0.9f;
@@ -115,6 +117,8 @@ namespace Narthex.Tools
                 filterMode = (FilterMode)EditorGUILayout.EnumPopup("Filter Mode", filterMode);
                 compression = (TextureImporterCompression)EditorGUILayout.EnumPopup("Compression", compression);
                 outputFolder = EditorGUILayout.TextField("Output Folder", outputFolder);
+                sourceFramesFaceRight =
+                    EditorGUILayout.Toggle("Source Frames Face Right", sourceFramesFaceRight);
                 fitExistingVisualBounds =
                     EditorGUILayout.Toggle("Fit Existing Visual Bounds", fitExistingVisualBounds);
                 using (new EditorGUI.DisabledScope(!fitExistingVisualBounds))
@@ -122,6 +126,8 @@ namespace Narthex.Tools
                     visualBoundsFillRatio =
                         EditorGUILayout.Slider("Visual Bounds Fill Ratio", visualBoundsFillRatio, 0.1f, 1f);
                 }
+                alignFeetToVisualBottom =
+                    EditorGUILayout.Toggle("Align Feet To Visual Bottom", alignFeetToVisualBottom);
                 fitStableBodyCollider = EditorGUILayout.Toggle("Fit Stable Body Collider", fitStableBodyCollider);
                 using (new EditorGUI.DisabledScope(!fitStableBodyCollider))
                 {
@@ -400,8 +406,13 @@ namespace Narthex.Tools
                 if (idleSprite != null) spriteRenderer.sprite = idleSprite;
             }
 
-            if (fitExistingVisualBounds && hasReferenceBounds && spriteRenderer.sprite != null)
-                FitVisualToReferenceBounds(generatedVisual, spriteRenderer.sprite, referenceBounds);
+            if (hasReferenceBounds && spriteRenderer.sprite != null)
+            {
+                if (fitExistingVisualBounds)
+                    FitVisualToReferenceBounds(generatedVisual, spriteRenderer.sprite, referenceBounds);
+                if (alignFeetToVisualBottom)
+                    AlignVisualToReferenceBottom(generatedVisual, spriteRenderer, referenceBounds);
+            }
 
             var bridge = existingBridge;
             if (bridge == null) bridge = Undo.AddComponent<CharacterPngAnimationBridge>(targetActor);
@@ -454,6 +465,7 @@ namespace Narthex.Tools
                 actor,
                 helte,
                 oldMotion,
+                sourceFramesFaceRight,
                 facingTarget,
                 GetClipDuration(clips, "Attack01"),
                 GetClipDuration(clips, "Attack02"),
@@ -604,6 +616,23 @@ namespace Narthex.Tools
 
             Undo.RecordObject(visual, "Fit Character Sprite To Existing Visual");
             visual.localScale = new Vector3(uniformScale, uniformScale, 1f);
+            EditorUtility.SetDirty(visual);
+        }
+
+        private static void AlignVisualToReferenceBottom(
+            Transform visual,
+            SpriteRenderer spriteRenderer,
+            Bounds referenceBounds)
+        {
+            var spriteWorldBounds = spriteRenderer.bounds;
+            var worldOffset = new Vector3(
+                referenceBounds.center.x - spriteWorldBounds.center.x,
+                referenceBounds.min.y - spriteWorldBounds.min.y,
+                0f);
+            if (worldOffset.sqrMagnitude <= Mathf.Epsilon) return;
+
+            Undo.RecordObject(visual, "Align Character Sprite Feet");
+            visual.position += worldOffset;
             EditorUtility.SetDirty(visual);
         }
 

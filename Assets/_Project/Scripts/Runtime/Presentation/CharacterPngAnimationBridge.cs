@@ -26,6 +26,7 @@ namespace Narthex.Presentation
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private HelteBossPatternHost heltePattern;
         [SerializeField] private CombatVisualMotionHost proceduralVisualMotion;
+        [SerializeField] private bool sourceFramesFaceRight;
         [SerializeField] private Transform facingTarget;
         [SerializeField, Min(0f)] private float crossFadeSeconds = 0.04f;
         [SerializeField, Min(0f)] private float airborneVelocityThreshold = 0.15f;
@@ -127,6 +128,7 @@ namespace Narthex.Presentation
             CombatActorHost configuredActor,
             HelteBossPatternHost configuredHeltePattern,
             CombatVisualMotionHost configuredProceduralVisualMotion,
+            bool configuredSourceFramesFaceRight,
             Transform configuredFacingTarget,
             float configuredAttackOneDuration,
             float configuredAttackTwoDuration,
@@ -142,6 +144,7 @@ namespace Narthex.Presentation
             actor = configuredActor;
             heltePattern = configuredHeltePattern;
             proceduralVisualMotion = configuredProceduralVisualMotion;
+            sourceFramesFaceRight = configuredSourceFramesFaceRight;
             facingTarget = configuredFacingTarget;
             attackOneDuration = Mathf.Max(0.01f, configuredAttackOneDuration);
             attackTwoDuration = Mathf.Max(0.01f, configuredAttackTwoDuration);
@@ -265,7 +268,7 @@ namespace Narthex.Presentation
         private void HandleAimDirectionChanged(float direction)
         {
             if (spriteRenderer != null && !Mathf.Approximately(direction, 0f))
-                spriteRenderer.flipX = direction < 0f;
+                spriteRenderer.flipX = ShouldFlipForDirection(direction);
         }
 
         private void UpdateFacing()
@@ -278,7 +281,7 @@ namespace Narthex.Presentation
                 if (movementBody == null) return;
                 var horizontalVelocity = movementBody.linearVelocity.x;
                 if (Mathf.Abs(horizontalVelocity) > runVelocityThreshold)
-                    spriteRenderer.flipX = horizontalVelocity < 0f;
+                    spriteRenderer.flipX = ShouldFlipForDirection(horizontalVelocity);
                 return;
             }
 
@@ -339,6 +342,11 @@ namespace Narthex.Presentation
         {
             if (proceduralVisualMotion != null)
                 proceduralVisualMotion.enabled = false;
+        }
+
+        private bool ShouldFlipForDirection(float direction)
+        {
+            return sourceFramesFaceRight ? direction < 0f : direction > 0f;
         }
     }
 }
