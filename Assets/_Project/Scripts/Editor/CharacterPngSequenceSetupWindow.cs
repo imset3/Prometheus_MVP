@@ -96,6 +96,11 @@ namespace Narthex.Tools
                 if (GUILayout.Button("계층에 생성 및 적용", GUILayout.Height(38f)))
                     BuildAndApply();
             }
+            using (new EditorGUI.DisabledScope(targetActor == null || !HasAppliedSetup(targetActor)))
+            {
+                if (GUILayout.Button("적용 초기화 · 기존 도형 복원", GUILayout.Height(32f)))
+                    ResetAppliedSetup();
+            }
             EditorGUILayout.Space();
             EditorGUILayout.EndScrollView();
         }
@@ -363,6 +368,15 @@ namespace Narthex.Tools
 
             var visualBind = FindDescendant(targetActor.transform, "Visual_ART_BIND") ?? targetActor.transform;
             var generatedVisual = FindDirectChild(visualBind, GeneratedVisualName);
+            var existingBridge = targetActor.GetComponent<CharacterPngAnimationBridge>();
+            var setupAlreadyApplied = generatedVisual != null || existingBridge != null;
+            var originalRenderers = visualBind.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => generatedVisual == null || !renderer.transform.IsChildOf(generatedVisual))
+                .ToArray();
+            var originalRendererStates = originalRenderers
+                .Select(renderer => setupAlreadyApplied || renderer.enabled)
+                .ToArray();
+            var oldMotion = targetActor.GetComponent<CombatVisualMotionHost>();
             var hasReferenceBounds =
                 TryGetReferenceVisualBounds(targetActor, visualBind, generatedVisual, out var referenceBounds);
             if (generatedVisual == null)
@@ -389,6 +403,22 @@ namespace Narthex.Tools
             if (fitExistingVisualBounds && hasReferenceBounds && spriteRenderer.sprite != null)
                 FitVisualToReferenceBounds(generatedVisual, spriteRenderer.sprite, referenceBounds);
 
+            var bridge = existingBridge;
+            if (bridge == null) bridge = Undo.AddComponent<CharacterPngAnimationBridge>(targetActor);
+            if (!bridge.HasSetupBackup)
+            {
+                Undo.RecordObject(bridge, "Capture Character PNG Setup Backup");
+                bridge.CaptureSetupBackup(
+                    originalRenderers,
+                    originalRendererStates,
+                    oldMotion,
+                    setupAlreadyApplied || oldMotion == null || oldMotion.enabled,
+                    targetActor.GetComponent<Collider2D>(),
+                    visualBind,
+                    originalRenderers);
+                EditorUtility.SetDirty(bridge);
+            }
+
             foreach (var renderer in visualBind.GetComponentsInChildren<Renderer>(true))
             {
                 if (renderer == spriteRenderer) continue;
@@ -397,7 +427,6 @@ namespace Narthex.Tools
                 EditorUtility.SetDirty(renderer);
             }
 
-            var oldMotion = targetActor.GetComponent<CombatVisualMotionHost>();
             if (oldMotion != null)
             {
                 Undo.RecordObject(oldMotion, "Disable Placeholder Visual Motion");
@@ -405,8 +434,6 @@ namespace Narthex.Tools
                 EditorUtility.SetDirty(oldMotion);
             }
 
-            var bridge = targetActor.GetComponent<CharacterPngAnimationBridge>();
-            if (bridge == null) bridge = Undo.AddComponent<CharacterPngAnimationBridge>(targetActor);
             var playerMotor = targetActor.GetComponent<PlayerMotorHost>();
             var playerInput = targetActor.GetComponent<PlayerInputHost>();
             var melee = targetActor.GetComponent<MeleeAttackHost>();
@@ -432,7 +459,7 @@ namespace Narthex.Tools
                 GetClipDuration(clips, "Attack03"));
             EditorUtility.SetDirty(bridge);
 
-            UpdateArtReplacementContract(targetActor, visualBind, spriteRenderer);
+            UpdateArtReplacementContract(targetActor, visualBind, new Renderer[] { spriteRenderer });
             if (fitStableBodyCollider && spriteRenderer.sprite != null)
                 FitStableCollider(targetActor, generatedVisual, spriteRenderer.sprite);
 
@@ -441,6 +468,86 @@ namespace Narthex.Tools
             if (saveSceneAfterApply) EditorSceneManager.SaveScene(targetActor.scene);
             Selection.activeGameObject = generatedVisual.gameObject;
             EditorGUIUtility.PingObject(generatedVisual.gameObject);
+        }
+
+        private static bool HasAppliedSetup(GameObject actorObject)
+        {
+            if (actorObject == null) return false;
+            if (actorObject.GetComponent<CharacterPngAnimationBridge>() != null) return true;
+
+            var visualBind = FindDescendant(actorObject.transform, "Visual_ART_BIND") ?? actorObject.transform;
+            return FindDirectChild(visualBind, GeneratedVisualName) != null;
+        }
+
+        private void ResetAppliedSetup()
+        {
+            try
+            {
+                if (targetActor == null)
+                    throw new InvalidOperationException("초기화할 대상 캐릭터를 선택하세요.");
+
+                Undo.RegisterFullObjectHierarchyUndo(targetActor, "Reset Character PNG Sequence");
+                var visualBind =
+                    FindDescendant(targetActor.transform, "Visual_ART_BIND") ?? targetActor.transform;
+                var generatedVisual = FindDirectChild(visualBind, GeneratedVisualName);
+                var bridge = targetActor.GetComponent<CharacterPngAnimationBridge>();
+
+                Renderer[] restoredRenderers;
+                Transform restoredVisualRoot;
+                if (bridge != null && bridge.HasSetupBackup)
+                {
+                    bridge.RestoreSetupBackup();
+                    restoredRenderers = (bridge.OriginalContractRenderers ?? new Renderer[0])
+                        .Where(renderer => renderer != null)
+                        .ToArray();
+                    restoredVisualRoot = bridge.OriginalContractVisualRoot != null
+                        ? bridge.OriginalContractVisualRoot
+                        : visualBind;
+                }
+                else
+                {
+                    restoredRenderers = visualBind.GetComponentsInChildren<Renderer>(true)
+                        .Where(renderer =>
+                            generatedVisual == null || !renderer.transform.IsChildOf(generatedVisual))
+                        .ToArray();
+                    foreach (var renderer in restoredRenderers)
+                    {
+                        renderer.enabled = true;
+                        EditorUtility.SetDirty(renderer);
+                    }
+
+                    var oldMotion = targetActor.GetComponent<CombatVisualMotionHost>();
+                    if (oldMotion != null)
+                    {
+                        oldMotion.enabled = true;
+                        EditorUtility.SetDirty(oldMotion);
+                    }
+                    restoredVisualRoot = visualBind;
+                }
+
+                if (generatedVisual != null)
+                    Undo.DestroyObjectImmediate(generatedVisual.gameObject);
+
+                UpdateArtReplacementContract(
+                    targetActor,
+                    restoredVisualRoot,
+                    restoredRenderers);
+
+                if (bridge != null)
+                    Undo.DestroyObjectImmediate(bridge);
+
+                EditorUtility.SetDirty(targetActor);
+                EditorSceneManager.MarkSceneDirty(targetActor.scene);
+                if (saveSceneAfterApply) EditorSceneManager.SaveScene(targetActor.scene);
+                Selection.activeGameObject = targetActor;
+                EditorGUIUtility.PingObject(targetActor);
+                ShowNotification(new GUIContent("PNG 적용을 초기화하고 기존 도형을 복원했습니다."));
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                EditorUtility.DisplayDialog("Character PNG Sequence Setup", exception.Message, "확인");
+            }
         }
 
         private static bool TryGetReferenceVisualBounds(
@@ -530,7 +637,7 @@ namespace Narthex.Tools
         private static void UpdateArtReplacementContract(
             GameObject actorObject,
             Transform visualBind,
-            SpriteRenderer spriteRenderer)
+            IReadOnlyList<Renderer> replacementRenderers)
         {
             var contract = actorObject.GetComponent<ArtReplacementContractHost>();
             if (contract == null) return;
@@ -538,8 +645,9 @@ namespace Narthex.Tools
             var serialized = new SerializedObject(contract);
             serialized.FindProperty("visualRoot").objectReferenceValue = visualBind;
             var renderers = serialized.FindProperty("renderers");
-            renderers.arraySize = 1;
-            renderers.GetArrayElementAtIndex(0).objectReferenceValue = spriteRenderer;
+            renderers.arraySize = replacementRenderers?.Count ?? 0;
+            for (var index = 0; index < renderers.arraySize; index++)
+                renderers.GetArrayElementAtIndex(index).objectReferenceValue = replacementRenderers[index];
             serialized.ApplyModifiedProperties();
             EditorUtility.SetDirty(contract);
         }

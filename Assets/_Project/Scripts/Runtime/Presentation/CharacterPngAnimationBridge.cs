@@ -34,6 +34,16 @@ namespace Narthex.Presentation
         [SerializeField, Min(0.01f)] private float attackTwoDuration = 0.22f;
         [SerializeField, Min(0.01f)] private float attackThreeDuration = 0.25f;
         [SerializeField, Min(0.01f)] private float hitDuration = 0.16f;
+        [SerializeField, HideInInspector] private bool setupBackupCaptured;
+        [SerializeField, HideInInspector] private Renderer[] originalRenderers;
+        [SerializeField, HideInInspector] private bool[] originalRendererEnabledStates;
+        [SerializeField, HideInInspector] private CombatVisualMotionHost originalVisualMotion;
+        [SerializeField, HideInInspector] private bool originalVisualMotionEnabled;
+        [SerializeField, HideInInspector] private Collider2D originalBodyCollider;
+        [SerializeField, HideInInspector] private Vector2 originalColliderSize;
+        [SerializeField, HideInInspector] private Vector2 originalColliderOffset;
+        [SerializeField, HideInInspector] private Transform originalContractVisualRoot;
+        [SerializeField, HideInInspector] private Renderer[] originalContractRenderers;
 
         private string currentState = string.Empty;
         private float actionLockedUntil;
@@ -42,6 +52,68 @@ namespace Narthex.Presentation
 
         public CharacterPngAnimationPreset Preset => preset;
         public bool HasValidSetup => animator != null && spriteRenderer != null;
+        public bool HasSetupBackup => setupBackupCaptured;
+        public Transform OriginalContractVisualRoot => originalContractVisualRoot;
+        public Renderer[] OriginalContractRenderers => originalContractRenderers;
+
+        public void CaptureSetupBackup(
+            Renderer[] renderers,
+            bool[] rendererEnabledStates,
+            CombatVisualMotionHost visualMotion,
+            bool visualMotionEnabled,
+            Collider2D bodyCollider,
+            Transform contractVisualRoot,
+            Renderer[] contractRenderers)
+        {
+            if (setupBackupCaptured) return;
+
+            originalRenderers = renderers ?? new Renderer[0];
+            originalRendererEnabledStates = rendererEnabledStates ?? new bool[0];
+            originalVisualMotion = visualMotion;
+            originalVisualMotionEnabled = visualMotionEnabled;
+            originalBodyCollider = bodyCollider;
+            originalContractVisualRoot = contractVisualRoot;
+            originalContractRenderers = contractRenderers ?? new Renderer[0];
+
+            if (bodyCollider is CapsuleCollider2D capsule)
+            {
+                originalColliderSize = capsule.size;
+                originalColliderOffset = capsule.offset;
+            }
+            else if (bodyCollider is BoxCollider2D box)
+            {
+                originalColliderSize = box.size;
+                originalColliderOffset = box.offset;
+            }
+
+            setupBackupCaptured = true;
+        }
+
+        public void RestoreSetupBackup()
+        {
+            if (!setupBackupCaptured) return;
+
+            var rendererCount = Mathf.Min(
+                originalRenderers?.Length ?? 0,
+                originalRendererEnabledStates?.Length ?? 0);
+            for (var index = 0; index < rendererCount; index++)
+                if (originalRenderers[index] != null)
+                    originalRenderers[index].enabled = originalRendererEnabledStates[index];
+
+            if (originalVisualMotion != null)
+                originalVisualMotion.enabled = originalVisualMotionEnabled;
+
+            if (originalBodyCollider is CapsuleCollider2D capsule)
+            {
+                capsule.size = originalColliderSize;
+                capsule.offset = originalColliderOffset;
+            }
+            else if (originalBodyCollider is BoxCollider2D box)
+            {
+                box.size = originalColliderSize;
+                box.offset = originalColliderOffset;
+            }
+        }
 
         public void Configure(
             CharacterPngAnimationPreset configuredPreset,
