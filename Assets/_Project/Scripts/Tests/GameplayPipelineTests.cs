@@ -12,6 +12,58 @@ namespace Narthex.Tests
     public sealed class GameplayPipelineTests
     {
         [Test]
+        public void PlayerDashTimingPolicy_AppliesCooldownAfterInvulnerableDashEnds()
+        {
+            const float dashStartedAt = 10f;
+            const float dashDuration = 0.16f;
+            const float cooldownAfterDash = 0.5f;
+
+            Assert.That(
+                PlayerDashTimingPolicy.ResolveNextAllowedTime(
+                    dashStartedAt,
+                    dashDuration,
+                    cooldownAfterDash),
+                Is.EqualTo(10.66f).Within(0.001f));
+        }
+
+        [Test]
+        public void TutorialTrainingPhasePolicy_ActivatesExactlyOneLessonAndUnlocksAfterTraining()
+        {
+            var questIds = new[]
+            {
+                "QST-TUTO-004",
+                "QST-TUTO-002",
+                "QST-TUTO-006",
+                "QST-TUTO-003",
+                "QST-TUTO-005"
+            };
+
+            for (var phaseIndex = 0; phaseIndex < questIds.Length; phaseIndex++)
+            {
+                var resolved = TutorialTrainingPhasePolicy.ResolvePhaseIndex(
+                    questIds[phaseIndex],
+                    questIds);
+                Assert.That(resolved, Is.EqualTo(phaseIndex));
+                Assert.That(TutorialTrainingPhasePolicy.ShouldLockExit(resolved), Is.True);
+
+                var activeCount = 0;
+                for (var candidateIndex = 0; candidateIndex < questIds.Length; candidateIndex++)
+                    if (TutorialTrainingPhasePolicy.ShouldActivatePhase(resolved, candidateIndex))
+                        activeCount++;
+                Assert.That(activeCount, Is.EqualTo(1));
+            }
+
+            var completedPhase = TutorialTrainingPhasePolicy.ResolvePhaseIndex(
+                "QST-TUTO-007",
+                questIds);
+            Assert.That(completedPhase, Is.EqualTo(-1));
+            Assert.That(TutorialTrainingPhasePolicy.ShouldLockExit(completedPhase), Is.False);
+            Assert.That(
+                TutorialTrainingPhasePolicy.ShouldActivatePhase(completedPhase, 0),
+                Is.False);
+        }
+
+        [Test]
         public void TutorialCameraPolicy_UsesVelocityLookAheadAndBossWeightedCenter()
         {
             Assert.That(TutorialCameraPolicy.ResolveLookAhead(0.05f, 2f, 0.2f), Is.Zero);
@@ -54,16 +106,66 @@ namespace Narthex.Tests
                 "Updraft recovery must not activate without held glide input.");
             Assert.That(TutorialUpdraftPolicy.ShouldApply(true, Vector2.zero, minimum, maximum), Is.True);
             Assert.That(TutorialUpdraftPolicy.ShouldApply(true, new Vector2(8f, 0f), minimum, maximum), Is.False);
+            Assert.That(TutorialUpdraftPolicy.HasReturnClearance(15.5f, 12f), Is.True);
+            Assert.That(TutorialUpdraftPolicy.HasReturnClearance(11.5f, 12f), Is.False,
+                "The updraft must not stop below the return ledge.");
 
             const float fixedDeltaTime = 0.02f;
             const float gravityMagnitude = 29.43f;
             var firstStep = TutorialUpdraftPolicy.ResolveVerticalVelocity(
-                -3f, 5.5f, 3.5f, gravityMagnitude, fixedDeltaTime);
+                -3f, 6.5f, 4.5f, gravityMagnitude, fixedDeltaTime);
             Assert.That(firstStep - gravityMagnitude * fixedDeltaTime, Is.GreaterThan(0f));
 
             var cappedStep = TutorialUpdraftPolicy.ResolveVerticalVelocity(
-                3.4f, 5.5f, 3.5f, gravityMagnitude, fixedDeltaTime);
-            Assert.That(cappedStep, Is.EqualTo(3.5f).Within(0.001f));
+                4.4f, 6.5f, 4.5f, gravityMagnitude, fixedDeltaTime);
+            Assert.That(cappedStep, Is.EqualTo(4.5f).Within(0.001f));
+        }
+
+        [Test]
+        public void TutorialEnvironmentHazardPolicy_UsesPercentDamageHeldGlideAndAliveSafeReturn()
+        {
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ResolveFractionalDamage(100, 0.1f),
+                Is.EqualTo(10));
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ResolveFractionalDamage(100, 0.2f),
+                Is.EqualTo(20));
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ResolveFractionalDamage(7, 0.1f),
+                Is.EqualTo(1));
+
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ShouldApplyWind(true, false),
+                Is.False,
+                "Wind must not replace the player's Space/glide input.");
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ShouldApplyWind(false, true),
+                Is.False);
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ShouldApplyWind(true, true),
+                Is.True);
+
+            var rise = TutorialEnvironmentHazardPolicy.ResolveWindVelocity(
+                -3f,
+                24f,
+                8f,
+                29.43f,
+                0.02f);
+            Assert.That(rise, Is.GreaterThan(0f));
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ResolveWindVelocity(
+                    7.9f,
+                    24f,
+                    8f,
+                    29.43f,
+                    0.02f),
+                Is.EqualTo(8f).Within(0.001f));
+
+            Assert.That(TutorialEnvironmentHazardPolicy.ShouldReturnToSafePoint(true), Is.True);
+            Assert.That(
+                TutorialEnvironmentHazardPolicy.ShouldReturnToSafePoint(false),
+                Is.False,
+                "Fatal lava damage must be handled by the normal G checkpoint restart.");
         }
 
         [Test]

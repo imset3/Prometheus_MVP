@@ -20,5 +20,5 @@ MonoBehaviour:
   GroundProbeRadius: 0.12
   DashSpeed: 14
   DashDuration: 0.16
-  DashCooldown: 0.55
+  DashCooldown: 0.5
   GlideFallSpeed: 3

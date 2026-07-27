@@ -50,6 +50,16 @@ namespace Narthex.Presentation
         public int PendingNarrativeCount => pendingNarratives.Count;
         public event Action DialogueClosed;
 
+        public bool HasIntroductionDefinition(string questId, bool showAfterDialogue)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || introductionDefinitions == null) return false;
+            foreach (var definition in introductionDefinitions)
+                if (definition != null && definition.QuestId == questId &&
+                    definition.ShowAfterDialogue == showAfterDialogue)
+                    return true;
+            return false;
+        }
+
         private void Awake()
         {
             if (serviceRoot == null || playerInputHost == null || dialogueView == null || !dialogueView.HasDialogueLabel)

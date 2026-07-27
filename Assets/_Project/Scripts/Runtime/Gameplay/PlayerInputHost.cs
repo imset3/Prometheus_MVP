@@ -97,6 +97,7 @@ namespace Narthex.Gameplay
             {
                 latestMovementInput = context.ReadValue<Vector2>();
                 motor.SetMovementInput(latestMovementInput);
+                UpdateAimDirection(latestMovementInput.x);
             }
             else if (context.action.name == lookActionName)
             {
@@ -126,7 +127,15 @@ namespace Narthex.Gameplay
             }
             else if (context.action.name == interactActionName && context.performed)
                 InteractRequested?.Invoke();
-            else if (context.action.name == moduleActionName && context.performed) ModuleRequested?.Invoke();
+            else if (context.action.name == moduleActionName && context.performed)
+            {
+                UpdateAimDirection(TutorialAimPolicy.ResolveNonPointerAttackDirection(
+                    false,
+                    latestLookInput.x,
+                    latestMovementInput.x,
+                    AimDirectionX));
+                ModuleRequested?.Invoke();
+            }
             else if (context.action.name == moduleTreeActionName && context.performed) ModuleTreeRequested?.Invoke();
             else if (context.action.name == inventoryActionName && context.performed) InventoryRequested?.Invoke();
         }

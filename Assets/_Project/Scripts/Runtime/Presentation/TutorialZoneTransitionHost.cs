@@ -20,6 +20,8 @@ namespace Narthex.Presentation
         [SerializeField] private TutorialDialoguePresenter dialoguePresenter;
         [SerializeField] private TutorialGuideCompanionHost guideCompanion;
         [SerializeField] private CameraFollowHost cameraFollowHost;
+        [SerializeField] private TutorialRestartHost restartHost;
+        [SerializeField] private TutorialObjectiveBeaconHost objectiveBeacon;
         [SerializeField] private Transform player;
         [SerializeField] private Rigidbody2D playerBody;
         [SerializeField] private CanvasGroup fadeCanvasGroup;
@@ -31,9 +33,15 @@ namespace Narthex.Presentation
         [SerializeField] private Vector3 guideArrivalOffset = new(-1.1f, 1.1f, 0f);
         [SerializeField] private string requiredQuestId = "QST-TUTO-001";
         [SerializeField] private string portalSignalTargetId = "TUTORIAL-HQ-EXIT";
+        [SerializeField] private string destinationCheckpointQuestId;
+        [SerializeField] private Transform destinationObjectiveTarget;
+        [SerializeField] private GameObject[] activateOnArrival = System.Array.Empty<GameObject>();
+        [SerializeField] private GameObject[] deactivateOnArrival = System.Array.Empty<GameObject>();
+        [SerializeField] private GameObject[] deactivateOnCompletion = System.Array.Empty<GameObject>();
 
         [Header("Optional Ladder Sequence")]
         [SerializeField] private bool useLadderSequence;
+        [SerializeField] private bool requireInteractInput;
         [SerializeField] private Transform ladderEntry;
         [SerializeField] private Transform ladderExit;
         [SerializeField] private GameObject ladderVisual;
@@ -59,8 +67,10 @@ namespace Narthex.Presentation
         private Collider2D transitionTrigger;
         private Vector2 previousPlayerPosition;
         private bool hasPreviousPlayerPosition;
+        private bool playerInsideTrigger;
 
         public bool UsesLadderSequence => useLadderSequence;
+        public bool RequiresInteraction => requireInteractInput;
         public bool UsesSweptPlayerDetection => true;
         public bool HasValidLadderSetup => !useLadderSequence ||
                                            (ladderEntry != null && ladderExit != null && ladderVisual != null);
@@ -94,10 +104,33 @@ namespace Narthex.Presentation
             hasPreviousPlayerPosition = true;
         }
 
+        private void OnEnable()
+        {
+            if (playerInputHost != null)
+                playerInputHost.InteractRequested += HandleInteractRequested;
+        }
+
+        private void OnDisable()
+        {
+            if (playerInputHost != null)
+                playerInputHost.InteractRequested -= HandleInteractRequested;
+            playerInsideTrigger = false;
+        }
+
         private void LateUpdate()
         {
             if (player == null || transitionTrigger == null) return;
             var currentPlayerPosition = (Vector2)player.position;
+            if (requireInteractInput)
+            {
+                playerInsideTrigger = transitionTrigger.enabled &&
+                                      transitionTrigger.bounds.Contains(
+                                          new Vector3(currentPlayerPosition.x, currentPlayerPosition.y, 0f));
+                previousPlayerPosition = currentPlayerPosition;
+                hasPreviousPlayerPosition = true;
+                return;
+            }
+
             var displacement = currentPlayerPosition - previousPlayerPosition;
             if (transitionTrigger.enabled && !transitionRunning && !dialoguePresenter.IsShowing && IsTransitionUnlocked() &&
                 hasPreviousPlayerPosition &&
@@ -114,10 +147,27 @@ namespace Narthex.Presentation
 
         private void OnTriggerEnter2D(Collider2D other) => TryBeginTransition(other);
         private void OnTriggerStay2D(Collider2D other) => TryBeginTransition(other);
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            if (requireInteractInput && IsPlayer(other)) playerInsideTrigger = false;
+        }
 
         private void TryBeginTransition(Collider2D other)
         {
             if (transitionRunning || dialoguePresenter.IsShowing || !IsTransitionUnlocked() || !IsPlayer(other)) return;
+            if (requireInteractInput)
+            {
+                playerInsideTrigger = true;
+                return;
+            }
+            StartCoroutine(TransitionRoutine());
+        }
+
+        private void HandleInteractRequested()
+        {
+            if (!requireInteractInput || !playerInsideTrigger || transitionRunning ||
+                dialoguePresenter.IsShowing || !IsTransitionUnlocked())
+                return;
             StartCoroutine(TransitionRoutine());
         }
 
@@ -132,6 +182,7 @@ namespace Narthex.Presentation
         private IEnumerator TransitionRoutine()
         {
             transitionRunning = true;
+            playerInsideTrigger = false;
             var playerMotor = player.GetComponent<PlayerMotorHost>();
             if (playerMotor != null) playerMotor.ResetTransientInput();
             playerInputHost.enabled = false;
@@ -149,6 +200,8 @@ namespace Narthex.Presentation
             yield return FadeTo(1f, fadeOutDuration);
 
             nextZoneRoot.SetActive(true);
+            SetActive(deactivateOnArrival, false);
+            SetActive(activateOnArrival, true);
             guideCompanion.CancelGuide();
             playerBody.position = destinationSpawn.position;
             player.position = destinationSpawn.position;
@@ -176,6 +229,11 @@ namespace Narthex.Presentation
                     true);
             }
             serviceRoot.Events.Publish(new GameplaySignal(QuestSignalType.PortalUsed, portalSignalTargetId));
+            serviceRoot.Events.Publish(new TutorialLocationChanged(nextZoneRoot.name));
+            if (restartHost != null && !string.IsNullOrWhiteSpace(destinationCheckpointQuestId))
+                restartHost.SetRuntimeCheckpoint(destinationCheckpointQuestId, destinationSpawn);
+            if (objectiveBeacon != null)
+                objectiveBeacon.SetExternalTarget(destinationObjectiveTarget);
 
             if (blackHoldDuration > 0f)
                 yield return new WaitForSecondsRealtime(blackHoldDuration);
@@ -186,6 +244,14 @@ namespace Narthex.Presentation
             playerInputHost.enabled = true;
             transitionRunning = false;
             currentZoneRoot.SetActive(false);
+            SetActive(deactivateOnCompletion, false);
+        }
+
+        private static void SetActive(GameObject[] targets, bool active)
+        {
+            if (targets == null) return;
+            foreach (var target in targets)
+                if (target != null) target.SetActive(active);
         }
 
         private IEnumerator PlayLadderSequence()

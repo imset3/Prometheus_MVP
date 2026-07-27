@@ -56,6 +56,7 @@ namespace Narthex.Presentation
         [SerializeField, Min(0.1f)] private float lensChangeSpeed = 4f;
 
         [Header("Motion feedback")]
+        [SerializeField] private bool cinematicMovementEnabled;
         [SerializeField, Range(0f, 1f)] private float motionIntensity = 0.65f;
         [SerializeField, Min(0f)] private float maximumShakeDistance = 0.2f;
 
@@ -73,6 +74,7 @@ namespace Narthex.Presentation
         public float NormalOrthographicSize => normalOrthographicSize;
         public float BossOrthographicSize => bossOrthographicSize;
         public float MotionIntensity => motionIntensity;
+        public bool CinematicMovementEnabled => cinematicMovementEnabled;
 
         private void Awake()
         {
@@ -107,6 +109,18 @@ namespace Narthex.Presentation
         {
             if (target == null) return;
 
+            if (!cinematicMovementEnabled)
+            {
+                currentLookAhead = 0f;
+                currentCenter = new Vector2(
+                    Mathf.Clamp(target.position.x, minX, maxX),
+                    GetDesiredY(true));
+                if (controlledCamera != null && controlledCamera.orthographic)
+                    controlledCamera.orthographicSize = normalOrthographicSize;
+                transform.position = new Vector3(currentCenter.x, currentCenter.y, fixedZ);
+                return;
+            }
+
             var velocityX = targetBody != null ? targetBody.linearVelocity.x : 0f;
             var lookAheadTarget = TutorialCameraPolicy.ResolveLookAhead(
                 velocityX,
@@ -118,7 +132,7 @@ namespace Narthex.Presentation
                 lookAheadResponse * Time.unscaledDeltaTime);
 
             var focusX = target.position.x;
-            if (bossArenaHost != null && bossArenaHost.CombatActive && bossFocus != null)
+            if (bossArenaHost != null && bossArenaHost.EncounterPresentationActive && bossFocus != null)
                 focusX = TutorialCameraPolicy.ResolveBossCenter(target.position.x, bossFocus.position.x, bossFramingWeight);
 
             var desiredX = Mathf.Clamp(focusX + currentLookAhead, minX, maxX);
@@ -200,7 +214,7 @@ namespace Narthex.Presentation
         private void UpdateLens()
         {
             if (controlledCamera == null || !controlledCamera.orthographic) return;
-            var targetSize = bossArenaHost != null && bossArenaHost.CombatActive
+            var targetSize = bossArenaHost != null && bossArenaHost.EncounterPresentationActive
                 ? bossOrthographicSize
                 : normalOrthographicSize;
             controlledCamera.orthographicSize = Mathf.MoveTowards(

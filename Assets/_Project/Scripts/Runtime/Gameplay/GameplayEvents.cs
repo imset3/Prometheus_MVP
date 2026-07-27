@@ -96,6 +96,36 @@ namespace Narthex.Gameplay
         }
     }
 
+    public readonly struct TutorialLocationChanged
+    {
+        public readonly string LocationName;
+
+        public TutorialLocationChanged(string locationName)
+        {
+            LocationName = locationName;
+        }
+    }
+
+    public readonly struct QuestProgressChanged
+    {
+        public readonly string QuestId;
+        public readonly string ConditionId;
+        public readonly int CurrentAmount;
+        public readonly int RequiredAmount;
+
+        public QuestProgressChanged(
+            string questId,
+            string conditionId,
+            int currentAmount,
+            int requiredAmount)
+        {
+            QuestId = questId;
+            ConditionId = conditionId;
+            CurrentAmount = currentAmount;
+            RequiredAmount = requiredAmount;
+        }
+    }
+
     public readonly struct TutorialNarrativeChanged
     {
         public readonly string QuestId;

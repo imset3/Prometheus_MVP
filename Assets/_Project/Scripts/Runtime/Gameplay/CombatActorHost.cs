@@ -14,13 +14,18 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float hitRecoverySeconds = 0.15f;
 
         private float hitRecoveryEndsAt;
+        private float dashInvulnerabilityEndsAt;
+        private bool dashInvulnerabilityActive;
 
         public string ActorId => actorId;
         public CombatActorKind Kind => kind;
         public ActorRuntimeState Runtime { get; private set; }
         public CombatSystem CombatSystem => combatSystemHost != null ? combatSystemHost.System : null;
         public GameEventBus Events => combatSystemHost != null ? combatSystemHost.Events : null;
-        public bool IsInHitRecovery => Runtime != null && Runtime.IsInvincible && Time.time < hitRecoveryEndsAt;
+        public bool IsInHitRecovery => Runtime != null && Runtime.State == CombatState.Hit &&
+                                       Time.time < hitRecoveryEndsAt;
+        public bool IsDashInvulnerable => Runtime != null && dashInvulnerabilityActive &&
+                                          Time.time < dashInvulnerabilityEndsAt;
         public float HitRecoverySeconds => hitRecoverySeconds;
 
         public void ResetRuntime()
@@ -30,7 +35,25 @@ namespace Narthex.Gameplay
             Runtime.State = CombatState.Idle;
             Runtime.IsInvincible = false;
             hitRecoveryEndsAt = 0f;
+            dashInvulnerabilityEndsAt = 0f;
+            dashInvulnerabilityActive = false;
             if (Runtime is PlayerRuntimeState player) player.HitCount = 0;
+        }
+
+        public void BeginDashInvulnerability(float durationSeconds)
+        {
+            if (Runtime == null || !Runtime.IsAlive || durationSeconds <= 0f) return;
+            dashInvulnerabilityEndsAt = Time.time + durationSeconds;
+            dashInvulnerabilityActive = true;
+            Runtime.IsInvincible = true;
+        }
+
+        public void EndDashInvulnerability()
+        {
+            if (Runtime == null) return;
+            dashInvulnerabilityActive = false;
+            dashInvulnerabilityEndsAt = 0f;
+            Runtime.IsInvincible = IsHitRecoveryActive();
         }
 
         private void Awake()
@@ -65,13 +88,24 @@ namespace Narthex.Gameplay
         private void OnDisable()
         {
             combatSystemHost?.Events?.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
+            EndDashInvulnerability();
         }
 
         private void Update()
         {
-            if (Runtime == null || Runtime.State != CombatState.Hit || Time.time < hitRecoveryEndsAt) return;
-            Runtime.IsInvincible = false;
-            Runtime.State = CombatState.Idle;
+            if (Runtime == null) return;
+
+            var now = Time.time;
+            if (dashInvulnerabilityActive && now >= dashInvulnerabilityEndsAt)
+            {
+                dashInvulnerabilityActive = false;
+                dashInvulnerabilityEndsAt = 0f;
+            }
+
+            if (Runtime.State == CombatState.Hit && now >= hitRecoveryEndsAt)
+                Runtime.State = CombatState.Idle;
+
+            Runtime.IsInvincible = dashInvulnerabilityActive || IsHitRecoveryActive();
         }
 
         private void HandleHitConfirmed(HitConfirmed message)
@@ -79,6 +113,12 @@ namespace Narthex.Gameplay
             if (Runtime == null || !Runtime.IsAlive || message.TargetId != actorId) return;
             hitRecoveryEndsAt = Time.time + hitRecoverySeconds;
             Runtime.IsInvincible = true;
+        }
+
+        private bool IsHitRecoveryActive()
+        {
+            return Runtime != null && Runtime.State == CombatState.Hit &&
+                   Time.time < hitRecoveryEndsAt;
         }
     }
 }

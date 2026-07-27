@@ -22,7 +22,7 @@ namespace Narthex.Presentation
         [SerializeField] private GameObject resultOverlay;
         [SerializeField] private string treeId = "TREE-BASIC-001";
         [SerializeField] private string selectedModuleId = "MOD-TUTO-001";
-        [SerializeField] private string selectedModuleDisplayName = "튜토리얼 펄스";
+        [SerializeField] private string selectedModuleDisplayName = "기본 전투 모듈";
         [SerializeField, Min(0)] private int equipSlotIndex;
 
         private bool restoreResultOverlay;

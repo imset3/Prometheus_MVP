@@ -156,6 +156,8 @@ namespace Narthex.Tools
             flowObject.FindProperty("wrongWayThresholdX").floatValue = -18f;
             flowObject.FindProperty("updraftMin").vector2Value = new Vector2(-204f, -5f);
             flowObject.FindProperty("updraftMax").vector2Value = new Vector2(-190f, 3.8f);
+            flowObject.FindProperty("updraftLiftSpeed").floatValue = 6.5f;
+            flowObject.FindProperty("updraftMaxRiseSpeed").floatValue = 4.5f;
             flowObject.ApplyModifiedPropertiesWithoutUndo();
 
             routeObject.GetComponent<TutorialGuideRouteHost>().enabled = false;
@@ -192,7 +194,7 @@ namespace Narthex.Tools
             if (canvasGroup == null) canvasGroup = root.AddComponent<CanvasGroup>();
             cardObject.FindProperty("canvasGroup").objectReferenceValue = canvasGroup;
             cardObject.FindProperty("cardRect").objectReferenceValue = root.GetComponent<RectTransform>();
-            cardObject.FindProperty("promptDelay").floatValue = 3f;
+            cardObject.FindProperty("promptDelay").floatValue = 1f;
             cardObject.FindProperty("collapseDuration").floatValue = 0.24f;
             cardObject.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -248,9 +250,7 @@ namespace Narthex.Tools
                     SetLines(beat.FindPropertyRelative("lines"), new[]
                     {
                         "테우스: 광물 저장고에 헬테가 있어. 항로 도면과 판도라 공장 접근 정보를 확인해야 해.",
-                        "프로메: 여기까지 와서 돌아갈 수는 없어.",
-                        "헬테: 아다마스의 아이가 여기까지 들어왔군.",
-                        "프로메: 길을 비켜 줘. 우리는 판도라 공장으로 가야 해."
+                        "프로메: 여기까지 와서 돌아갈 수는 없어."
                     });
                 }
             }

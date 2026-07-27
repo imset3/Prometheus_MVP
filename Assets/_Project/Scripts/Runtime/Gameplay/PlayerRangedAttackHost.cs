@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Narthex.Gameplay
 {
     /// <summary>
-    /// Input-agnostic ranged attack foundation. A future input/ability decision only needs to call TryFire.
-    /// The projectile and visual are pre-placed scene objects and are never created at runtime.
+    /// Prome's basic ranged attack. Key 2 launches the pre-placed projectile in the
+    /// player's current facing direction; projectile objects are never created at runtime.
     /// </summary>
     public sealed class PlayerRangedAttackHost : MonoBehaviour
     {
@@ -14,12 +14,14 @@ namespace Narthex.Gameplay
         [SerializeField] private Collider2D projectileHitbox;
         [SerializeField] private GameObject projectileVisualSlot;
         [SerializeField] private LayerMask targetLayers = -1;
-        [SerializeField] private string attackId = "WPN-PROME-RANGED-PLACEHOLDER";
+        [SerializeField] private string attackId = "WPN-PROME-RANGED-BASIC";
         [SerializeField, Min(1)] private int damage = 20;
         [SerializeField, Min(0.1f)] private float spawnOffset = 1f;
         [SerializeField, Min(0.1f)] private float travelDistance = 10f;
         [SerializeField, Min(0.05f)] private float travelSeconds = 0.55f;
         [SerializeField, Min(0f)] private float cooldownSeconds = 0.6f;
+        [SerializeField, Min(1)] private int trainingMultiHitTargetCount = 3;
+        [SerializeField] private string trainingSignalTargetId = "PLAYER-001";
 
         private readonly Collider2D[] overlapResults = new Collider2D[8];
         private readonly HashSet<string> hitActorIds = new HashSet<string>();
@@ -29,10 +31,12 @@ namespace Narthex.Gameplay
         private float launchedAt;
         private float cooldownEndsAt;
         private bool projectileActive;
+        private bool trainingSignalPublished;
 
         public bool HasValidSetup => inputHost != null && sourceActor != null && projectileHitbox != null && projectileVisualSlot != null;
         public bool IsProjectileActive => projectileActive;
-        public bool HasAssignedInput => false;
+        public bool HasAssignedInput => inputHost != null;
+        public float CooldownSeconds => cooldownSeconds;
         public event System.Action<Vector2> RangedAttackStarted;
 
         private void Awake()
@@ -48,8 +52,14 @@ namespace Narthex.Gameplay
             ResetProjectile();
         }
 
+        private void OnEnable()
+        {
+            if (inputHost != null) inputHost.ModuleRequested += HandleRangedInput;
+        }
+
         private void OnDisable()
         {
+            if (inputHost != null) inputHost.ModuleRequested -= HandleRangedInput;
             ResetProjectile();
         }
 
@@ -86,6 +96,7 @@ namespace Narthex.Gameplay
             projectileHitbox.enabled = true;
             projectileVisualSlot.SetActive(true);
             hitActorIds.Clear();
+            trainingSignalPublished = false;
             Physics2D.SyncTransforms();
             ApplyHits();
             RangedAttackStarted?.Invoke(direction.normalized);
@@ -106,6 +117,14 @@ namespace Narthex.Gameplay
                     target.ActorId,
                     new DamagePacket(sourceActor.ActorId, attackId, damage));
             }
+
+            if (!trainingSignalPublished && hitActorIds.Count >= trainingMultiHitTargetCount)
+            {
+                trainingSignalPublished = true;
+                sourceActor.Events?.Publish(new GameplaySignal(
+                    Narthex.Content.QuestSignalType.RangedTripleHitPerformed,
+                    trainingSignalTargetId));
+            }
         }
 
         private void ResetProjectile()
@@ -115,6 +134,9 @@ namespace Narthex.Gameplay
             if (projectileVisualSlot != null) projectileVisualSlot.SetActive(false);
             transform.localPosition = originLocalPosition;
             hitActorIds.Clear();
+            trainingSignalPublished = false;
         }
+
+        private void HandleRangedInput() => TryFire();
     }
 }

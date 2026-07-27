@@ -65,8 +65,10 @@ namespace Narthex.Presentation
         {
             var unlocked = moduleTreeManagerHost.System != null &&
                            moduleTreeManagerHost.System.TryGetModuleState(tutorialModule.StableId, out var state) && state.Unlocked;
-            moduleStateText.text = unlocked ? "펄스 모듈  |  보유" : "펄스 모듈  |  미보유";
-            detailText.text = unlocked ? "전방 에너지 파동\n피해 35  |  재사용 3초" : "훈련을 진행하면 모듈을 획득합니다.";
+            moduleStateText.text = unlocked ? "원거리 공격  |  사용 가능" : "원거리 공격  |  훈련 전";
+            detailText.text = unlocked
+                ? "프로메의 기본 원거리 공격\n바라보는 방향 발사  |  키 2  |  재사용 1.5초"
+                : "훈련장에서 기본 원거리 공격 사용법을 익힙니다.";
         }
     }
 }

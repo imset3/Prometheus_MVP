@@ -14,6 +14,7 @@ namespace Narthex.Gameplay
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private CombatSystemHost combatSystemHost;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
+        [SerializeField] private PlayerInputHost playerInputHost;
 
         [Header("Arena Entry")]
         [SerializeField] private string bossQuestId = "QST-TUTO-008";
@@ -31,7 +32,7 @@ namespace Narthex.Gameplay
         [Header("Replaceable presentation slots")]
         [SerializeField] private GameObject bossWarningSlot;
         [SerializeField] private GameObject[] patternLaneSlots = new GameObject[0];
-        [SerializeField, Min(0f)] private float introWarningSeconds = 0.8f;
+        [SerializeField, Min(0f)] private float introWarningSeconds = 1.1f;
 
         private bool fightStarted;
         private bool fightCompleted;
@@ -39,7 +40,8 @@ namespace Narthex.Gameplay
         private Coroutine introRoutine;
 
         public bool HasValidSetup => serviceRoot != null && combatSystemHost != null && questSequenceHost != null &&
-                                     !string.IsNullOrWhiteSpace(bossQuestId) && playerCollider != null &&
+                                     playerInputHost != null && !string.IsNullOrWhiteSpace(bossQuestId) &&
+                                     playerCollider != null &&
                                      arenaStartTrigger != null && arenaStartTrigger.isTrigger &&
                                      entryGateCollider != null && entryGateRenderer != null && bossActor != null &&
                                      bossBodyCollider != null && bossAttackHost != null && bossPatternHost != null &&
@@ -48,6 +50,8 @@ namespace Narthex.Gameplay
         public bool FightStarted => fightStarted;
         public bool FightCompleted => fightCompleted;
         public bool CombatActive => combatActive;
+        public bool EncounterPresentationActive => fightStarted && !fightCompleted;
+        public float IntroWarningSeconds => introWarningSeconds;
 
         public void ResetForRetry()
         {
@@ -94,6 +98,7 @@ namespace Narthex.Gameplay
         private void Update()
         {
             if (fightStarted || fightCompleted || questSequenceHost.CurrentQuestId != bossQuestId) return;
+            if (playerInputHost.IsDialogueInputClaimed) return;
             if (!arenaStartTrigger.Distance(playerCollider).isOverlapped) return;
 
             fightStarted = true;

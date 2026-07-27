@@ -80,21 +80,27 @@ namespace Narthex.Gameplay
             attackHitbox.enabled = true;
             var comboStage = comboTracker.RegisterAttack(Time.time);
             ComboStageChanged?.Invoke(comboStage);
-            sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.AttackPerformed, sourceActor.ActorId));
+            Physics2D.SyncTransforms();
 
             var filter = ContactFilter2D.noFilter;
             filter.SetLayerMask(targetLayers);
             filter.useTriggers = true;
             var count = attackHitbox.Overlap(filter, results);
+            var hitEnemy = false;
             for (var index = 0; index < count; index++)
             {
                 var target = results[index].GetComponentInParent<CombatActorHost>();
                 if (target == null || target.Kind == sourceActor.Kind) continue;
 
-                sourceActor.CombatSystem.TryApplyDamage(
+                hitEnemy |= sourceActor.CombatSystem.TryApplyDamage(
                     target.ActorId,
                     new DamagePacket(sourceActor.ActorId, $"{attackId}-COMBO-{comboStage:00}", damage));
             }
+
+            if (!hitEnemy) return;
+            sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.AttackPerformed, sourceActor.ActorId));
+            if (comboStage == 3)
+                sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.MeleeComboCompleted, sourceActor.ActorId));
         }
 
         private void ApplyAimDirection(float direction)

@@ -11,6 +11,7 @@ namespace Narthex.Gameplay
         [SerializeField] private LayerMask groundLayers = -1;
         [SerializeField] private PlayerMotorDefinition motorDefinition;
         [SerializeField] private ServiceRoot serviceRoot;
+        [SerializeField] private CombatActorHost combatActor;
         [SerializeField] private string playerId = "PLAYER-001";
         [SerializeField, Min(0f)] private float movementSignalSpeed = 0.1f;
 
@@ -30,11 +31,17 @@ namespace Narthex.Gameplay
         public bool IsGliding { get; private set; }
         public bool IsGlideHeld => glideHeld;
         public bool IsDoubleJumpUnlocked => doubleJumpUnlocked;
+        public bool IsDashing => Time.time < dashEndsAt;
+        public float DashDurationSeconds => motorDefinition != null ? motorDefinition.DashDuration : 0f;
+        public float DashCooldownSeconds => motorDefinition != null ? motorDefinition.DashCooldown : 0f;
 
         private void Awake()
         {
+            if (combatActor == null) combatActor = GetComponent<CombatActorHost>();
             if (body == null || groundProbe == null || motorDefinition == null || serviceRoot == null)
                 Debug.LogError("PlayerMotorHost requires pre-placed Rigidbody2D, GroundProbe, PlayerMotorDefinition, and ServiceRoot references.", this);
+            else if (combatActor == null)
+                Debug.LogError("PlayerMotorHost requires a CombatActorHost for dash invulnerability.", this);
             else serviceRoot.Initialize();
         }
 
@@ -58,6 +65,7 @@ namespace Narthex.Gameplay
             glideHeld = false;
             movementSignalArmed = false;
             dashEndsAt = 0f;
+            combatActor?.EndDashInvulnerability();
             IsGliding = false;
         }
 
@@ -68,6 +76,7 @@ namespace Narthex.Gameplay
             velocity.x = 0f;
             body.linearVelocity = velocity;
             dashEndsAt = 0f;
+            combatActor?.EndDashInvulnerability();
         }
 
         public void UnlockDoubleJump()
@@ -85,7 +94,11 @@ namespace Narthex.Gameplay
             if (dashRequested && now >= dashCooldownEndsAt)
             {
                 dashEndsAt = now + motorDefinition.DashDuration;
-                dashCooldownEndsAt = now + motorDefinition.DashCooldown;
+                dashCooldownEndsAt = PlayerDashTimingPolicy.ResolveNextAllowedTime(
+                    now,
+                    motorDefinition.DashDuration,
+                    motorDefinition.DashCooldown);
+                combatActor?.BeginDashInvulnerability(motorDefinition.DashDuration);
                 serviceRoot?.Events.Publish(new GameplaySignal(QuestSignalType.DashPerformed, playerId));
             }
 
@@ -153,6 +166,16 @@ namespace Narthex.Gameplay
         {
             glideHeld = false;
             IsGliding = false;
+            dashEndsAt = 0f;
+            combatActor?.EndDashInvulnerability();
+        }
+    }
+
+    public static class PlayerDashTimingPolicy
+    {
+        public static float ResolveNextAllowedTime(float dashStartedAt, float dashDuration, float cooldownAfterDash)
+        {
+            return dashStartedAt + Mathf.Max(0f, dashDuration) + Mathf.Max(0f, cooldownAfterDash);
         }
     }
 }

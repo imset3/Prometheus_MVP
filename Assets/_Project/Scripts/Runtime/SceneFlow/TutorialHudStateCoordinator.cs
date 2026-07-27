@@ -102,7 +102,7 @@ namespace Narthex.SceneFlow
                 result,
                 dialoguePanel.activeInHierarchy,
                 introductionCard.activeInHierarchy,
-                bossArenaHost.CombatActive);
+                bossArenaHost.EncounterPresentationActive);
 
             if (nextMode != currentMode) ChangeMode(nextMode);
             EnforceCurrentMode();

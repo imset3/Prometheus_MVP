@@ -39,6 +39,8 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float fadeDuration = 0.25f;
 
         private Transform activeSpawnPoint;
+        private string runtimeCheckpointQuestId;
+        private Transform runtimeCheckpointSpawnPoint;
         private bool restarting;
 
         public bool HasConfiguredResetActors
@@ -74,6 +76,15 @@ namespace Narthex.Gameplay
             foreach (var checkpoint in questCheckpoints)
                 if (checkpoint != null && checkpoint.QuestId == questId && checkpoint.SpawnPoint != null) return true;
             return false;
+        }
+
+        public void SetRuntimeCheckpoint(string questId, Transform spawnPoint)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || spawnPoint == null) return;
+            runtimeCheckpointQuestId = questId;
+            runtimeCheckpointSpawnPoint = spawnPoint;
+            if (questSequenceHost != null && questSequenceHost.CurrentQuestId == questId)
+                activeSpawnPoint = spawnPoint;
         }
 
         private void Awake()
@@ -148,6 +159,9 @@ namespace Narthex.Gameplay
         private Transform ResolveCurrentCheckpoint()
         {
             var currentQuestId = questSequenceHost != null ? questSequenceHost.CurrentQuestId : string.Empty;
+            if (runtimeCheckpointSpawnPoint != null && runtimeCheckpointQuestId == currentQuestId)
+                return runtimeCheckpointSpawnPoint;
+
             foreach (var checkpoint in questCheckpoints)
                 if (checkpoint != null && checkpoint.QuestId == currentQuestId && checkpoint.SpawnPoint != null)
                     return checkpoint.SpawnPoint;

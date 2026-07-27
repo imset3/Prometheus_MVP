@@ -410,7 +410,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7927198a45804dc68d4a22bef4a3852, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialQuestGateHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -551,14 +551,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-B-02
   kind: 1
   maxHealth: 70
   stageId: TUTORIAL-EXTERIOR-B
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &22526899
 MonoBehaviour:
@@ -570,7 +570,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 22526898}
   visualRoot: {fileID: 405284583}
@@ -593,7 +593,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 22526898}
   attackHitbox: {fileID: 1449929817}
@@ -684,7 +684,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 22526902}
   visualRoot: {fileID: 793913621}
@@ -1065,7 +1065,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1088,7 +1088,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &43421869
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1173,7 +1173,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -1617,7 +1617,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ecfde329c59054898b559aa8d532d361, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialSfxCueHost
   serviceRoot: {fileID: 465223170}
   uiSource: {fileID: 1159012270}
@@ -2666,7 +2666,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3310,7 +3310,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.25, g: 1, b: 0.9, a: 1}
@@ -3333,7 +3333,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &200351579
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3408,7 +3408,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3637,7 +3637,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51f864b310fe44d74ab656401242db77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialZoneTransitionHost
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -3766,7 +3766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -4005,7 +4005,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -4176,7 +4176,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05bde841c71f74b079195583ca3b59a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitleTriggerHost
   presenter: {fileID: 1752482089}
   questSequenceHost: {fileID: 465223176}
@@ -4335,7 +4335,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e5fd9330abb547bc83c9d22295cfc27, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialFallingHazardHost
   trainingHost: {fileID: 825025869}
 --- !u!50 &252815066
@@ -4962,7 +4962,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.45, g: 0.9, b: 1, a: 1}
@@ -4985,7 +4985,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!1 &284573733
 GameObject:
   m_ObjectHideFlags: 0
@@ -5114,7 +5114,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.18, g: 0.42, b: 0.62, a: 1}
@@ -5152,7 +5152,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -5217,14 +5217,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-A-03
   kind: 1
   maxHealth: 60
   stageId: TUTORIAL-EXTERIOR-A
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &294675043
 MonoBehaviour:
@@ -5236,7 +5236,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 294675042}
   visualRoot: {fileID: 1963734116}
@@ -5259,7 +5259,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 294675042}
   attackHitbox: {fileID: 111794254}
@@ -5350,7 +5350,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 294675046}
   visualRoot: {fileID: 1783592216}
@@ -5406,7 +5406,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c08a787dbefc04db1b2e156465e70305, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialBootsPickupHost
   saveSystemHost: {fileID: 465223174}
   serviceRoot: {fileID: 465223170}
@@ -5601,7 +5601,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4774fdf5875c42abbfd5d10f26893f2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.PlayerRangedAttackHost
   inputHost: {fileID: 397905168}
   sourceActor: {fileID: 397905174}
@@ -5610,7 +5610,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  attackId: WPN-PROME-RANGED-PLACEHOLDER
+  attackId: WPN-PROME-RANGED-BASIC
   damage: 20
   spawnOffset: 1
   travelDistance: 10
@@ -6463,7 +6463,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c036efdb9497b4bd399d0a8b50247c50, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialStatusPresenter
   serviceRoot: {fileID: 465223170}
   statusText: {fileID: 345944324}
@@ -6493,7 +6493,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.94, g: 0.98, b: 1, a: 1}
@@ -6946,7 +6946,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -6963,7 +6963,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -7046,7 +7046,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3634135ef5b8a4629ae39b2fb4f9e3a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ModuleTreePanelPresenter
   serviceRoot: {fileID: 465223170}
   inputHost: {fileID: 397905168}
@@ -7063,7 +7063,7 @@ MonoBehaviour:
   resultOverlay: {fileID: 375918304}
   treeId: TREE-BASIC-001
   selectedModuleId: MOD-TUTO-001
-  selectedModuleDisplayName: "\uD29C\uD1A0\uB9AC\uC5BC \uD384\uC2A4"
+  selectedModuleDisplayName: "\uAE30\uBCF8 \uC804\uD22C \uBAA8\uB4C8"
   equipSlotIndex: 0
 --- !u!114 &374043888
 MonoBehaviour:
@@ -7075,7 +7075,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f0b6b33941524dd69ffaedf9c0b2b53, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.InventoryPanelPresenter
   playerInputHost: {fileID: 397905168}
   moduleTreeManagerHost: {fileID: 465223179}
@@ -7093,7 +7093,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9ee540fe86b24f17a3473451b25a1f9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialInteractionPromptHost
   questSequenceHost: {fileID: 465223176}
   playerCollider: {fileID: 397905171}
@@ -7192,7 +7192,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -7275,7 +7275,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7342,6 +7342,7 @@ GameObject:
   - component: {fileID: 392459536}
   - component: {fileID: 392459535}
   - component: {fileID: 392459534}
+  - component: {fileID: 392459537}
   m_Layer: 0
   m_Name: PlayerVisual
   m_TagString: Untagged
@@ -7361,7 +7362,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.75, y: 1.5, z: 0.3}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1843846645}
   m_Father: {fileID: 600514999}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &392459534
@@ -7371,7 +7373,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 392459532}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -7442,6 +7444,48 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 392459532}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &392459537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 392459532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 420f4967e7db04bab93ddb0a837e7aa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CharacterPngAnimationBridge
+  preset: 1
+  animator: {fileID: 1843846646}
+  spriteRenderer: {fileID: 1843846647}
+  movementBody: {fileID: 0}
+  playerMotor: {fileID: 0}
+  playerInput: {fileID: 0}
+  meleeAttack: {fileID: 0}
+  actor: {fileID: 0}
+  heltePattern: {fileID: 0}
+  proceduralVisualMotion: {fileID: 0}
+  sourceFramesFaceRight: 0
+  facingTarget: {fileID: 0}
+  crossFadeSeconds: 0.04
+  airborneVelocityThreshold: 0.15
+  runVelocityThreshold: 0.05
+  dashVelocityThreshold: 8
+  attackOneDuration: 0.22
+  attackTwoDuration: 0.22
+  attackThreeDuration: 0.22
+  hitDuration: 0.16
+  setupBackupCaptured: 0
+  originalRenderers: []
+  originalRendererEnabledStates: 
+  originalVisualMotion: {fileID: 0}
+  originalVisualMotionEnabled: 0
+  originalBodyCollider: {fileID: 0}
+  originalColliderSize: {x: 0, y: 0}
+  originalColliderOffset: {x: 0, y: 0}
+  originalContractVisualRoot: {fileID: 0}
+  originalContractRenderers: []
 --- !u!1 &394442119
 GameObject:
   m_ObjectHideFlags: 0
@@ -7529,7 +7573,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74f88cf0fe5914a9d9afa00c6ed9feb8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.PlayerInputHost
   playerInput: {fileID: 397905170}
   motor: {fileID: 397905169}
@@ -7554,7 +7598,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 13121dc40573f4aad9fb373269028cd1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.PlayerMotorHost
   body: {fileID: 397905172}
   groundProbe: {fileID: 1395617442}
@@ -7575,7 +7619,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
   m_Actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_NotificationBehavior: 3
@@ -7591,7 +7635,7 @@ MonoBehaviour:
       m_Calls: []
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme:
+  m_DefaultControlScheme: 
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
@@ -7669,7 +7713,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8514fb8b38e344884856183c42d19359, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.MeleeAttackHost
   inputHost: {fileID: 397905168}
   sourceActor: {fileID: 397905174}
@@ -7693,14 +7737,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: PLAYER-001
   kind: 0
   maxHealth: 100
   stageId: TUTORIAL
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &397905175
 MonoBehaviour:
@@ -7712,7 +7756,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1df0a7069ce584d1f9a83a8128ab6fd0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialModuleUseHost
   inputHost: {fileID: 397905168}
   playerActor: {fileID: 397905174}
@@ -7729,7 +7773,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 397905174}
   visualRoot: {fileID: 392459533}
@@ -7752,7 +7796,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 397905167}
   visualRoot: {fileID: 600514999}
@@ -7898,7 +7942,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: af203ecadaaee4a949be06a8bf7e5db0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialGuideRouteHost
   dialoguePresenter: {fileID: 465223186}
   guideCompanion: {fileID: 1106852534}
@@ -7955,7 +7999,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7927198a45804dc68d4a22bef4a3852, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialQuestGateHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -8366,7 +8410,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.15, g: 0.45, b: 0.7, a: 1}
@@ -8404,7 +8448,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -8747,7 +8791,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.96, g: 0.91, b: 0.92, a: 1}
@@ -8860,14 +8904,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-A-02
   kind: 1
   maxHealth: 60
   stageId: TUTORIAL-EXTERIOR-A
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &435110450
 MonoBehaviour:
@@ -8879,7 +8923,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 435110449}
   visualRoot: {fileID: 796044793}
@@ -8902,7 +8946,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 435110449}
   attackHitbox: {fileID: 1490292948}
@@ -8993,7 +9037,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 435110453}
   visualRoot: {fileID: 63867}
@@ -9036,14 +9080,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-A-01
   kind: 1
   maxHealth: 60
   stageId: TUTORIAL-EXTERIOR-A
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &438057383
 MonoBehaviour:
@@ -9055,7 +9099,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 438057382}
   visualRoot: {fileID: 329308337}
@@ -9078,7 +9122,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 438057382}
   attackHitbox: {fileID: 1387102151}
@@ -9169,7 +9213,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 438057386}
   visualRoot: {fileID: 684452733}
@@ -9535,7 +9579,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29859fa51508547b78e5689ae73396a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatSystemHost
   serviceRoot: {fileID: 465223170}
 --- !u!114 &465223170
@@ -9548,7 +9592,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d38f4bca05cf48cd9eb9b2026491484, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Core::Narthex.Core.ServiceRoot
 --- !u!4 &465223171
 Transform:
@@ -9575,7 +9619,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc8b8cfe9a306436a987d15953bbcc4b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialRestartHost
   combatSystemHost: {fileID: 465223169}
   saveSystemHost: {fileID: 465223174}
@@ -9628,7 +9672,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c9cf716401aa746eda348eda886a4cfe, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEncounterHost
   combatSystemHost: {fileID: 465223169}
   tutorialEnemy: {fileID: 494919141}
@@ -9644,7 +9688,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d7f6dd1c675043cfb15c2a246530ca2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Save::Narthex.Save.SaveSystemHost
   serviceRoot: {fileID: 465223170}
   saveFileName: narthex_tutorial_save.json
@@ -9658,7 +9702,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46e00036417144001ae8d31ade69668d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.SceneFlow::Narthex.SceneFlow.TutorialCompletionFlowHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9685,7 +9729,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41cc64a0d81c3487fa408b03fa065968, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialQuestSequenceHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9724,7 +9768,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2bb32190f1ed40ebbe2a6539ef54657, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.QuestManagerHost
   serviceRoot: {fileID: 465223170}
 --- !u!114 &465223178
@@ -9737,7 +9781,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: edb806982ba99459e9ca33216db3e674, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.ModuleSystemHost
   serviceRoot: {fileID: 465223170}
 --- !u!114 &465223179
@@ -9750,7 +9794,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91f42917ba8764a9f82bac1e92a6bae9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.ModuleTreeManagerHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9768,7 +9812,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dde4a9008211743fab8e7a41273db98f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialBossCompletionHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9784,7 +9828,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 87005e2d210c74a9da28ee14ac6d48f4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialBossEncounterHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9801,7 +9845,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ddb3940406f34b24b11e514bd2b6497, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.RewardExecutorHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9815,7 +9859,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 202facbc723ba4d73b2197b3c3386008, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.SceneFlow::Narthex.SceneFlow.Chapter01TransitionHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -9834,7 +9878,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a0046b1f74ec44f9c9baacdbd39d7435, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialNarrativeSequenceHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -9862,7 +9906,7 @@ MonoBehaviour:
     - "\uD14C\uC6B0\uC2A4: \uC548\uB155, \uD504\uB85C\uBA54!"
     - "\uD14C\uC6B0\uC2A4: \uC77C\uB2E8 \uBE44\uD589\uC120 \uD328\uC2A4\uD0A4\uBD80\uD130
       \uCC59\uAE30\uB7EC \uAC00 \uBCF4\uC790!"
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 984369835}
     deactivateOnStart:
@@ -9879,7 +9923,7 @@ MonoBehaviour:
     - "\uD14C\uC6B0\uC2A4: SPACE\uB85C \uC810\uD504\uD574 3\uBC88 \uD53C\uD574\uC57C
       \uD574. \uD22C\uC0AC\uCCB4\uC5D0 \uB9DE\uC73C\uBA74 \uC774 \uAD6C\uAC04\uC744
       \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC2DC\uC791\uD560 \uAC70\uC57C!"
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 1697514729}
     deactivateOnStart:
@@ -9897,7 +9941,7 @@ MonoBehaviour:
       \uACF5\uACA9\uD574 \uBD10. \uCEE4\uC11C\uAC00 \uC788\uB294 \uBC29\uD5A5\uC73C\uB85C
       \uBAB8\uC744 \uB3CC\uB824 3\uBC88 \uC774\uC5B4\uC11C \uC0AC\uC6A9\uD558\uBA74
       \uB3FC!"
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 1697514729}
     deactivateOnStart:
@@ -9916,7 +9960,7 @@ MonoBehaviour:
       \uC788\uC5B4."
     - "\uD14C\uC6B0\uC2A4: \uD558\uB298\uC5D0\uC11C \uB5A8\uC5B4\uC9C0\uB294 \uB099\uD558\uBB3C\uC744
       \uB300\uC2DC\uB85C 3\uBC88 \uD53C\uD574 \uBD10!"
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 1697514729}
     deactivateOnStart:
@@ -9932,7 +9976,7 @@ MonoBehaviour:
       \uC5D0\uB108\uC9C0 \uB3C4\uD615\uC744 \uBC1C\uC0AC\uD560 \uC218 \uC788\uC5B4."
     - "\uD14C\uC6B0\uC2A4: \uC18C\uD658\uB41C \uD45C\uC801\uC744 \uD5A5\uD574 \uD384\uC2A4\uB97C
       \uBC1C\uC0AC\uD574 \uBD10!"
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 1697514729}
     deactivateOnStart:
@@ -9984,7 +10028,7 @@ MonoBehaviour:
     - "\uD14C\uC6B0\uC2A4: \uC88B\uC544. \uC774 \uD1B5\uB85C\uB294 \uC77C\uC790\uC57C.
       \uC55E\uC758 \uB9B4\uB808\uC774\uB97C \uC5F4\uACE0 \uADF8\uB300\uB85C \uC804\uC9C4\uD558\uBA74
       \uB3FC."
-    deferUntilPortalTargetId:
+    deferUntilPortalTargetId: 
     activateOnStart:
     - {fileID: 733579597}
     deactivateOnStart:
@@ -10044,7 +10088,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d1854c2de5eec4f8284f0ba26ec43364, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Save::Narthex.Save.DevelopmentProgressResetManager
   saveSystemHost: {fileID: 465223174}
   resetProgressOnSceneStart: 1
@@ -10058,7 +10102,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ffb959ad7f6e94c1dbca95773228e2bc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialDialoguePresenter
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -10082,11 +10126,9 @@ MonoBehaviour:
       \uC9C0\uC6D0\uD55C\uB2E4."
     showAfterDialogue: 0
   - questId: QST-TUTO-005
-    displayName: "\uB098\uB974\uD14D\uC2A4 \uD384\uC2A4 \uBAA8\uB4C8"
-    englishName: Narthex Pulse
-    description: "\uC804\uBC29\uC5D0 \uC5D0\uB108\uC9C0 \uD30C\uB3D9\uC744 \uBC1C\uC0AC\uD558\uB294
-      \uAE30\uBCF8 \uBAA8\uB4C8.\n2\uB97C \uB20C\uB7EC \uC801\uACFC \uC7A5\uCE58\uC5D0
-      \uD384\uC2A4\uB97C \uC0AC\uC6A9\uD55C\uB2E4."
+    displayName: "원거리 공격"
+    englishName: Ranged Attack
+    description: "프로메의 무기에 내장된 기본 원거리 공격.\n2번 키를 누르면 현재 바라보는 방향으로 관통 투사체를 발사한다."
     showAfterDialogue: 0
   - questId: QST-TUTO-008
     displayName: "\uD5EC\uD14C"
@@ -10105,7 +10147,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6593ce72067964b6283b8171a1cf2a5f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.SceneFlow::Narthex.SceneFlow.TutorialHudStateCoordinator
   serviceRoot: {fileID: 465223170}
   bossArenaHost: {fileID: 1694739986}
@@ -10159,7 +10201,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1846c1d7cd4f431f9bb5970d9825f27, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialAccessibilityHost
   cameraFollowHost: {fileID: 519420033}
   readableTexts:
@@ -10201,7 +10243,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f21fd150589840839e0909d89f23cb1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialChapter0IntroFlowHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -10251,8 +10293,9 @@ MonoBehaviour:
   transitionFadeIn: 0.45
   updraftMin: {x: -204, y: -5}
   updraftMax: {x: -190, y: 3.8}
-  updraftLiftSpeed: 5.5
-  updraftMaxRiseSpeed: 3.5
+  updraftLiftSpeed: 6.5
+  updraftMaxRiseSpeed: 4.5
+  glideRetryBelowY: -5.25
 --- !u!1 &465709390
 GameObject:
   m_ObjectHideFlags: 0
@@ -10331,7 +10374,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.2, g: 0.94, b: 0.84, a: 1}
@@ -10354,7 +10397,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &468481986
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10406,7 +10449,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05bde841c71f74b079195583ca3b59a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitleTriggerHost
   presenter: {fileID: 1752482089}
   questSequenceHost: {fileID: 465223176}
@@ -10785,7 +10828,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -10863,14 +10906,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-TUTO-001
   kind: 1
   maxHealth: 50
   stageId: TUTORIAL
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!61 &494919142
 BoxCollider2D:
@@ -10928,7 +10971,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 494919141}
   attackHitbox: {fileID: 1087924308}
@@ -10954,7 +10997,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 494919141}
   visualRoot: {fileID: 769910888}
@@ -10977,7 +11020,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 494919140}
   visualRoot: {fileID: 1416358920}
@@ -11044,7 +11087,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11278,7 +11321,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 520d97cfaf08c4e8b8ac8ef370c16042, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialWaveEncounterHost
   serviceRoot: {fileID: 465223170}
   combatSystemHost: {fileID: 465223169}
@@ -11739,8 +11782,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -11849,7 +11892,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 16c0ac9ee2b42415e8df97c51618d6c7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CameraFollowHost
   serviceRoot: {fileID: 465223170}
   target: {fileID: 397905167}
@@ -12013,7 +12056,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.58, g: 0.92, b: 0.94, a: 1}
@@ -12036,7 +12079,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &524142264
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12555,7 +12598,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -12599,7 +12642,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.13, g: 0.32, b: 0.42, a: 1}
@@ -12986,7 +13029,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32dad07b03883478899cadc80ec01b0f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatHealthTextPresenter
   actorHost: {fileID: 494919141}
   alternateActorHosts:
@@ -13016,7 +13059,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -13079,14 +13122,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-B-01
   kind: 1
   maxHealth: 70
   stageId: TUTORIAL-EXTERIOR-B
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &561862574
 MonoBehaviour:
@@ -13098,7 +13141,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 561862573}
   visualRoot: {fileID: 1419271200}
@@ -13121,7 +13164,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 561862573}
   attackHitbox: {fileID: 1188407646}
@@ -13212,7 +13255,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 561862577}
   visualRoot: {fileID: 1132798977}
@@ -13313,7 +13356,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51f864b310fe44d74ab656401242db77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialZoneTransitionHost
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -13686,7 +13729,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9487943a8466b480f835462e09057b97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.InventoryPanelButtonHost
   inventoryPanelPresenter: {fileID: 374043888}
   closePanel: 1
@@ -13700,7 +13743,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -13744,7 +13787,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.32, g: 0.18, b: 0.2, a: 1}
@@ -13862,7 +13905,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -14168,7 +14211,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.39, g: 0.88, b: 0.83, a: 1}
@@ -14261,7 +14304,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
@@ -14399,8 +14442,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_ComponentVersion: 2
   m_LightType: 4
   m_BlendStyleIndex: 0
@@ -14788,7 +14831,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -15878,7 +15921,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16112,7 +16155,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -16150,7 +16193,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b226e96b56e6046539a53ed30c57b403, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.DialogueViewModule
   panelRoot: {fileID: 714094744}
   stageLabel: {fileID: 1332163513}
@@ -16212,7 +16255,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.11, g: 0.07, b: 0.09, a: 1}
@@ -16601,7 +16644,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -16632,7 +16675,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -16699,7 +16742,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.55, g: 0.82, b: 1, a: 1}
@@ -16993,7 +17036,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11d05e992956b4395934e8bec543df34, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialJumpProjectileHazardHost
   trainingHost: {fileID: 2003447769}
 --- !u!50 &747465602
@@ -17170,7 +17213,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d4e1b57534734d45930eca3a91e3c21, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.ModulePulseHost
   sourceActor: {fileID: 397905174}
   ability: {fileID: 11400000, guid: d0ef3cc52be914634871321394bfbfdf, type: 2}
@@ -17696,7 +17739,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -18494,7 +18537,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c8df81aa4fe4c4babb576e98f31a0c40, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialTrainingSpawnHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -18584,7 +18627,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -18607,7 +18650,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &832816955
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18738,7 +18781,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 843924505}
   attackHitbox: {fileID: 284573734}
@@ -18764,7 +18807,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: BOSS-TUTO-HELTE
@@ -18853,7 +18896,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b101982878f64b979396bd5397fb769, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.HelteBossPatternHost
   sourceActor: {fileID: 843924505}
   playerActor: {fileID: 397905174}
@@ -18917,7 +18960,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 843924505}
   visualRoot: {fileID: 2070630258}
@@ -18940,7 +18983,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 843924507}
   visualRoot: {fileID: 2125361495}
@@ -19215,7 +19258,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -19768,7 +19811,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -19942,7 +19985,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e5fd9330abb547bc83c9d22295cfc27, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialFallingHazardHost
   trainingHost: {fileID: 825025869}
 --- !u!50 &908362524
@@ -21012,7 +21055,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.91, g: 0.98, b: 1, a: 1}
@@ -21035,7 +21078,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &989125146
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21497,7 +21540,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51f864b310fe44d74ab656401242db77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialZoneTransitionHost
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -22313,7 +22356,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -22357,7 +22400,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.15, g: 0.45, b: 0.7, a: 1}
@@ -23298,7 +23341,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7903a1a01a518479a998863a53749a52, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialGuideCompanionHost
   player: {fileID: 397905167}
   visualRoot: {fileID: 820282717}
@@ -23429,14 +23472,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-B-03
   kind: 1
   maxHealth: 85
   stageId: TUTORIAL-EXTERIOR-B
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &1110962973
 MonoBehaviour:
@@ -23448,7 +23491,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 1110962972}
   visualRoot: {fileID: 661306705}
@@ -23471,7 +23514,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 1110962972}
   attackHitbox: {fileID: 1870948404}
@@ -23562,7 +23605,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 1110962976}
   visualRoot: {fileID: 542589253}
@@ -23622,7 +23665,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.18, g: 0.76, b: 0.86, a: 1}
@@ -23825,7 +23868,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.55, g: 0.82, b: 1, a: 1}
@@ -24135,7 +24178,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.91, g: 0.97, b: 1, a: 1}
@@ -24158,7 +24201,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1161337676
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24365,7 +24408,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51f864b310fe44d74ab656401242db77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialZoneTransitionHost
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -24798,7 +24841,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7927198a45804dc68d4a22bef4a3852, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialQuestGateHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -25208,7 +25251,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 202d490a1447947029d03fd90dd463f2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialSequentialEncounterHost
   serviceRoot: {fileID: 465223170}
   combatSystemHost: {fileID: 465223169}
@@ -25274,7 +25317,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e94eb77af7c04a42b68a82a1bc62622, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialRelayHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}
@@ -25595,7 +25638,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -25667,7 +25710,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 1042449115}
   visualShape: {fileID: 1020041817}
@@ -25814,7 +25857,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13dbe830543841f5b4f02278bbb35b4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialObjectiveBeaconHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -26128,7 +26171,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 1047077079}
   visualShape: {fileID: 531868652}
@@ -26519,7 +26562,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 1642255969}
   visualShape: {fileID: 1513799305}
@@ -26673,7 +26716,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.78, g: 0.88, b: 0.94, a: 1}
@@ -26696,7 +26739,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1283152361
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27037,7 +27080,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05bde841c71f74b079195583ca3b59a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitleTriggerHost
   presenter: {fileID: 1752482089}
   questSequenceHost: {fileID: 465223176}
@@ -27438,7 +27481,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.42, g: 0.88, b: 1, a: 1}
@@ -27461,7 +27504,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1332163514
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27514,7 +27557,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 1899871853}
   visualShape: {fileID: 1167063724}
@@ -27567,7 +27610,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.37, g: 0.95, b: 0.88, a: 1}
@@ -27590,7 +27633,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1336241591
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27989,7 +28032,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.92, g: 0.78, b: 0.8, a: 0.9}
@@ -28290,7 +28333,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0530aae45cd37480991ee38eca401edb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialTrainingActionScopeHost
   questManagerHost: {fileID: 465223177}
   player: {fileID: 397905167}
@@ -28483,7 +28526,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51f864b310fe44d74ab656401242db77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialZoneTransitionHost
   serviceRoot: {fileID: 465223170}
   playerInputHost: {fileID: 397905168}
@@ -29404,7 +29447,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -29569,7 +29612,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05bde841c71f74b079195583ca3b59a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitleTriggerHost
   presenter: {fileID: 1752482089}
   questSequenceHost: {fileID: 465223176}
@@ -29943,7 +29986,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 136f713e0b96f4e2c959f5011283bd0b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.DialogueIntroductionCardModule
   cardRoot: {fileID: 1429360760}
   titleText: {fileID: 832816954}
@@ -29952,7 +29995,7 @@ MonoBehaviour:
   continueText: {fileID: 468481985}
   canvasGroup: {fileID: 1429360765}
   cardRect: {fileID: 1429360761}
-  promptDelay: 3
+  promptDelay: 1
   collapseDuration: 0.24
 --- !u!114 &1429360763
 MonoBehaviour:
@@ -29964,7 +30007,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -30702,7 +30745,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 1258501519}
   visualShape: {fileID: 1902367657}
@@ -31101,7 +31144,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e5fd9330abb547bc83c9d22295cfc27, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialFallingHazardHost
   trainingHost: {fileID: 825025869}
 --- !u!50 &1505822240
@@ -31587,7 +31630,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7927198a45804dc68d4a22bef4a3852, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialQuestGateHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -31967,7 +32010,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -32057,14 +32100,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd31cecc0fbd149048518dfd24e1a291, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.CombatActorHost
   combatSystemHost: {fileID: 465223169}
   actorId: ENEMY-EXT-B-04
   kind: 1
   maxHealth: 85
   stageId: TUTORIAL-EXTERIOR-B
-  unlockTreeId:
+  unlockTreeId: 
   hitRecoverySeconds: 0.15
 --- !u!114 &1568885402
 MonoBehaviour:
@@ -32076,7 +32119,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8d6902f152442eb5e39ce339b4895, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatVisualMotionHost
   actor: {fileID: 1568885401}
   visualRoot: {fileID: 1429997228}
@@ -32099,7 +32142,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ae79fc3b818d4bb6b9ea79391c167b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.EnemyAttackHost
   sourceActor: {fileID: 1568885401}
   attackHitbox: {fileID: 1325555697}
@@ -32190,7 +32233,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6f9269c80564af99097b23d574b517, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.ArtReplacementContractHost
   actorRoot: {fileID: 1568885405}
   visualRoot: {fileID: 1311562216}
@@ -32340,7 +32383,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32dad07b03883478899cadc80ec01b0f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatHealthTextPresenter
   actorHost: {fileID: 397905174}
   alternateActorHosts: []
@@ -32362,7 +32405,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -33240,7 +33283,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0.25, g: 0.92, b: 0.85, a: 0.9}
@@ -33411,7 +33454,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -33467,7 +33510,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -33490,7 +33533,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1649562016
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33931,7 +33974,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -33954,7 +33997,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!1 &1687439780
 GameObject:
   m_ObjectHideFlags: 0
@@ -34173,7 +34216,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 938273f9c148649bda788903e573ad23, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialBossArenaHost
   serviceRoot: {fileID: 465223170}
   combatSystemHost: {fileID: 465223169}
@@ -34682,7 +34725,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
@@ -34761,7 +34804,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -35057,7 +35100,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d9252e2ae30447e1adaa492ed354368, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitlePresenter
   canvasGroup: {fileID: 1752482090}
   subtitleText: {fileID: 1161337675}
@@ -35087,7 +35130,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -35163,7 +35206,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.82, g: 0.16, b: 0.24, a: 1}
@@ -35865,7 +35908,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 496372809}
   visualShape: {fileID: 65474689}
@@ -36174,7 +36217,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -36295,7 +36338,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68b09d917f4ec4a78a35c9abcf99fed4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.BossHealthBarPresenter
   arenaHost: {fileID: 1694739986}
   bossActor: {fileID: 843924505}
@@ -36325,7 +36368,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -36385,12 +36428,126 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 569f1aa75503e49e8bd5a5724c2a81da, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.BossCombatCuePresenter
   arenaHost: {fileID: 1694739986}
   patternHost: {fileID: 843924508}
   cueRoot: {fileID: 1927381350}
   cueText: {fileID: 1927381351}
+--- !u!1 &1843846644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1843846645}
+  - component: {fileID: 1843846647}
+  - component: {fileID: 1843846646}
+  m_Layer: 0
+  m_Name: CharacterSprite_ART
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1843846645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1843846644}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.10042283, y: 0.10042283, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 392459533}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &1843846646
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1843846644}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 1d92dfcafb12048bd940a4e2b3660957, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!212 &1843846647
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1843846644}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 9220336061761822636, guid: 8337cd23d6f9442babc100c6b919ead3, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 7.07, y: 9.46}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
 --- !u!1 &1851284825
 GameObject:
   m_ObjectHideFlags: 0
@@ -37373,7 +37530,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05bde841c71f74b079195583ca3b59a7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TutorialLoreSubtitleTriggerHost
   presenter: {fileID: 1752482089}
   questSequenceHost: {fileID: 465223176}
@@ -37752,7 +37909,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -38397,7 +38554,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -38420,7 +38577,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1927381352
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38682,7 +38839,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -38705,7 +38862,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text:
+  m_Text: 
 --- !u!222 &1948084269
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38910,7 +39067,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.55, g: 0.6, b: 0.65, a: 1}
@@ -40214,7 +40371,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b98730ada95394094b7caa3920742f32, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialJumpTrainingHost
   serviceRoot: {fileID: 465223170}
   questSequenceHost: {fileID: 465223176}
@@ -40276,7 +40433,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
@@ -40546,7 +40703,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
@@ -40969,7 +41126,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215f4ef1fae024a3b810d56e4321f81a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.TerrainBlock
   collisionShape: {fileID: 700159319}
   visualShape: {fileID: 270941100}
@@ -41053,7 +41210,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -41961,7 +42118,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9487943a8466b480f835462e09057b97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.InventoryPanelButtonHost
   inventoryPanelPresenter: {fileID: 374043888}
   closePanel: 0
@@ -41975,7 +42132,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -42019,7 +42176,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.08, g: 0.42, b: 0.48, a: 0.98}
@@ -42275,7 +42432,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d484cc2292bf45758325663f606415e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialGoalHost
   serviceRoot: {fileID: 465223170}
   saveSystemHost: {fileID: 465223174}

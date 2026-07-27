@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Narthex.Content;
@@ -83,7 +84,10 @@ namespace Narthex.Tools
             if (chapter0Intro != null && !chapter0Intro.HasValidSetup)
                 issues.Add("Chapter0 A/B intro flow has missing room, passkey, camera, UI, or save references.");
             if (chapter0Intro != null && !chapter0Intro.HasValidUpdraftSetup)
-                issues.Add("Chapter0 updraft must reach above the passkey while remaining inside the hidden-room camera bounds and use positive lift speeds.");
+                issues.Add("Chapter0 updraft must clear the return ledge, reach above the passkey, remain inside the hidden-room camera bounds, and use positive lift speeds.");
+            if (chapter0Intro != null &&
+                (chapter0Intro.UpdraftLiftSpeed < 6.5f || chapter0Intro.UpdraftMaxRiseSpeed < 4.5f))
+                issues.Add("Chapter0 hidden-room return updraft must use at least 6.5 lift and 4.5 maximum rise speed.");
             RequireComponent<ModuleSystemHost>(systems, issues);
             RequireComponent<ModuleTreeManagerHost>(systems, issues);
             RequireComponent<RewardExecutorHost>(systems, issues);
@@ -118,20 +122,43 @@ namespace Narthex.Tools
             var questSequence = systems != null ? systems.GetComponent<TutorialQuestSequenceHost>() : null;
             if (questSequence != null && !questSequence.HasValidSequence)
                 issues.Add("TutorialQuestSequenceHost has no valid quest sequence.");
+            if (questSequence != null)
+            {
+                var expectedOrder = new[]
+                {
+                    "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-002", "QST-TUTO-006", "QST-TUTO-003",
+                    "QST-TUTO-005", "QST-TUTO-007", "QST-TUTO-007-A", "QST-TUTO-007-B", "QST-TUTO-008"
+                };
+                var sequenceSerialized = new SerializedObject(questSequence);
+                var sequenceProperty = sequenceSerialized.FindProperty("questSequence");
+                var actualOrder = new string[sequenceProperty.arraySize];
+                for (var index = 0; index < sequenceProperty.arraySize; index++)
+                {
+                    var definition = sequenceProperty.GetArrayElementAtIndex(index).objectReferenceValue as QuestDefinition;
+                    actualOrder[index] = definition != null ? definition.StableId : string.Empty;
+                }
+                if (!actualOrder.SequenceEqual(expectedOrder))
+                    issues.Add($"Tutorial quest order must be {string.Join(" -> ", expectedOrder)}.");
+            }
 
             var narrativeSequence = systems != null ? systems.GetComponent<TutorialNarrativeSequenceHost>() : null;
+            var dialoguePresenter = systems != null ? systems.GetComponent<TutorialDialoguePresenter>() : null;
             if (narrativeSequence != null)
             {
                 if (!narrativeSequence.HasValidSetup || narrativeSequence.BeatCount != 10)
                     issues.Add("TutorialNarrativeSequenceHost must contain all ten tutorial beats.");
                 if (narrativeSequence.GetLineCount("QST-TUTO-001") != 10)
                     issues.Add("HQ narrative must contain the ten confirmed Notion A-scene lines; the departure line is published after the introduction card.");
-                if (!narrativeSequence.HasDeferredBeat("QST-TUTO-006", "TUTORIAL-TRAINING-EXIT") ||
-                    !narrativeSequence.HasDeferredBeat("QST-TUTO-007-A", "TUTORIAL-Z03-EXIT") ||
+                if (narrativeSequence.GetLineCount("QST-TUTO-008") != 2)
+                    issues.Add("Helte's QST-TUTO-008 entry beat must contain only the two dock-approach lines; the encounter lines belong to the dock trigger.");
+                if (!narrativeSequence.HasDeferredBeat("QST-TUTO-007-A", "TUTORIAL-EXTERIOR-TO-ENCOUNTER-A") ||
                     !narrativeSequence.HasDeferredBeat("QST-TUTO-007-B", "TUTORIAL-ENCOUNTER-A-EXIT") ||
                     !narrativeSequence.HasDeferredBeat("QST-TUTO-008", "TUTORIAL-ENCOUNTER-B-EXIT"))
                     issues.Add("Zone-entry narrative beats must wait for their matching portal transitions.");
             }
+            if (dialoguePresenter != null &&
+                !dialoguePresenter.HasIntroductionDefinition("QST-TUTO-008-HELTE", true))
+                issues.Add("Helte's introduction card must appear after the dock encounter dialogue, not at the dock entrance.");
 
             var bossEncounter = systems != null ? systems.GetComponent<TutorialBossEncounterHost>() : null;
             if (bossEncounter != null && !bossEncounter.HasValidSetup)
@@ -157,16 +184,12 @@ namespace Narthex.Tools
             RequireComponent<PlayerMotorHost>(player, issues);
             RequireComponent<CombatActorHost>(player, issues);
             RequireComponent<MeleeAttackHost>(player, issues);
-            RequireComponent<TutorialModuleUseHost>(player, issues);
             RequireComponent<CombatVisualMotionHost>(player, issues);
             RequireChild(player, "GroundProbe", issues);
             var attackAnchor = RequireChild(player, "AttackAnchor", issues);
             var pulseHitbox = RequireChild(attackAnchor, "ModulePulseHitbox", issues);
-            RequireChild(pulseHitbox, "PulseProjectileVisual_ART_SLOT", issues);
-            var pulseHost = pulseHitbox != null ? pulseHitbox.GetComponent<ModulePulseHost>() : null;
-            RequireComponent<ModulePulseHost>(pulseHitbox, issues);
-            if (pulseHost != null && !pulseHost.HasValidSetup)
-                issues.Add("ModulePulseHost has no valid moving projectile visual setup.");
+            if (pulseHitbox != null && pulseHitbox.activeInHierarchy)
+                issues.Add("Legacy pulse hitbox must remain disabled now that key 2 is assigned to Prome's ranged attack.");
 
             var playerInput = player != null ? player.GetComponent<PlayerInputHost>() : null;
             if (playerInput != null && !playerInput.UsesCSharpEvents)
@@ -187,23 +210,46 @@ namespace Narthex.Tools
             RequireComponent<PlayerRangedAttackHost>(rangedRoot, issues);
             var rangedAttack = rangedRoot != null ? rangedRoot.GetComponent<PlayerRangedAttackHost>() : null;
             RequireChild(rangedRoot, "RangedProjectileVisual_ART_SLOT", issues);
-            if (rangedAttack != null && (!rangedAttack.HasValidSetup || rangedAttack.HasAssignedInput))
-                issues.Add("Prome's ranged attack must be fully pre-placed but remain unbound until its activation input is decided.");
+            if (rangedAttack != null && (!rangedAttack.HasValidSetup || !rangedAttack.HasAssignedInput ||
+                                         !Mathf.Approximately(rangedAttack.CooldownSeconds, 1.5f)))
+                issues.Add("Prome's ranged attack must be bound to key 2 with valid references and a 1.5 second cooldown.");
 
             var playerMotor = player != null ? player.GetComponent<PlayerMotorHost>() : null;
             if (playerMotor != null && !playerMotor.HasServiceRoot)
                 issues.Add("PlayerMotorHost requires a ServiceRoot reference for tutorial signals.");
+            if (playerMotor != null &&
+                (!Mathf.Approximately(playerMotor.DashCooldownSeconds, 0.5f) ||
+                 playerMotor.DashDurationSeconds <= 0f))
+                issues.Add("Prome's invulnerable dash must use a positive duration followed by a 0.5 second cooldown.");
+            if (playerMotor != null &&
+                !Mathf.Approximately(
+                    PlayerDashTimingPolicy.ResolveNextAllowedTime(
+                        0f,
+                        playerMotor.DashDurationSeconds,
+                        playerMotor.DashCooldownSeconds),
+                    playerMotor.DashDurationSeconds + 0.5f))
+                issues.Add("Prome's dash cooldown must begin after the invulnerable dash duration ends.");
 
             var moduleUseHost = player != null ? player.GetComponent<TutorialModuleUseHost>() : null;
-            if (moduleUseHost != null && !moduleUseHost.HasValidSetup)
-                issues.Add("TutorialModuleUseHost has no valid module setup.");
+            if (moduleUseHost != null && moduleUseHost.enabled)
+                issues.Add("Legacy tutorial pulse input must be disabled while the module system itself remains available.");
 
             var tutorialGuide = RequireObject("TutorialGuideCompanion", issues);
             RequireComponent<TutorialGuideCompanionHost>(tutorialGuide, issues);
+            RequireComponent<TutorialTheusLightFormHost>(tutorialGuide, issues);
             var guideVisual = RequireChild(tutorialGuide, "Visual", issues);
             RequireChild(guideVisual, "ModelSlot", issues);
             RequireChild(guideVisual, "EffectsSlot", issues);
             RequireChild(guideVisual, "AttachmentSlot", issues);
+            var theusLightFormRoot = RequireChild(tutorialGuide, "TheusLightFormRoot", issues);
+            RequireChild(theusLightFormRoot, "LightCore_ART_SLOT", issues);
+            RequireChild(theusLightFormRoot, "LightHalo_ART_SLOT", issues);
+            RequireChild(theusLightFormRoot, "LightBeam_ART_SLOT", issues);
+            var theusLightForm = tutorialGuide != null
+                ? tutorialGuide.GetComponent<TutorialTheusLightFormHost>()
+                : null;
+            if (theusLightForm != null && !theusLightForm.HasValidSetup)
+                issues.Add("TutorialTheusLightFormHost requires normal, light-core, beam, and passkey references.");
 
             var hqGuideRoute = RequireObject("HQGuideRouteController", issues);
             RequireComponent<TutorialGuideRouteHost>(hqGuideRoute, issues);
@@ -231,7 +277,6 @@ namespace Narthex.Tools
             RequireChild(hiddenAnchors, "PasskeyTarget", issues);
             RequireChild(hiddenAnchors, "HiddenReturnTarget", issues);
             RequireObject("HiddenRoomEntryTrigger", issues);
-            RequireObject("TheusFlashlight_ART_SLOT", issues);
             RequireObject("TheusWrongWayAlarm_ART_SLOT", issues);
 
             var objectiveBeacon = RequireObject("TutorialObjectiveBeacon", issues);
@@ -243,7 +288,82 @@ namespace Narthex.Tools
             if (beaconHost != null && !beaconHost.HasValidSetup)
                 issues.Add("TutorialObjectiveBeaconHost has invalid quest, player, or visual references.");
             if (beaconHost != null && !beaconHost.HasTarget("QST-TUTO-006"))
-                issues.Add("TutorialObjectiveBeaconHost must guide the player to the equipment pickup.");
+                issues.Add("TutorialObjectiveBeaconHost must guide the player to the double-jump practice platform.");
+            if (beaconHost != null && !beaconHost.HasTarget("QST-TUTO-007"))
+                issues.Add("TutorialObjectiveBeaconHost must guide the player to the emergency training-room exit.");
+
+            var emergencyExit = RequireObject("D02_EmergencyExit_To_C02", issues);
+            RequireComponent<BoxCollider2D>(emergencyExit, issues);
+            RequireComponent<TutorialEmergencyZoneTransitionHost>(emergencyExit, issues);
+            var emergencyTransition = emergencyExit != null
+                ? emergencyExit.GetComponent<TutorialEmergencyZoneTransitionHost>()
+                : null;
+            if (emergencyTransition != null &&
+                (!emergencyTransition.HasValidSetup || !emergencyTransition.UsesBlackoutRun))
+                issues.Add("Training-room emergency exit requires blackout, running audio, C02 spawn, and camera references.");
+
+            var c02MeetingExit = RequireObject("C02_Exit_MeetingSide", issues);
+            RequireComponent<BoxCollider2D>(c02MeetingExit, issues);
+            RequireComponent<TutorialEmergencyMeetingArrivalHost>(c02MeetingExit, issues);
+            var meetingArrival = c02MeetingExit != null
+                ? c02MeetingExit.GetComponent<TutorialEmergencyMeetingArrivalHost>()
+                : null;
+            if (meetingArrival != null &&
+                (!meetingArrival.HasValidSetup || !meetingArrival.LocksDepartureUntilDialogue ||
+                 meetingArrival.DialogueLineCount != 6))
+                issues.Add("C02 meeting-side exit requires a six-line A03 reunion and a dialogue-locked departure.");
+
+            RequireObject("A03_회의장_긴급복귀스폰", issues);
+            RequireObject("C03_Spawn_MeetingSide", issues);
+            var a03Departure = RequireObject("A03_Exit_To_C03", issues);
+            RequireComponent<BoxCollider2D>(a03Departure, issues);
+            RequireComponent<TutorialZoneTransitionHost>(a03Departure, issues);
+            var a03DepartureHost = a03Departure != null
+                ? a03Departure.GetComponent<TutorialZoneTransitionHost>()
+                : null;
+            if (a03DepartureHost != null && !a03DepartureHost.HasValidSetup)
+                issues.Add("A03 meeting departure requires valid C03 spawn, camera, player, and fade references.");
+
+            var c03State = RequireObject("C03_긴급이동_연출", issues);
+            RequireObject("C03_LadderEntry", issues);
+            RequireObject("C03_LadderExit", issues);
+            var c03Lore = c03State != null
+                ? c03State.GetComponentsInChildren<TutorialLoreSubtitleTriggerHost>(true)
+                : Array.Empty<TutorialLoreSubtitleTriggerHost>();
+            var c03Shakes = c03State != null
+                ? c03State.GetComponentsInChildren<TutorialCameraShakeTriggerHost>(true)
+                : Array.Empty<TutorialCameraShakeTriggerHost>();
+            if (c03Lore.Length != 2 || c03Lore.Any(host => host == null || !host.HasValidSetup))
+                issues.Add("C03 requires exactly two valid emergency subtitle triggers.");
+            if (c03Shakes.Length != 2 || c03Shakes.Any(host => host == null || !host.HasValidSetup))
+                issues.Add("C03 requires exactly two valid camera-shake triggers.");
+
+            var c03ExteriorExit = RequireObject("C03_Exit_ExteriorSide", issues);
+            RequireComponent<BoxCollider2D>(c03ExteriorExit, issues);
+            RequireComponent<TutorialZoneTransitionHost>(c03ExteriorExit, issues);
+            var c03ExteriorTransition = c03ExteriorExit != null
+                ? c03ExteriorExit.GetComponent<TutorialZoneTransitionHost>()
+                : null;
+            if (c03ExteriorTransition != null &&
+                (!c03ExteriorTransition.HasValidSetup || !c03ExteriorTransition.UsesLadderSequence ||
+                 !c03ExteriorTransition.RequiresInteraction || !c03ExteriorTransition.HasValidLadderSetup))
+                issues.Add("C03 exterior exit requires F interaction, the ladder sequence, and valid E01 transition references.");
+
+            var exteriorViewAnchor = RequireObject("E01_InvasionViewAnchor", issues);
+            RequireComponent<BoxCollider2D>(exteriorViewAnchor, issues);
+            RequireComponent<TutorialExteriorInvasionViewHost>(exteriorViewAnchor, issues);
+            var exteriorView = exteriorViewAnchor != null
+                ? exteriorViewAnchor.GetComponent<TutorialExteriorInvasionViewHost>()
+                : null;
+            if (exteriorView != null &&
+                (!exteriorView.HasValidSetup || !exteriorView.PreservesPlayerControl ||
+                 exteriorView.SubtitleCount != 2))
+                issues.Add("E01 invasion view requires two subtitles and must preserve player control.");
+
+            var exteriorColliders = RequireObject("외부 충돌체", issues);
+            if (exteriorColliders != null &&
+                exteriorColliders.GetComponentsInChildren<BoxCollider2D>(true).Length == 0)
+                issues.Add("E01 requires collision proxies for the level designer's white blockout shapes.");
 
             var tutorialAudioRoot = RequireObject("TutorialAudioRoot", issues);
             RequireComponent<TutorialSfxCueHost>(tutorialAudioRoot, issues);
@@ -276,8 +396,8 @@ namespace Narthex.Tools
                 ? actionScopes.GetComponent<TutorialTrainingActionScopeHost>()
                 : null;
             if (actionScopeHost != null && !actionScopeHost.HasValidSetup)
-                issues.Add("TutorialTrainingActionScopeHost requires four valid lesson-lane trigger areas.");
-            var scopeNames = new[] { "Dash", "Jump", "Attack", "Pulse" };
+                issues.Add("TutorialTrainingActionScopeHost requires five valid training-room trigger areas.");
+            var scopeNames = new[] { "Dash", "Jump", "DoubleJump", "Attack", "Ranged" };
             for (var scopeIndex = 0; scopeIndex < scopeNames.Length; scopeIndex++)
             {
                 var scopeObject = RequireChild(actionScopes, $"TrainingScope_{scopeNames[scopeIndex]}", issues);
@@ -323,8 +443,33 @@ namespace Narthex.Tools
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Quests/QST-TUTO-006.asset");
             if (doubleJumpCondition == null || doubleJumpCondition.SignalType != QuestSignalType.DoubleJumpPerformed ||
                 doubleJumpCondition.TargetId != "PLAYER-001" || equipmentQuest == null ||
-                equipmentQuest.Conditions == null || !equipmentQuest.Conditions.Contains(doubleJumpCondition))
-                issues.Add("QST-TUTO-006 must require one actual PLAYER-001 double jump.");
+                equipmentQuest.Conditions == null || equipmentQuest.Conditions.Length != 1 ||
+                equipmentQuest.Conditions[0] != doubleJumpCondition)
+                issues.Add("QST-TUTO-006 must require only one actual PLAYER-001 double jump.");
+            var meleeComboCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
+                "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-003-ATTACK.asset");
+            if (meleeComboCondition == null || meleeComboCondition.SignalType != QuestSignalType.AttackPerformed ||
+                meleeComboCondition.RequiredAmount != 3)
+                issues.Add("QST-TUTO-003 must count three successful melee hits against a target.");
+            var rangedCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
+                "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-005-RANGED-TRIPLE-HIT.asset");
+            if (rangedCondition == null || rangedCondition.SignalType != QuestSignalType.RangedTripleHitPerformed ||
+                rangedCondition.RequiredAmount != 1)
+                issues.Add("QST-TUTO-005 must require one projectile to penetrate all three ranged targets.");
+            var importedTrainingFlow = RequireObject("TrainingFlowManager", issues);
+            RequireComponent<TutorialImportedTrainingFlowHost>(importedTrainingFlow, issues);
+            var importedTrainingHost = importedTrainingFlow != null
+                ? importedTrainingFlow.GetComponent<TutorialImportedTrainingFlowHost>()
+                : null;
+            if (importedTrainingHost != null &&
+                (!importedTrainingHost.HasValidSetup || importedTrainingHost.RangedTargetCount != 3))
+                issues.Add("Imported training flow requires room bounds, automatic boots, and exactly three ranged targets.");
+            var phaseController = importedTrainingFlow != null
+                ? importedTrainingFlow.GetComponent<TutorialTrainingPhaseControllerHost>()
+                : null;
+            if (RequireObject("훈련장 배치 마커", issues) != null &&
+                (phaseController == null || !phaseController.HasValidSetup))
+                issues.Add("Imported training room requires one valid sequential phase controller.");
             var doubleJumpPractice = RequireObject("DoubleJumpPracticeRoot", issues);
             var lowPracticePlatform = RequireChild(doubleJumpPractice, "DoubleJumpPlatform_Low_ART_SLOT", issues);
             var highPracticePlatform = RequireChild(doubleJumpPractice, "DoubleJumpPlatform_High_ART_SLOT", issues);
@@ -360,6 +505,8 @@ namespace Narthex.Tools
                 : null;
             if (bossArenaHost != null && !bossArenaHost.HasValidSetup)
                 issues.Add("Tutorial boss arena has invalid entry, boss, warning, or pattern-lane references.");
+            if (bossArenaHost != null && !Mathf.Approximately(bossArenaHost.IntroWarningSeconds, 1.1f))
+                issues.Add("Helte's pre-combat camera and warning presentation must last 1.1 seconds.");
             RequireObject("BossArena_StartTrigger", issues);
             RequireObject("BossArena_EntryGate_ART_SLOT", issues);
             RequireObject("BossWarning_ART_SLOT", issues);
@@ -414,6 +561,14 @@ namespace Narthex.Tools
             if (bossStartTrigger != null && helte != null &&
                 Mathf.Abs(bossStartTrigger.transform.position.x - helte.transform.position.x) > 12f)
                 issues.Add("Helte must be visible from the arena start trigger in the compact tutorial arena.");
+            var helteDialogueTrigger = RequireObject("H01_헬테조우대화_TRIGGER", issues);
+            RequireComponent<BoxCollider2D>(helteDialogueTrigger, issues);
+            RequireComponent<TutorialHelteEncounterDialogueHost>(helteDialogueTrigger, issues);
+            var helteDialogue = helteDialogueTrigger != null
+                ? helteDialogueTrigger.GetComponent<TutorialHelteEncounterDialogueHost>()
+                : null;
+            if (helteDialogue != null && (!helteDialogue.HasValidSetup || helteDialogue.LineCount != 2))
+                issues.Add("Helte's dock encounter must split the two encounter lines from the entry dialogue and set the retry checkpoint.");
 
             var goal = RequireObject("GoalMarker", issues);
             RequireComponent<TutorialGoalHost>(goal, issues);
@@ -574,14 +729,16 @@ namespace Narthex.Tools
             var introductionCardModule = introductionCard != null
                 ? introductionCard.GetComponent<DialogueIntroductionCardModule>()
                 : null;
-            if (introductionCardModule != null && !introductionCardModule.UsesTimedCollapse)
-                issues.Add("Theus introduction card must wait three seconds and use the vertical collapse close animation.");
+            if (introductionCardModule != null &&
+                (!introductionCardModule.UsesTimedCollapse ||
+                 Mathf.Abs(introductionCardModule.PromptDelay - 1f) > 0.01f))
+                issues.Add("Introduction cards must allow any-key dismissal after one second and use the vertical collapse close animation.");
 
             var loreTriggers = Resources.FindObjectsOfTypeAll<TutorialLoreSubtitleTriggerHost>()
                 .Where(candidate => candidate != null && candidate.gameObject.scene.IsValid())
                 .ToArray();
-            if (loreTriggers.Length != 5)
-                issues.Add($"Tutorial route must have exactly five Teus lore subtitle triggers, but found {loreTriggers.Length}.");
+            if (loreTriggers.Length < 5)
+                issues.Add($"Tutorial route must retain at least five Teus lore subtitle triggers, but found {loreTriggers.Length}.");
             foreach (var loreTrigger in loreTriggers)
                 if (!loreTrigger.HasValidSetup)
                     issues.Add($"Lore subtitle trigger '{loreTrigger.name}' has invalid quest, player, text, presenter, or collider setup.");
@@ -621,42 +778,159 @@ namespace Narthex.Tools
             RequireChild(ladderVisual, "LadderEntry", issues);
             RequireChild(ladderVisual, "LadderExit", issues);
 
-            var trainingGates = Resources.FindObjectsOfTypeAll<TutorialQuestGateHost>();
-            if (trainingGates.Length != 4)
-                issues.Add($"Tutorial training room must have exactly 4 quest gates, but found {trainingGates.Length}.");
-            foreach (var trainingGate in trainingGates)
-                if (trainingGate != null && !trainingGate.HasValidSetup)
-                    issues.Add($"TutorialQuestGateHost '{trainingGate.name}' has invalid quest, collider, or visual references.");
+            var trainingGateRoot = RequireObject("TrainingExitGates", issues);
+            var sequentialTraining = RequireObject("훈련장 배치 마커", issues) != null;
+            if (sequentialTraining)
+            {
+                var singleTrainingGate = RequireObject("Gate_Block_TrainingExit", issues);
+                RequireComponent<Collider2D>(singleTrainingGate, issues);
+                RequireComponent<Renderer>(singleTrainingGate, issues);
+                var activeLegacyGates = trainingGateRoot != null
+                    ? trainingGateRoot.GetComponentsInChildren<TutorialQuestGateHost>(true)
+                        .Count(host => host.enabled && host.gameObject.activeInHierarchy)
+                    : 0;
+                if (activeLegacyGates != 0)
+                    issues.Add("Sequential training must disable all five legacy quest-gate behaviours.");
+            }
+            else
+            {
+                var trainingGates = Resources.FindObjectsOfTypeAll<TutorialQuestGateHost>();
+                if (trainingGates.Length != 5)
+                    issues.Add($"Tutorial training room must have exactly 5 quest gates, but found {trainingGates.Length}.");
+                foreach (var trainingGate in trainingGates)
+                    if (trainingGate != null && !trainingGate.HasValidSetup)
+                        issues.Add($"TutorialQuestGateHost '{trainingGate.name}' has invalid quest, collider, or visual references.");
+            }
 
-            var encounterAController = RequireObject("EncounterA_Controller", issues);
-            RequireComponent<TutorialSequentialEncounterHost>(encounterAController, issues);
+            var encounterAController = RequireObject("F01_EncounterController", issues);
+            RequireComponent<TutorialSimultaneousEncounterHost>(encounterAController, issues);
             var encounterAHost = encounterAController != null
-                ? encounterAController.GetComponent<TutorialSequentialEncounterHost>()
+                ? encounterAController.GetComponent<TutorialSimultaneousEncounterHost>()
                 : null;
-            if (encounterAHost != null && !encounterAHost.HasValidSetup)
-                issues.Add("Exterior encounter A has invalid enemy, spawn, warning, or exit-gate references.");
+            if (encounterAHost != null &&
+                (!encounterAHost.HasValidSetup || !encounterAHost.ActivatesAllEnemiesAtOnce ||
+                 encounterAHost.EnemyCount != 3))
+                issues.Add("Exterior encounter A must activate three valid enemies together and lock its exit gate.");
             for (var enemyIndex = 1; enemyIndex <= 3; enemyIndex++)
             {
                 var exteriorEnemy = RequireObject($"ExteriorA_Enemy_0{enemyIndex}_ART_SLOT", issues);
                 RequireComponent<CombatActorHost>(exteriorEnemy, issues);
                 RequireComponent<EnemyAttackHost>(exteriorEnemy, issues);
                 RequireComponent<CombatVisualMotionHost>(exteriorEnemy, issues);
+                RequireComponent<TutorialEnemyPursuitHost>(exteriorEnemy, issues);
+                var pursuit = exteriorEnemy != null
+                    ? exteriorEnemy.GetComponent<TutorialEnemyPursuitHost>()
+                    : null;
+                if (pursuit != null && !pursuit.HasValidSetup)
+                    issues.Add($"Exterior encounter A enemy 0{enemyIndex} has an invalid player-pursuit setup.");
             }
+            RequireObject("F01_Spawn_ExteriorSide", issues);
+            RequireObject("F01_Exit_ToG", issues);
+            var fGate = RequireObject("F01_출구잠금문_PROXY", issues);
+            RequireComponent<BoxCollider2D>(fGate, issues);
+            RequireComponent<TutorialGateVisualBindingHost>(fGate, issues);
+            if (fGate != null && fGate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
+                issues.Add("F01 exit gate proxy must reference the level designer's thin door renderer.");
+            var exteriorToF = RequireObject("E01_Exit_ToF", issues);
+            RequireComponent<BoxCollider2D>(exteriorToF, issues);
+            RequireComponent<TutorialZoneTransitionHost>(exteriorToF, issues);
+            var exteriorToFHost = exteriorToF != null
+                ? exteriorToF.GetComponent<TutorialZoneTransitionHost>()
+                : null;
+            if (exteriorToFHost != null && !exteriorToFHost.HasValidSetup)
+                issues.Add("E01 to F01 transition has invalid player, camera, zone, or checkpoint references.");
 
-            var encounterBController = RequireObject("EncounterB_Controller", issues);
+            var encounterBController = RequireObject("G01_EncounterController", issues);
             RequireComponent<TutorialWaveEncounterHost>(encounterBController, issues);
             var encounterBHost = encounterBController != null
                 ? encounterBController.GetComponent<TutorialWaveEncounterHost>()
                 : null;
-            if (encounterBHost != null && !encounterBHost.HasValidSetup)
-                issues.Add("Exterior encounter B has invalid wave, enemy, warning, or exit-gate references.");
+            if (encounterBHost != null &&
+                (!encounterBHost.HasValidSetup || !encounterBHost.RequiresTraversalForNextWave ||
+                 encounterBHost.WaveCount != 2 || encounterBHost.EnemyCount != 4))
+                issues.Add(
+                    "Exterior encounter B must use two valid enemy groups separated by a traversal gate.");
             for (var enemyIndex = 1; enemyIndex <= 4; enemyIndex++)
             {
                 var exteriorEnemy = RequireObject($"ExteriorB_Enemy_0{enemyIndex}_ART_SLOT", issues);
                 RequireComponent<CombatActorHost>(exteriorEnemy, issues);
                 RequireComponent<EnemyAttackHost>(exteriorEnemy, issues);
                 RequireComponent<CombatVisualMotionHost>(exteriorEnemy, issues);
+                RequireComponent<TutorialEnemyPursuitHost>(exteriorEnemy, issues);
+                var pursuit = exteriorEnemy != null
+                    ? exteriorEnemy.GetComponent<TutorialEnemyPursuitHost>()
+                    : null;
+                if (pursuit != null && !pursuit.HasValidSetup)
+                    issues.Add($"Exterior encounter B enemy 0{enemyIndex} has an invalid player-pursuit setup.");
             }
+            var encounterBPhaseTrigger = RequireObject("G01_후반부진입_TRIGGER", issues);
+            RequireComponent<BoxCollider2D>(encounterBPhaseTrigger, issues);
+            RequireComponent<TutorialEncounterPhaseTriggerHost>(encounterBPhaseTrigger, issues);
+            var phaseTriggerHost = encounterBPhaseTrigger != null
+                ? encounterBPhaseTrigger.GetComponent<TutorialEncounterPhaseTriggerHost>()
+                : null;
+            if (phaseTriggerHost != null &&
+                (!phaseTriggerHost.HasValidSetup || !phaseTriggerHost.HasDynamicGuidance))
+                issues.Add("Exterior encounter B phase trigger has invalid encounter, player, or objective guidance references.");
+            foreach (var gateName in new[] { "G01_내부통로잠금문_PROXY", "G01_출구잠금문_PROXY" })
+            {
+                var gate = RequireObject(gateName, issues);
+                RequireComponent<BoxCollider2D>(gate, issues);
+                RequireComponent<TutorialGateVisualBindingHost>(gate, issues);
+                if (gate != null && gate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
+                    issues.Add($"{gateName} must reference the level designer's thin door renderer.");
+            }
+            foreach (var transitionName in new[] { "F01_Exit_ToG", "G01_Exit_ToH" })
+            {
+                var transitionObject = RequireObject(transitionName, issues);
+                RequireComponent<BoxCollider2D>(transitionObject, issues);
+                RequireComponent<TutorialZoneTransitionHost>(transitionObject, issues);
+                var transition = transitionObject != null
+                    ? transitionObject.GetComponent<TutorialZoneTransitionHost>()
+                    : null;
+                if (transition != null && !transition.HasValidSetup)
+                    issues.Add($"{transitionName} has invalid player, zone, camera, or checkpoint references.");
+            }
+            RequireObject("G01_Spawn_FromF", issues);
+            RequireObject("H01_Spawn_FromG", issues);
+
+            var hazardCoordinatorObject = RequireObject("G02_HazardController", issues);
+            RequireComponent<TutorialEnvironmentHazardCoordinatorHost>(hazardCoordinatorObject, issues);
+            var hazardCoordinator = hazardCoordinatorObject != null
+                ? hazardCoordinatorObject.GetComponent<TutorialEnvironmentHazardCoordinatorHost>()
+                : null;
+            if (hazardCoordinator != null &&
+                (!hazardCoordinator.HasValidSetup ||
+                 !Mathf.Approximately(hazardCoordinator.LavaDamageFraction, 0.2f)))
+                issues.Add("G environment hazard coordinator must apply 20% lava damage and have a valid safe point.");
+
+            var fireHazards = Resources.FindObjectsOfTypeAll<TutorialFireHazardHost>()
+                .Where(host => host != null && host.gameObject.scene.IsValid())
+                .ToArray();
+            if (fireHazards.Length != 2 ||
+                fireHazards.Any(host => !host.HasValidSetup ||
+                                        !Mathf.Approximately(host.DamageFraction, 0.1f)))
+                issues.Add("G must have exactly two valid cyclic fire hazards dealing 10% max-health damage.");
+
+            var windHazards = Resources.FindObjectsOfTypeAll<TutorialWindHazardHost>()
+                .Where(host => host != null && host.gameObject.scene.IsValid())
+                .ToArray();
+            if (windHazards.Length != 2 ||
+                windHazards.Any(host => !host.HasValidSetup || !host.RequiresGlideInput))
+                issues.Add("G must have exactly two valid wind volumes that require held Space/glide input.");
+
+            var lavaHazards = Resources.FindObjectsOfTypeAll<TutorialLavaHazardHost>()
+                .Where(host => host != null && host.gameObject.scene.IsValid())
+                .ToArray();
+            if (lavaHazards.Length != 1 ||
+                lavaHazards.Any(host => !host.HasValidSetup || !host.ReturnsToLatestSafePoint))
+                issues.Add("G must have exactly one valid lava volume that returns the player to the latest safe point.");
+            var safePointTriggers = Resources.FindObjectsOfTypeAll<TutorialSafePointTriggerHost>()
+                .Where(host => host != null && host.gameObject.scene.IsValid())
+                .ToArray();
+            if (safePointTriggers.Length < lavaHazards.Length ||
+                safePointTriggers.Any(host => !host.HasValidSetup))
+                issues.Add("Every G lava volume must have a valid preceding safe-point trigger.");
 
             RequireNoScreenOverlap(objectivePanel, dialoguePanel, "Tutorial objective panel overlaps the dialogue panel.", issues);
             RequireNoScreenOverlap(objectivePanel, lorePanel, "Tutorial objective panel overlaps the lore subtitle panel.", issues);

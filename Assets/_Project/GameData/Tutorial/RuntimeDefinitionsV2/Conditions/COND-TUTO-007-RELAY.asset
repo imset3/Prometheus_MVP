@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Content::Narthex.Content.QuestConditionDefinition
   stableId: COND-TUTO-007-RELAY
   displayNameTextKey: 
-  SignalType: 6
-  TargetId: RELAY-TUTO-001
+  SignalType: 8
+  TargetId: TUTORIAL-EXTERIOR-TO-ENCOUNTER-A
   RequiredAmount: 1

@@ -15,7 +15,7 @@ MonoBehaviour:
   stableId: QST-TUTO-005
   displayNameTextKey: 
   Conditions:
-  - {fileID: 11400000, guid: a83f4e62ba8424303a9aa0f0049857c1, type: 2}
+  - {fileID: 11400000, guid: 90189f028b18045df8c654ac00f42ea1, type: 2}
   Rewards: []
   NextQuestIds:
-  - QST-TUTO-006
+  - QST-TUTO-007

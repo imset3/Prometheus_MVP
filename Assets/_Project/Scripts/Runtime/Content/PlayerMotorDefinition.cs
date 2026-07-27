@@ -11,7 +11,7 @@ namespace Narthex.Content
         public float GroundProbeRadius = 0.12f;
         public float DashSpeed = 14f;
         public float DashDuration = 0.16f;
-        public float DashCooldown = 0.55f;
+        public float DashCooldown = 0.5f;
         public float GlideFallSpeed = 3f;
     }
 }

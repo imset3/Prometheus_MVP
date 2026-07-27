@@ -82,7 +82,15 @@ namespace Narthex.Gameplay
                     if (condition == null) continue;
                     if (condition.SignalType == signal.SignalType && (string.IsNullOrEmpty(condition.TargetId) || condition.TargetId == signal.TargetId))
                     {
-                        state.Progress[condition.StableId] = Math.Min(condition.RequiredAmount, GetProgress(state, condition.StableId) + signal.Amount);
+                        var previousAmount = GetProgress(state, condition.StableId);
+                        var nextAmount = Math.Min(condition.RequiredAmount, previousAmount + signal.Amount);
+                        state.Progress[condition.StableId] = nextAmount;
+                        if (nextAmount != previousAmount)
+                            events.Publish(new QuestProgressChanged(
+                                pair.Key,
+                                condition.StableId,
+                                nextAmount,
+                                condition.RequiredAmount));
                     }
                     if (GetProgress(state, condition.StableId) < condition.RequiredAmount) allComplete = false;
                 }

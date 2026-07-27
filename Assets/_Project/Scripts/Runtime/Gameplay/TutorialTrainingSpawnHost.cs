@@ -32,6 +32,7 @@ namespace Narthex.Gameplay
         [SerializeField] private Transform player;
         [SerializeField] private Rigidbody2D playerBody;
         [SerializeField] private PlayerMotorHost playerMotor;
+        [SerializeField] private Collider2D activationArea;
         [SerializeField, Min(0f)] private float dashRestartDelay = 0.45f;
 
         [Header("Enemy Arrival")]
@@ -59,6 +60,7 @@ namespace Narthex.Gameplay
                                      fallingWarnings != null && fallingObjects.Length == fallingWarnings.Length &&
                                      HasCompleteWarningReferences() && dashRestartPoint != null &&
                                      player != null && playerBody != null && playerMotor != null &&
+                                     activationArea != null && activationArea.isTrigger &&
                                      !string.IsNullOrWhiteSpace(enemyQuestId) && tutorialEnemy != null &&
                                      enemySpawnPoint != null && enemyLandingPoint != null && enemyCollider != null &&
                                      enemyAttackBehaviour != null && enemySpawnWarning != null;
@@ -145,6 +147,9 @@ namespace Narthex.Gameplay
         private IEnumerator StartFallingWhenDialogueCloses()
         {
             fallingStartPending = true;
+            while (questSequenceHost.CurrentQuestId == fallingQuestId &&
+                   !activationArea.OverlapPoint(player.position))
+                yield return null;
             while (playerInputHost.IsDialogueInputClaimed && questSequenceHost.CurrentQuestId == fallingQuestId)
                 yield return null;
             if (postDialogueStartDelay > 0f && questSequenceHost.CurrentQuestId == fallingQuestId)

@@ -33,6 +33,7 @@ namespace Narthex.Presentation
         [SerializeField] private Transform equipmentDoubleJumpTarget;
         [SerializeField] private string equipmentQuestId = "QST-TUTO-006";
         [SerializeField] private string doubleJumpConditionId = "COND-TUTO-006-DOUBLE-JUMP";
+        [SerializeField] private bool equipmentGuidanceEnabled = true;
         [SerializeField] private Vector3 visualOffset = new(0f, 1.6f, 0f);
         [SerializeField, Min(0f)] private float hideDistance = 2.25f;
 
@@ -41,10 +42,12 @@ namespace Narthex.Presentation
         private bool externalTargetActive;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
-                                     player != null && beaconVisual != null && equipmentPickupHost != null &&
-                                     equipmentPickupTarget != null && equipmentDoubleJumpTarget != null &&
-                                     !string.IsNullOrWhiteSpace(equipmentQuestId) &&
-                                     !string.IsNullOrWhiteSpace(doubleJumpConditionId);
+                                     player != null && beaconVisual != null &&
+                                     (!equipmentGuidanceEnabled ||
+                                      (equipmentPickupHost != null && equipmentPickupTarget != null &&
+                                       equipmentDoubleJumpTarget != null &&
+                                       !string.IsNullOrWhiteSpace(equipmentQuestId) &&
+                                       !string.IsNullOrWhiteSpace(doubleJumpConditionId)));
 
         public bool HasTarget(string questId)
         {
@@ -140,6 +143,7 @@ namespace Narthex.Presentation
 
         private void RefreshEquipmentQuestTarget()
         {
+            if (!equipmentGuidanceEnabled) return;
             if (questSequenceHost.CurrentQuestId != equipmentQuestId) return;
             if (!equipmentPickupHost.IsCollected)
             {

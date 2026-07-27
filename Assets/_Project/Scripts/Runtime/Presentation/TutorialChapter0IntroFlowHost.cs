@@ -51,10 +51,17 @@ namespace Narthex.Presentation
 
     public static class TutorialUpdraftPolicy
     {
+        public const float RequiredReturnClearance = 2f;
+
         public static bool ShouldApply(bool glideHeld, Vector2 position, Vector2 minimum, Vector2 maximum)
         {
             return glideHeld && position.x >= minimum.x && position.x <= maximum.x &&
                    position.y >= minimum.y && position.y <= maximum.y;
+        }
+
+        public static bool HasReturnClearance(float updraftMaximumY, float returnTargetY)
+        {
+            return updraftMaximumY >= returnTargetY + RequiredReturnClearance;
         }
 
         public static float ResolveVerticalVelocity(
@@ -127,6 +134,7 @@ namespace Narthex.Presentation
         [Header("Pre-placed visuals")]
         [SerializeField] private GameObject passkeyVisual;
         [SerializeField] private GameObject theusFlashlightVisual;
+        [SerializeField] private TutorialTheusLightFormHost theusLightForm;
         [SerializeField] private GameObject wrongWayAlarmVisual;
         [SerializeField] private GameObject glideInstructionRoot;
         [SerializeField] private RectTransform glideKeyVisual;
@@ -150,8 +158,8 @@ namespace Narthex.Presentation
         [SerializeField, Min(0.1f)] private float transitionFadeIn = 0.45f;
         [SerializeField] private Vector2 updraftMin = new(-204f, -5f);
         [SerializeField] private Vector2 updraftMax = new(-190f, 3.8f);
-        [SerializeField, Min(0f)] private float updraftLiftSpeed = 5.5f;
-        [SerializeField, Min(0f)] private float updraftMaxRiseSpeed = 3.5f;
+        [SerializeField, Min(0f)] private float updraftLiftSpeed = 6.5f;
+        [SerializeField, Min(0f)] private float updraftMaxRiseSpeed = 4.5f;
         [SerializeField] private float glideRetryBelowY = -5.25f;
 
         private static readonly string[][] WrongWayResponses =
@@ -190,12 +198,20 @@ namespace Narthex.Presentation
                                      hiddenRoomSpawn != null && meetingReturnSpawn != null && hiddenRoomEntryTarget != null &&
                                      ledgeTarget != null && passkeyTarget != null && hiddenRoomReturnTarget != null && trainingExitTarget != null &&
                                      hiddenRoomEntryTrigger != null && ledgeTrigger != null && passkeyTrigger != null && hiddenRoomReturnTrigger != null &&
-                                     passkeyVisual != null && theusFlashlightVisual != null && wrongWayAlarmVisual != null &&
+                                     passkeyVisual != null && (theusLightForm != null || theusFlashlightVisual != null) &&
+                                     wrongWayAlarmVisual != null &&
                                      glideInstructionRoot != null && updraftVisual != null;
+        public bool UsesTheusLightForm => theusLightForm != null && theusLightForm.HasValidSetup;
+        public float UpdraftLiftSpeed => updraftLiftSpeed;
+        public float UpdraftMaxRiseSpeed => updraftMaxRiseSpeed;
         public bool HasValidUpdraftSetup => updraftMax.x > updraftMin.x &&
                                             updraftMax.y > updraftMin.y &&
                                             updraftMax.y <= hiddenCameraMaxY + 0.01f &&
                                             passkeyTarget != null && updraftMax.y > passkeyTarget.position.y &&
+                                            hiddenRoomReturnTarget != null &&
+                                            TutorialUpdraftPolicy.HasReturnClearance(
+                                                updraftMax.y,
+                                                hiddenRoomReturnTarget.position.y) &&
                                             updraftLiftSpeed > 0f && updraftMaxRiseSpeed > 0f;
 
         private void Awake()
@@ -217,7 +233,7 @@ namespace Narthex.Presentation
             legacyGuideRoute.enabled = false;
             trainingExitTransitionTrigger.enabled = false;
             hiddenRoomRoot.SetActive(false);
-            theusFlashlightVisual.SetActive(false);
+            SetTheusLightForm(false);
             wrongWayAlarmVisual.SetActive(false);
             glideInstructionRoot.SetActive(false);
             updraftVisual.SetActive(false);
@@ -384,7 +400,8 @@ namespace Narthex.Presentation
                 hiddenCameraMinY,
                 hiddenCameraMaxY,
                 true);
-            theusFlashlightVisual.SetActive(true);
+            serviceRoot.Events.Publish(new TutorialLocationChanged("숨겨진 방"));
+            SetTheusLightForm(true);
             passkeyVisual.SetActive(!HasPasskey);
             SaveStage(TutorialChapter0IntroProgress.HiddenRoomStageId, "TutorialIntroHiddenRoomEntered");
             if (transitionBlackHold > 0f) yield return new WaitForSecondsRealtime(transitionBlackHold);
@@ -409,8 +426,9 @@ namespace Narthex.Presentation
             guideCompanion.CancelGuide();
             guideCompanion.transform.position = meetingReturnSpawn.position + new Vector3(-1.1f, 1.1f, 0f);
             cameraFollowHost.SetBounds(meetingCameraMinX, meetingCameraMaxX, meetingCameraY, true);
+            serviceRoot.Events.Publish(new TutorialLocationChanged("회의장"));
             hiddenRoomRoot.SetActive(false);
-            theusFlashlightVisual.SetActive(false);
+            SetTheusLightForm(false);
             trainingExitTransitionTrigger.enabled = true;
             SaveStage(TutorialChapter0IntroProgress.ReturnStageId, "TutorialIntroReturnedToMeeting");
             if (transitionBlackHold > 0f) yield return new WaitForSecondsRealtime(transitionBlackHold);
@@ -459,6 +477,7 @@ namespace Narthex.Presentation
             run.TutorialIntroStageId = TutorialChapter0IntroProgress.ReturnStageId;
             saveSystemHost.System.Save("TutorialAirshipPasskeyCollected");
             passkeyVisual.SetActive(false);
+            SetTheusLightForm(false);
             glideInstructionRoot.SetActive(false);
             state = TutorialChapter0IntroState.ReturnToMeeting;
             objectiveBeacon.SetExternalTarget(hiddenRoomReturnTarget);
@@ -534,8 +553,9 @@ namespace Narthex.Presentation
             hiddenRoomRoot.SetActive(true);
             MovePlayer(hiddenRoomSpawn.position);
             cameraFollowHost.SetTrackingBounds(hiddenCameraMinX, hiddenCameraMaxX, hiddenCameraMinY, hiddenCameraMaxY, true);
+            serviceRoot.Events.Publish(new TutorialLocationChanged("숨겨진 방"));
             guideCompanion.transform.position = hiddenRoomSpawn.position + new Vector3(-1.1f, 1.1f, 0f);
-            theusFlashlightVisual.SetActive(true);
+            SetTheusLightForm(true);
             passkeyVisual.SetActive(true);
             updraftVisual.SetActive(true);
             trainingExitTransitionTrigger.enabled = false;
@@ -556,8 +576,9 @@ namespace Narthex.Presentation
             hiddenRoomRoot.SetActive(false);
             MovePlayer(meetingReturnSpawn.position);
             cameraFollowHost.SetBounds(meetingCameraMinX, meetingCameraMaxX, meetingCameraY, true);
+            serviceRoot.Events.Publish(new TutorialLocationChanged("회의장"));
             passkeyVisual.SetActive(false);
-            theusFlashlightVisual.SetActive(false);
+            SetTheusLightForm(false);
             trainingExitTransitionTrigger.enabled = true;
             objectiveBeacon.SetExternalTarget(trainingExitTarget);
             guideCompanion.BeginGuide(legacyGuideRoute.Waypoints);
@@ -567,9 +588,22 @@ namespace Narthex.Presentation
         {
             return new[]
             {
-                "테우스: 윽, 껌껌해.",
-                "프로메: 일단 더 들어가 볼까?"
+                "테우스: 윽, 껌껌해. 잠깐만.",
+                "테우스: 내가 빛으로 변해서 앞을 비출게. 패스키 반응이 저쪽에서 잡혀.",
+                "프로메: 좋아. 빛을 따라가 볼게."
             };
+        }
+
+        private void SetTheusLightForm(bool active)
+        {
+            if (theusLightForm != null)
+            {
+                if (active) theusLightForm.EnterLightForm();
+                else theusLightForm.ExitLightForm();
+                return;
+            }
+
+            if (theusFlashlightVisual != null) theusFlashlightVisual.SetActive(active);
         }
 
         private static string[] GlideBriefingDialogue()

@@ -28,6 +28,11 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float warningDuration = 0.55f;
         [SerializeField, Min(0f)] private float nextWaveDelay = 0.75f;
 
+        [Header("Traversal Gate")]
+        [SerializeField] private bool requireTraversalForNextWave;
+        [SerializeField] private Collider2D internalGateCollider;
+        [SerializeField] private Renderer internalGateRenderer;
+
         [Header("Exit Gate")]
         [SerializeField] private Collider2D exitGateCollider;
         [SerializeField] private Renderer exitGateRenderer;
@@ -35,6 +40,7 @@ namespace Narthex.Gameplay
         private readonly HashSet<string> activeEnemyIds = new HashSet<string>();
         private bool encounterStarted;
         private bool cleared;
+        private bool waitingForTraversal;
         private int currentWaveIndex = -1;
         private Coroutine waveRoutine;
 
@@ -44,9 +50,16 @@ namespace Narthex.Gameplay
                                      spawnPoints != null && spawnWarnings != null && waveEnemyCounts != null &&
                                      enemies.Length > 0 && enemies.Length == spawnPoints.Length &&
                                      enemies.Length == spawnWarnings.Length && HasValidWaveCounts() &&
+                                     (!requireTraversalForNextWave ||
+                                      (waveEnemyCounts.Length == 2 && internalGateCollider != null &&
+                                       internalGateRenderer != null)) &&
                                      exitGateCollider != null && exitGateRenderer != null;
         public bool EncounterStarted => encounterStarted;
         public bool IsCleared => cleared;
+        public bool RequiresTraversalForNextWave => requireTraversalForNextWave;
+        public bool IsWaitingForTraversal => waitingForTraversal;
+        public int WaveCount => waveEnemyCounts?.Length ?? 0;
+        public int EnemyCount => enemies?.Length ?? 0;
         public int CurrentWaveIndex => currentWaveIndex;
         public int ActiveEnemyCount => activeEnemyIds.Count;
 
@@ -61,6 +74,7 @@ namespace Narthex.Gameplay
 
             serviceRoot.Initialize();
             combatSystemHost.Initialize();
+            SetInternalGateLocked(requireTraversalForNextWave);
             SetGateLocked(true);
             for (var index = 0; index < enemies.Length; index++)
             {
@@ -74,6 +88,7 @@ namespace Narthex.Gameplay
             if (!HasValidSetup) return;
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost.Events.Subscribe<EnemyKilled>(HandleEnemyKilled);
+            combatSystemHost.Events.Subscribe<PlayerRespawned>(HandlePlayerRespawned);
         }
 
         private void Start() => TryStartEncounter(questSequenceHost.CurrentQuestId);
@@ -82,6 +97,7 @@ namespace Narthex.Gameplay
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost?.Events?.Unsubscribe<EnemyKilled>(HandleEnemyKilled);
+            combatSystemHost?.Events?.Unsubscribe<PlayerRespawned>(HandlePlayerRespawned);
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => TryStartEncounter(message.QuestId);
@@ -90,7 +106,7 @@ namespace Narthex.Gameplay
         {
             if (encounterStarted || cleared || questId != encounterQuestId) return;
             encounterStarted = true;
-            waveRoutine = StartCoroutine(SpawnWaveAfterDelay(0, initialDelay));
+            ResetEncounter();
         }
 
         private void HandleEnemyKilled(EnemyKilled message)
@@ -113,8 +129,58 @@ namespace Narthex.Gameplay
                 return;
             }
 
+            if (requireTraversalForNextWave)
+            {
+                waitingForTraversal = true;
+                SetInternalGateLocked(false);
+                return;
+            }
+
             if (waveRoutine != null) StopCoroutine(waveRoutine);
             waveRoutine = StartCoroutine(SpawnWaveAfterDelay(nextWaveIndex, nextWaveDelay));
+        }
+
+        public void TryAdvanceFromTraversal()
+        {
+            if (!requireTraversalForNextWave || !waitingForTraversal || cleared ||
+                questSequenceHost.CurrentQuestId != encounterQuestId)
+                return;
+
+            waitingForTraversal = false;
+            var nextWaveIndex = currentWaveIndex + 1;
+            if (nextWaveIndex >= waveEnemyCounts.Length) return;
+            if (waveRoutine != null) StopCoroutine(waveRoutine);
+            waveRoutine = StartCoroutine(SpawnWaveAfterDelay(nextWaveIndex, nextWaveDelay));
+        }
+
+        private void HandlePlayerRespawned(PlayerRespawned message)
+        {
+            if (cleared || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            encounterStarted = true;
+            ResetEncounter();
+        }
+
+        private void ResetEncounter()
+        {
+            if (waveRoutine != null)
+            {
+                StopCoroutine(waveRoutine);
+                waveRoutine = null;
+            }
+
+            activeEnemyIds.Clear();
+            waitingForTraversal = false;
+            currentWaveIndex = -1;
+            SetInternalGateLocked(requireTraversalForNextWave);
+            SetGateLocked(true);
+            for (var index = 0; index < enemies.Length; index++)
+            {
+                enemies[index].gameObject.SetActive(false);
+                enemies[index].ResetRuntime();
+                spawnWarnings[index].SetActive(false);
+            }
+
+            waveRoutine = StartCoroutine(SpawnWaveAfterDelay(0, initialDelay));
         }
 
         private IEnumerator SpawnWaveAfterDelay(int waveIndex, float delay)
@@ -141,6 +207,7 @@ namespace Narthex.Gameplay
                 var enemy = enemies[enemyIndex];
                 enemy.transform.position = spawnPoints[enemyIndex].position;
                 enemy.gameObject.SetActive(true);
+                enemy.ResetRuntime();
                 activeEnemyIds.Add(enemy.ActorId);
             }
 
@@ -151,8 +218,10 @@ namespace Narthex.Gameplay
         private void CompleteEncounter()
         {
             cleared = true;
+            waitingForTraversal = false;
             currentWaveIndex = -1;
             activeEnemyIds.Clear();
+            SetInternalGateLocked(false);
             SetGateLocked(false);
             serviceRoot.Events.Publish(new GameplaySignal(QuestSignalType.PortalUsed, clearSignalTargetId));
         }
@@ -181,6 +250,12 @@ namespace Narthex.Gameplay
         {
             exitGateCollider.enabled = locked;
             exitGateRenderer.enabled = locked;
+        }
+
+        private void SetInternalGateLocked(bool locked)
+        {
+            if (internalGateCollider != null) internalGateCollider.enabled = locked;
+            if (internalGateRenderer != null) internalGateRenderer.enabled = locked;
         }
     }
 }

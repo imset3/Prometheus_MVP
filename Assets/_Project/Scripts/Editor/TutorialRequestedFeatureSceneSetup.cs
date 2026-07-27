@@ -1231,8 +1231,8 @@ namespace Narthex.Tools
                 }
                 else if (questId == "QST-TUTO-005" && lines.arraySize >= 3)
                 {
-                    lines.GetArrayElementAtIndex(1).stringValue = "테우스: 마지막은 훈련용 나르텍스 펄스야. 2번 키를 누르면 전방으로 에너지 도형을 발사할 수 있어.";
-                    lines.GetArrayElementAtIndex(2).stringValue = "테우스: 소환된 표적을 향해 펄스를 발사해 봐!";
+                    lines.GetArrayElementAtIndex(1).stringValue = "테우스: 마지막은 프로메의 기본 원거리 공격이야. 2번 키를 누르면 바라보는 방향으로 관통 투사체를 발사할 수 있어.";
+                    lines.GetArrayElementAtIndex(2).stringValue = "테우스: 소환된 표적을 향해 원거리 공격을 사용해 봐!";
                 }
                 else if (questId == "QST-TUTO-006")
                 {
@@ -1241,8 +1241,8 @@ namespace Narthex.Tools
                         "크리온: 프로메!",
                         "크리온: 언니... 이거 챙겨 가.",
                         "프로메: 이게 뭐야?",
-                        "테우스: 스캔 완료. 더블 점프 부츠와 나르텍스 펄스의 실전 운용 모듈이 들어 있어.",
-                        "테우스: 훈련장에서 임시로 열었던 펄스 권한을 실전 장착 상태로 전환했어. 2번 키 사용법은 그대로야.",
+                        "테우스: 스캔 완료. 더블 점프 부츠와 원거리 무장 제어 장치가 들어 있어.",
+                        "테우스: 원거리 공격 제어가 활성화됐어. 2번 키 사용법은 훈련장에서 익힌 그대로야.",
                         "테우스: 부츠도 장착됐어. 공중에서 한 번 더 점프해 높은 발판까지 올라가 봐.",
                         "테우스: 앞으로 모험 중 쓸 만한 물건을 찾으면 내가 바로 알려줄게.",
                         "프로메: 고마워, 크링. 다녀와서 같이 또 놀자.",

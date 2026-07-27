@@ -32,7 +32,8 @@ namespace Narthex.Presentation
         private void Update()
         {
             var runtime = bossActor != null ? bossActor.Runtime : null;
-            var shouldShow = arenaHost != null && arenaHost.CombatActive && runtime != null && runtime.IsAlive;
+            var shouldShow = arenaHost != null && arenaHost.EncounterPresentationActive &&
+                             runtime != null && runtime.IsAlive;
             SetVisible(shouldShow);
             if (!shouldShow) return;
 

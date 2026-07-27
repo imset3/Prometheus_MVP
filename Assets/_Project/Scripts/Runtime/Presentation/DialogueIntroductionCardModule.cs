@@ -18,7 +18,7 @@ namespace Narthex.Presentation
         [SerializeField] private Text continueText;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform cardRect;
-        [SerializeField, Min(0f)] private float promptDelay = 3f;
+        [SerializeField, Min(0f)] private float promptDelay = 1f;
         [SerializeField, Min(0.05f)] private float collapseDuration = 0.24f;
 
         private string pendingPrompt;
@@ -31,7 +31,8 @@ namespace Narthex.Presentation
 
         public bool HasValidSetup => cardRoot != null && titleText != null && descriptionText != null;
         public bool IsShowing => showing;
-        public bool UsesTimedCollapse => promptDelay >= 3f && collapseDuration >= 0.2f &&
+        public float PromptDelay => promptDelay;
+        public bool UsesTimedCollapse => promptDelay >= 1f && collapseDuration >= 0.2f &&
                                          canvasGroup != null && cardRect != null;
 
         public void Show(string title, string subtitle, string description, string prompt)
