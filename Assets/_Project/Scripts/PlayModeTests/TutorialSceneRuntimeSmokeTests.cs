@@ -22,7 +22,7 @@ namespace Narthex.PlayModeTests
     public sealed class TutorialSceneRuntimeSmokeTests
     {
         private const string ImportedTutorialScenePath =
-            "Assets/Scenes/TutorialScene-이경수 버전.unity";
+            "Assets/Scenes/TutorialScene.unity";
 
         [UnityTest]
         public IEnumerator TutorialScene_LoadsAndStartsTheOpeningFlow()

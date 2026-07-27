@@ -15,7 +15,7 @@ namespace Narthex.Tools
     [InitializeOnLoad]
     public static class TutorialImportedTrainingSetup
     {
-        private const string TargetScenePath = "Assets/Scenes/TutorialScene-이경수 버전.unity";
+        private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "D01_연동완료";
         private const string RangedConditionPath =
             "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-005-RANGED-TRIPLE-HIT.asset";

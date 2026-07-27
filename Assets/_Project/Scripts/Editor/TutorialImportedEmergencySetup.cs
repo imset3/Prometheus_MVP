@@ -12,7 +12,7 @@ namespace Narthex.Tools
     [InitializeOnLoad]
     public static class TutorialImportedEmergencySetup
     {
-        private const string TargetScenePath = "Assets/Scenes/TutorialScene-이경수 버전.unity";
+        private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "C02_Emergency_연동완료";
 
         static TutorialImportedEmergencySetup()

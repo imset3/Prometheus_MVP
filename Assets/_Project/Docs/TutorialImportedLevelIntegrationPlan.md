@@ -2,7 +2,7 @@
 
 ## 1. 문서 목적
 
-팀원이 제작한 `TutorialScene-이경수 버전`의 구역 도형은 수정하지 않고 보존한다.
+팀원이 제작한 신규 레벨 구역 도형은 수정하지 않고 `TutorialScene`의 기준 배치로 보존한다.
 기존 `TutorialScene`에 구현된 튜토리얼 시스템을 별도의 연동 계층으로 이식하여,
 최신 노션 시나리오와 사용자가 확정한 규칙에 맞는 1회 완주 가능한 챕터 0을 구성한다.
 
@@ -13,7 +13,7 @@
 
 ## 2. 기준 자료
 
-- 신규 레벨: `Assets/Scenes/TutorialScene-이경수 버전.unity`
+- 기준 레벨: `Assets/Scenes/TutorialScene.unity`
 - 기존 기능 씬: `Assets/Scenes/TutorialScene.unity`
 - 최신 노션: `2D_챕터0(튜토리얼)의 플로우 및 시나리오`
 - 최신 노션: `2D_챕터0(튜토리얼) 확장 시나리오 — C씬~엔딩`

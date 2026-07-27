@@ -15,12 +15,11 @@
 
 ## 현재 기준 씬
 
-- 메인 튜토리얼: `Assets/Scenes/TutorialScene-이경수 버전.unity`
-- 기존 호환·참조 씬: `Assets/Scenes/TutorialScene.unity`
+- 메인 튜토리얼: `Assets/Scenes/TutorialScene.unity`
 - 빌드 시작 씬: `Assets/_Project/Scenes/Boot.unity`
 - 튜토리얼 이후 연결 씬: `Assets/Scenes/Chapter01.unity`
 
-새 레벨 작업과 검증은 `TutorialScene-이경수 버전`을 기준으로 진행합니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
+기존 튜토리얼 씬은 팀원이 새로 배치한 레벨과 최신 기능이 통합된 `TutorialScene`으로 대체되었습니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
 
 ## 챕터 0 진행 흐름
 
@@ -140,8 +139,7 @@
 ```text
 Assets/
   Scenes/
-    TutorialScene-이경수 버전.unity  # 현재 새 레벨 기준 씬
-    TutorialScene.unity              # 기존 호환·참조 씬
+    TutorialScene.unity              # 새 레벨이 통합된 현재 기준 씬
     Chapter01.unity
   _Project/
     Art/
@@ -168,7 +166,7 @@ Assets/
 
 1. Unity Hub에서 저장소 폴더를 프로젝트로 추가합니다.
 2. Unity `6000.3.14f1`로 열고 에셋 임포트와 스크립트 컴파일이 끝날 때까지 기다립니다.
-3. `Assets/Scenes/TutorialScene-이경수 버전.unity`를 엽니다.
+3. `Assets/Scenes/TutorialScene.unity`를 엽니다.
 4. Play를 눌러 회의장부터 헬테 보스전까지 확인합니다.
 
 빌드 전체 흐름을 확인할 때는 `Assets/_Project/Scenes/Boot.unity`에서 시작합니다.

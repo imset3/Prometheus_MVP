@@ -14,7 +14,7 @@ namespace Narthex.Tools
     [InitializeOnLoad]
     public static class TutorialImportedEncounterASetup
     {
-        private const string TargetScenePath = "Assets/Scenes/TutorialScene-이경수 버전.unity";
+        private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "F01_연동완료";
         private const string TravelQuestId = "QST-TUTO-007";
         private const string EncounterQuestId = "QST-TUTO-007-A";

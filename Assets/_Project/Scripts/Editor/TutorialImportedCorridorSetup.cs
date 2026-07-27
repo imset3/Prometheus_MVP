@@ -18,7 +18,7 @@ namespace Narthex.Tools
     [InitializeOnLoad]
     public static class TutorialImportedCorridorSetup
     {
-        private const string TargetScenePath = "Assets/Scenes/TutorialScene-이경수 버전.unity";
+        private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "C01_연동완료";
         private const string DashQuestId = "QST-TUTO-004";
 
