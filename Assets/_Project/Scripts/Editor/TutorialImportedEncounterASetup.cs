@@ -15,7 +15,7 @@ namespace Narthex.Tools
     public static class TutorialImportedEncounterASetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
-        private const string CompletionMarkerName = "F01_연동완료";
+        private const string CompletionMarkerName = "F03_연속상승기류수직카메라완료";
         private const string TravelQuestId = "QST-TUTO-007";
         private const string EncounterQuestId = "QST-TUTO-007-A";
         private const string TravelSignalId = "TUTORIAL-EXTERIOR-TO-ENCOUNTER-A";
@@ -62,15 +62,19 @@ namespace Narthex.Tools
                 ConfigureQuestAndNarrative(scene);
 
                 var geometry = AnalyzeGeometry(fRoot);
-                var spawn = GetOrCreateAnchor(
+                var spawn = GetOrCreateFunctionalMarker(
                     fIntegration.transform,
                     "F01_Spawn_ExteriorSide",
-                    new Vector3(geometry.minX + 3f, -3.9f, 0f));
-                var exitTarget = GetOrCreateAnchor(
+                    new Vector3(geometry.minX + 3f, -3.9f, 0f),
+                    TutorialFunctionMarkerKind.Checkpoint);
+                var exitTarget = GetOrCreateFunctionalMarker(
                     fIntegration.transform,
                     "F01_Exit_ToG",
-                    new Vector3(geometry.maxX - 1.5f, -3.9f, 0f));
+                    new Vector3(geometry.maxX - 1.5f, -3.9f, 0f),
+                    TutorialFunctionMarkerKind.Objective);
                 var gate = ConfigureCollisionAndGate(fRoot, fIntegration.transform, geometry.exitGateRenderer);
+                ConfigureOpeningWind(fIntegration.transform, fRoot, Require(scene, "PlayerRoot"), spawn, geometry);
+                ConfigureFallRecovery(scene, fIntegration.transform, geometry);
                 var enemies = ConfigureEnemies(scene, fIntegration.transform, geometry);
                 ConfigureEncounter(scene, fIntegration.transform, enemies.actors, enemies.spawns, gate);
                 ConfigureExteriorTransition(scene, spawn, exitTarget, geometry);
@@ -99,8 +103,12 @@ namespace Narthex.Tools
         {
             var oldSequential = FindSceneComponent<TutorialSequentialEncounterHost>(scene);
             if (oldSequential != null) oldSequential.enabled = false;
-            var oldWave = FindSceneComponent<TutorialWaveEncounterHost>(scene);
-            if (oldWave != null) oldWave.enabled = false;
+            foreach (var wave in scene.GetRootGameObjects()
+                         .SelectMany(root => root.GetComponentsInChildren<TutorialWaveEncounterHost>(true)))
+            {
+                if (wave.gameObject.name == "G01_EncounterController") continue;
+                wave.enabled = false;
+            }
         }
 
         private static void ConfigureQuestAndNarrative(Scene scene)
@@ -143,6 +151,8 @@ namespace Narthex.Tools
 
             var minX = renderers.Min(renderer => renderer.bounds.min.x);
             var maxX = renderers.Max(renderer => renderer.bounds.max.x);
+            var minY = renderers.Min(renderer => renderer.bounds.min.y);
+            var maxY = renderers.Max(renderer => renderer.bounds.max.y);
             var gate = renderers
                 .Where(IsWhiteBlockout)
                 .Where(renderer => renderer.bounds.size.x <= 1.5f && renderer.bounds.size.y >= 2.2f)
@@ -151,7 +161,20 @@ namespace Narthex.Tools
             if (gate == null)
                 throw new InvalidOperationException("F스테이지 오른쪽의 얇은 출구 문 도형을 찾지 못했습니다.");
 
-            return new GeometryAnalysis(minX, maxX, gate);
+            return new GeometryAnalysis(minX, maxX, minY, maxY, gate);
+        }
+
+        private static Bounds CalculateRendererBounds(GameObject root)
+        {
+            var renderers = root.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer != null)
+                .ToArray();
+            if (renderers.Length == 0)
+                throw new InvalidOperationException($"{root.name}에 Renderer가 없습니다.");
+            var bounds = renderers[0].bounds;
+            for (var index = 1; index < renderers.Length; index++)
+                bounds.Encapsulate(renderers[index].bounds);
+            return bounds;
         }
 
         private static GameObject ConfigureCollisionAndGate(
@@ -205,6 +228,55 @@ namespace Narthex.Tools
             return gate;
         }
 
+        private static void ConfigureOpeningWind(
+            Transform integration,
+            GameObject stageRoot,
+            GameObject player,
+            Transform stageSpawn,
+            GeometryAnalysis geometry)
+        {
+            var blueSource = stageRoot.GetComponentsInChildren<Renderer>(true)
+                .Where(IsBlueBlockout)
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .FirstOrDefault();
+            var markerRoot = GetOrCreateChild(integration, "F01_기능마커");
+            var existing = markerRoot.transform.Find("F01_시작활공바람_MARKER");
+            var marker = existing != null
+                ? existing.gameObject
+                : GetOrCreateChild(markerRoot.transform, "F01_시작활공바람_MARKER");
+            var collider = marker.GetComponent<BoxCollider2D>();
+            if (collider == null) collider = marker.AddComponent<BoxCollider2D>();
+            collider.isTrigger = true;
+            var bottom = blueSource != null ? blueSource.bounds.min.y : stageSpawn.position.y - 1f;
+            var requiredTop = Mathf.Max(geometry.maxY + 1f, bottom + 12f);
+            var height = requiredTop - bottom;
+            var width = blueSource != null ? Mathf.Max(blueSource.bounds.size.x, 3f) : 3f;
+            var centerX = blueSource != null ? blueSource.bounds.center.x : marker.transform.position.x;
+            marker.transform.SetPositionAndRotation(
+                new Vector3(centerX, bottom + height * 0.5f, 0f),
+                blueSource != null ? blueSource.transform.rotation : Quaternion.identity);
+            marker.transform.localScale = Vector3.one;
+            collider.offset = Vector2.zero;
+            collider.size = new Vector2(width, height);
+
+            var functionMarker = marker.GetComponent<TutorialFunctionMarkerHost>();
+            if (functionMarker == null) functionMarker = marker.AddComponent<TutorialFunctionMarkerHost>();
+            var markerSerialized = new SerializedObject(functionMarker);
+            markerSerialized.FindProperty("markerId").stringValue = "F01-OPENING-WIND";
+            markerSerialized.FindProperty("kind").enumValueIndex = (int)TutorialFunctionMarkerKind.Wind;
+            markerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var wind = marker.GetComponent<TutorialWindHazardHost>();
+            if (wind == null) wind = marker.AddComponent<TutorialWindHazardHost>();
+            var serialized = new SerializedObject(wind);
+            SetObject(serialized, "playerBody", player.GetComponent<Rigidbody2D>());
+            SetObject(serialized, "player", player.transform);
+            SetObject(serialized, "playerMotor", player.GetComponent<PlayerMotorHost>());
+            serialized.FindProperty("liftAcceleration").floatValue = 32f;
+            serialized.FindProperty("maximumRiseSpeed").floatValue = 12f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         private static (CombatActorHost[] actors, Transform[] spawns) ConfigureEnemies(
             Scene scene,
             Transform fIntegration,
@@ -232,8 +304,6 @@ namespace Narthex.Tools
             {
                 var enemy = enemies[index];
                 enemy.transform.SetParent(enemyRoot.transform, true);
-                enemy.transform.SetPositionAndRotation(positions[index], Quaternion.identity);
-                enemy.transform.localScale = Vector3.one;
                 actors[index] = enemy.GetComponent<CombatActorHost>();
                 if (actors[index] == null)
                     throw new InvalidOperationException($"{enemy.name}에 CombatActorHost가 없습니다.");
@@ -247,10 +317,52 @@ namespace Narthex.Tools
                 pursuitSerialized.FindProperty("stopDistance").floatValue = 1.15f;
                 pursuitSerialized.ApplyModifiedPropertiesWithoutUndo();
 
-                spawns[index] = GetOrCreateAnchor(spawnRoot.transform, $"F01_EnemySpawn_{index + 1:00}", positions[index]);
+                spawns[index] = GetOrCreateFunctionalMarker(
+                    spawnRoot.transform,
+                    $"F01_EnemySpawn_{index + 1:00}",
+                    positions[index],
+                    TutorialFunctionMarkerKind.EnemySpawn);
+                enemy.transform.SetPositionAndRotation(spawns[index].position, spawns[index].rotation);
+                enemy.transform.localScale = Vector3.one;
                 enemy.SetActive(false);
             }
             return (actors, spawns);
+        }
+
+        private static void ConfigureFallRecovery(
+            Scene scene,
+            Transform integration,
+            GeometryAnalysis geometry)
+        {
+            var marker = GetOrCreateChild(integration, "F01_낙사복귀_MARKER");
+            marker.transform.SetPositionAndRotation(
+                new Vector3((geometry.minX + geometry.maxX) * 0.5f, geometry.minY - 6f, 0f),
+                Quaternion.identity);
+            marker.transform.localScale = Vector3.one;
+
+            var collider = marker.GetComponent<BoxCollider2D>();
+            if (collider == null) collider = marker.AddComponent<BoxCollider2D>();
+            collider.isTrigger = true;
+            collider.offset = Vector2.zero;
+            collider.size = new Vector2(geometry.maxX - geometry.minX + 4f, 2f);
+
+            var functionMarker = marker.GetComponent<TutorialFunctionMarkerHost>();
+            if (functionMarker == null) functionMarker = marker.AddComponent<TutorialFunctionMarkerHost>();
+            var markerSerialized = new SerializedObject(functionMarker);
+            markerSerialized.FindProperty("markerId").stringValue = "F01-FALL-RECOVERY";
+            markerSerialized.FindProperty("kind").enumValueIndex =
+                (int)TutorialFunctionMarkerKind.FallRecovery;
+            markerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var recovery = marker.GetComponent<TutorialFallRestartHost>();
+            if (recovery == null) recovery = marker.AddComponent<TutorialFallRestartHost>();
+            var recoverySerialized = new SerializedObject(recovery);
+            SetObject(recoverySerialized, "restartHost", FindSceneComponent<TutorialRestartHost>(scene));
+            SetObject(recoverySerialized, "questSequenceHost",
+                FindSceneComponent<TutorialQuestSequenceHost>(scene));
+            SetObject(recoverySerialized, "player", Require(scene, "PlayerRoot").transform);
+            recoverySerialized.FindProperty("requiredQuestId").stringValue = EncounterQuestId;
+            recoverySerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void ConfigureEncounter(
@@ -315,8 +427,10 @@ namespace Narthex.Tools
             serialized.FindProperty("requireInteractInput").boolValue = false;
             serialized.FindProperty("destinationCameraMinX").floatValue = geometry.minX + 8f;
             serialized.FindProperty("destinationCameraMaxX").floatValue = geometry.maxX - 8f;
-            serialized.FindProperty("destinationCameraFixedY").floatValue = 0f;
-            serialized.FindProperty("destinationCameraTracksVertical").boolValue = false;
+            var verticalMargin = Mathf.Min(5f, Mathf.Max(0f, (geometry.maxY - geometry.minY) * 0.2f));
+            serialized.FindProperty("destinationCameraTracksVertical").boolValue = true;
+            serialized.FindProperty("destinationCameraMinY").floatValue = geometry.minY + verticalMargin;
+            serialized.FindProperty("destinationCameraMaxY").floatValue = geometry.maxY - verticalMargin;
             serialized.FindProperty("fadeOutDuration").floatValue = 0.3f;
             serialized.FindProperty("blackHoldDuration").floatValue = 0.12f;
             serialized.FindProperty("fadeInDuration").floatValue = 0.4f;
@@ -379,6 +493,22 @@ namespace Narthex.Tools
             return minimum >= 0.62f && maximum - minimum <= 0.18f;
         }
 
+        private static bool IsBlueBlockout(Renderer renderer)
+        {
+            Color color;
+            if (renderer is SpriteRenderer spriteRenderer)
+                color = spriteRenderer.color;
+            else
+            {
+                var material = renderer.sharedMaterial;
+                if (material == null) return false;
+                if (material.HasProperty("_BaseColor")) color = material.GetColor("_BaseColor");
+                else if (material.HasProperty("_Color")) color = material.color;
+                else return false;
+            }
+            return color.b >= 0.38f && color.b > color.r * 1.15f && color.b >= color.g * 0.9f;
+        }
+
         private static void ValidateAppliedScene(Scene scene)
         {
             var ladder = Require(scene, "C03_Exit_ExteriorSide").GetComponent<TutorialZoneTransitionHost>();
@@ -414,6 +544,24 @@ namespace Narthex.Tools
                 gate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
                 throw new InvalidOperationException("F 전멸 게이트의 충돌·문 도형 참조가 유효하지 않습니다.");
 
+            var openingWind = Require(scene, "F01_시작활공바람_MARKER");
+            var fallRecovery = Require(scene, "F01_낙사복귀_MARKER")
+                .GetComponent<TutorialFallRestartHost>();
+            if (fallRecovery == null || !fallRecovery.HasValidSetup ||
+                fallRecovery.RequiredQuestId != EncounterQuestId)
+                throw new InvalidOperationException("F 낙사 복귀 마커 설정이 유효하지 않습니다.");
+            if (openingWind.GetComponent<TutorialFunctionMarkerHost>() == null ||
+                openingWind.GetComponent<TutorialWindHazardHost>()?.HasValidSetup != true)
+                throw new InvalidOperationException("F 시작 활공 바람 마커의 방향·플레이어 참조가 유효하지 않습니다.");
+            var windCollider = openingWind.GetComponent<BoxCollider2D>();
+            var fBounds = CalculateRendererBounds(Require(scene, "F스테이지"));
+            if (windCollider == null || windCollider.bounds.max.y < fBounds.max.y - 0.5f)
+                throw new InvalidOperationException("F 시작 상승기류가 상단 이동 경로까지 이어지지 않습니다.");
+
+            if (!transition.DestinationTracksVertical ||
+                transition.DestinationCameraMinY > transition.DestinationCameraMaxY)
+                throw new InvalidOperationException("F 진입 카메라는 플레이어의 수직 상승을 추적해야 합니다.");
+
             var condition = RequireAsset<QuestConditionDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-007-RELAY.asset");
             if (condition.SignalType != QuestSignalType.PortalUsed ||
@@ -421,8 +569,8 @@ namespace Narthex.Tools
                 throw new InvalidOperationException("QST-TUTO-007은 E→F 출구 사용으로 완료되어야 합니다.");
 
             Debug.Log(
-                "[sragon000][F01][검증 통과] 사다리 F 입력, E→F 전환, " +
-                "적 3기 동시 활성화·추적, 전멸 문 잠금, F 체크포인트 정상.");
+                "[sragon000][F03][검증 통과] 상승 사다리 F 입력, E→F 수직 카메라 전환, " +
+                "상단까지 이어지는 시작 활공 바람, 적 3기 동시 활성화·추적, 전멸 문 잠금, F 체크포인트 정상.");
         }
 
         private static T RequireAsset<T>(string path) where T : UnityEngine.Object
@@ -459,6 +607,29 @@ namespace Narthex.Tools
             var gameObject = GetOrCreateChild(parent, name);
             gameObject.transform.SetPositionAndRotation(worldPosition, Quaternion.identity);
             gameObject.transform.localScale = Vector3.one;
+            return gameObject.transform;
+        }
+
+        private static Transform GetOrCreateFunctionalMarker(
+            Transform parent,
+            string name,
+            Vector3 suggestedWorldPosition,
+            TutorialFunctionMarkerKind kind)
+        {
+            var existing = parent.Find(name);
+            var gameObject = existing != null ? existing.gameObject : GetOrCreateChild(parent, name);
+            if (existing == null)
+            {
+                gameObject.transform.SetPositionAndRotation(suggestedWorldPosition, Quaternion.identity);
+                gameObject.transform.localScale = Vector3.one;
+            }
+
+            var marker = gameObject.GetComponent<TutorialFunctionMarkerHost>();
+            if (marker == null) marker = gameObject.AddComponent<TutorialFunctionMarkerHost>();
+            var serialized = new SerializedObject(marker);
+            serialized.FindProperty("markerId").stringValue = name;
+            serialized.FindProperty("kind").enumValueIndex = (int)kind;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
             return gameObject.transform;
         }
 
@@ -501,12 +672,16 @@ namespace Narthex.Tools
         {
             public readonly float minX;
             public readonly float maxX;
+            public readonly float minY;
+            public readonly float maxY;
             public readonly Renderer exitGateRenderer;
 
-            public GeometryAnalysis(float minX, float maxX, Renderer exitGateRenderer)
+            public GeometryAnalysis(float minX, float maxX, float minY, float maxY, Renderer exitGateRenderer)
             {
                 this.minX = minX;
                 this.maxX = maxX;
+                this.minY = minY;
+                this.maxY = maxY;
                 this.exitGateRenderer = exitGateRenderer;
             }
         }

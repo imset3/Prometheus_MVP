@@ -16,15 +16,17 @@ namespace Narthex.Tools
     public static class TutorialImportedTrainingSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
-        private const string CompletionMarkerName = "D01_연동완료";
+        private const string CompletionMarkerName = "D07_노션진행HUD동기화완료";
+        private const string DashFinishSignalId = "TRAINING-DASH-FINISH";
+        private const string DoubleJumpFinishSignalId = "TRAINING-DOUBLE-JUMP-SUMMIT";
         private const string RangedConditionPath =
             "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-005-RANGED-TRIPLE-HIT.asset";
 
         private static readonly string[] TrainingQuestOrder =
         {
             "QST-TUTO-004",
-            "QST-TUTO-002",
             "QST-TUTO-006",
+            "QST-TUTO-002",
             "QST-TUTO-003",
             "QST-TUTO-005"
         };
@@ -34,6 +36,12 @@ namespace Narthex.Tools
         private const string ImportedFullTutorialPlayModeTestName =
             "Narthex.PlayModeTests.TutorialSceneRuntimeSmokeTests." +
             "TrainingThroughHelte_CompletesTheTutorialThroughLiveSceneSystems";
+        private const string HiddenRoomPlayModeTestName =
+            "Narthex.PlayModeTests.TutorialSceneRuntimeSmokeTests." +
+            "Chapter0Intro_ReachesTheTrainingRoomThroughThePasskeyRoute";
+        private const string GWindRoutePlayModeTestName =
+            "Narthex.PlayModeTests.TutorialSceneRuntimeSmokeTests." +
+            "GWindRoute_LiftsPromeThroughAllColumnsAndReachesHNormally";
         private static TestRunnerApi trainingTestRunnerApi;
         private static string runningTestLabel = "훈련장";
 
@@ -106,6 +114,18 @@ namespace Narthex.Tools
         public static void RunImportedFullTutorialPlayModeTest()
         {
             RunImportedPlayModeTest(ImportedFullTutorialPlayModeTestName, "전체 튜토리얼");
+        }
+
+        [MenuItem("sragon000/튜토리얼/숨겨진 방 플레이 테스트 실행")]
+        public static void RunHiddenRoomPlayModeTest()
+        {
+            RunImportedPlayModeTest(HiddenRoomPlayModeTestName, "숨겨진 방");
+        }
+
+        [MenuItem("sragon000/튜토리얼/G 바람에서 H 도착 플레이 테스트 실행")]
+        public static void RunGWindRoutePlayModeTest()
+        {
+            RunImportedPlayModeTest(GWindRoutePlayModeTestName, "G→H");
         }
 
         private static void RunImportedPlayModeTest(string testName, string label)
@@ -201,7 +221,7 @@ namespace Narthex.Tools
 
             var integration = Require(scene, "D_Training_Integration", "D_훈련장_연동");
             var markerRoot = GetOrCreateChild(integration.transform, "훈련장 배치 마커");
-            markerRoot.tag = "EditorOnly";
+            markerRoot.tag = "Untagged";
 
             var definitions = new[]
             {
@@ -216,14 +236,14 @@ namespace Narthex.Tools
                 ("01_대시", "훈련_낙하_03", new Vector3(193f, -3.85f, 0f), 1),
                 ("01_대시", "훈련_대시_재시작", new Vector3(187f, -3.9f, 0f), 1),
 
-                ("02_점프", "훈련_점프_시작", new Vector3(195f, -3.9f, 0f), 2),
-                ("02_점프", "훈련_점프_끝", new Vector3(201f, -3.9f, 0f), 2),
-                ("02_점프", "훈련_점프_발사", new Vector3(201f, -3.2f, 0f), 2),
-                ("02_점프", "훈련_점프_도착", new Vector3(195f, -3.2f, 0f), 2),
-                ("02_점프", "훈련_점프_재시작", new Vector3(195f, -3.9f, 0f), 2),
+                ("02_더블점프", "훈련_더블점프_시작", new Vector3(201f, -3.9f, 0f), 2),
+                ("02_더블점프", "훈련_더블점프_끝", new Vector3(206f, -3.9f, 0f), 2),
 
-                ("03_더블점프", "훈련_더블점프_시작", new Vector3(201f, -3.9f, 0f), 3),
-                ("03_더블점프", "훈련_더블점프_끝", new Vector3(206f, -3.9f, 0f), 3),
+                ("03_점프", "훈련_점프_시작", new Vector3(195f, -3.9f, 0f), 3),
+                ("03_점프", "훈련_점프_끝", new Vector3(201f, -3.9f, 0f), 3),
+                ("03_점프", "훈련_점프_발사", new Vector3(201f, -3.2f, 0f), 3),
+                ("03_점프", "훈련_점프_도착", new Vector3(195f, -3.2f, 0f), 3),
+                ("03_점프", "훈련_점프_재시작", new Vector3(195f, -3.9f, 0f), 3),
 
                 ("04_근접공격", "훈련_근접_시작", new Vector3(206f, -3.9f, 0f), 4),
                 ("04_근접공격", "훈련_근접_끝", new Vector3(211f, -3.9f, 0f), 4),
@@ -241,7 +261,7 @@ namespace Narthex.Tools
             foreach (var definition in definitions)
             {
                 var group = GetOrCreateChild(markerRoot.transform, definition.Item1);
-                group.tag = "EditorOnly";
+                group.tag = "Untagged";
                 var existing = group.transform.Find(definition.Item2);
                 var marker = existing != null ? existing.gameObject : new GameObject(definition.Item2);
                 if (existing == null)
@@ -251,7 +271,11 @@ namespace Narthex.Tools
                     marker.transform.localScale = Vector3.one;
                     createdCount++;
                 }
-                marker.tag = "EditorOnly";
+                marker.tag = "Untagged";
+                ConfigureFunctionMarker(
+                    marker,
+                    $"TRAINING-{definition.Item2}",
+                    ResolveTrainingMarkerKind(definition.Item2));
                 var icon = EditorGUIUtility.IconContent($"sv_label_{definition.Item4}").image as Texture2D;
                 if (icon != null) EditorGUIUtility.SetIconForObject(marker, icon);
             }
@@ -286,7 +310,7 @@ namespace Narthex.Tools
                 ["훈련_습격_시작"] = new(215.8f, -3.9f, 0f),
 
                 ["훈련_대시_시작"] = new(185.2f, -3.9f, 0f),
-                ["훈련_대시_끝"] = new(192.5f, -3.9f, 0f),
+                ["훈련_대시_끝"] = new(215.2f, -3.9f, 0f),
                 ["훈련_낙하_01"] = new(187f, -4.25f, 0f),
                 ["훈련_낙하_02"] = new(189.6f, -4.25f, 0f),
                 ["훈련_낙하_03"] = new(192.2f, -4.25f, 0f),
@@ -294,8 +318,8 @@ namespace Narthex.Tools
 
                 ["훈련_점프_시작"] = new(192.5f, -3.9f, 0f),
                 ["훈련_점프_끝"] = new(198.5f, -3.9f, 0f),
-                ["훈련_점프_발사"] = new(198.5f, -2.4f, 0f),
-                ["훈련_점프_도착"] = new(192.5f, -2.4f, 0f),
+                ["훈련_점프_발사"] = new(215.7f, -3.25f, 0f),
+                ["훈련_점프_도착"] = new(184.8f, -3.25f, 0f),
                 ["훈련_점프_재시작"] = new(193f, -3.9f, 0f),
 
                 ["훈련_더블점프_시작"] = new(198.5f, -3.9f, 0f),
@@ -377,18 +401,6 @@ namespace Narthex.Tools
                     throw new InvalidOperationException($"{marker.Key}이 훈련장 도형 경계를 벗어났습니다: {marker.Value}");
             }
 
-            var phaseStarts = new[]
-            {
-                markers["훈련_대시_시작"].x,
-                markers["훈련_점프_시작"].x,
-                markers["훈련_더블점프_시작"].x,
-                markers["훈련_근접_시작"].x,
-                markers["훈련_원거리_시작"].x
-            };
-            for (var index = 1; index < phaseStarts.Length; index++)
-                if (phaseStarts[index] < phaseStarts[index - 1])
-                    throw new InvalidOperationException("훈련 단계 시작점이 대시→점프→더블점프→근접→원거리 순서가 아닙니다.");
-
             var dashMinimumX = markers["훈련_대시_시작"].x;
             var dashMaximumX = markers["훈련_대시_끝"].x;
             foreach (var name in new[] { "훈련_낙하_01", "훈련_낙하_02", "훈련_낙하_03" })
@@ -398,17 +410,24 @@ namespace Narthex.Tools
             if (markers["훈련_점프_발사"].x <= markers["훈련_점프_도착"].x)
                 throw new InvalidOperationException("점프 회피 투사체는 플레이어 진행 방향의 반대인 오른쪽→왼쪽으로 이동해야 합니다.");
 
-            var lowerPlatform = renderers
-                .Select(renderer => renderer.bounds)
-                .FirstOrDefault(bounds =>
-                    Mathf.Abs(bounds.center.x - 202f) <= 0.1f &&
-                    Mathf.Abs(bounds.center.y + 1.5f) <= 0.1f);
-            if (lowerPlatform.size == Vector3.zero)
-                throw new InvalidOperationException("더블점프 착지용 X=202 중앙 발판을 찾지 못했습니다.");
+            var platformRenderers = renderers
+                .Concat(RequireChild(
+                    Require(scene, "TrainingPhaseContents").transform,
+                    "02_더블점프").GetComponentsInChildren<Renderer>(true))
+                .Where(IsTrainingPlatform)
+                .Distinct()
+                .ToArray();
+            if (platformRenderers.Length == 0)
+                throw new InvalidOperationException("더블점프 착지용 높은 발판을 찾지 못했습니다.");
+            var highestPlatform = platformRenderers
+                .OrderByDescending(renderer => renderer.bounds.max.y)
+                .First()
+                .bounds;
             var doubleJumpEnd = markers["훈련_더블점프_끝"];
-            if (doubleJumpEnd.x < lowerPlatform.min.x || doubleJumpEnd.x > lowerPlatform.max.x ||
-                doubleJumpEnd.y < lowerPlatform.max.y - 0.25f || doubleJumpEnd.y > lowerPlatform.max.y + 0.5f)
-                throw new InvalidOperationException("더블점프 종료 마커가 중앙 발판 상단 안에 있지 않습니다.");
+            if (doubleJumpEnd.x < highestPlatform.min.x || doubleJumpEnd.x > highestPlatform.max.x ||
+                doubleJumpEnd.y < highestPlatform.max.y ||
+                doubleJumpEnd.y > highestPlatform.max.y + 1.5f)
+                throw new InvalidOperationException("더블점프 종료 마커가 최고 발판 상단에 있지 않습니다.");
 
             var player = Require(scene, "PlayerRoot");
             var body = RequireComponent<Rigidbody2D>(player);
@@ -416,13 +435,23 @@ namespace Narthex.Tools
                 "Assets/_Project/GameData/Player/PlayerMotor_Default.asset");
             var gravity = Mathf.Abs(Physics2D.gravity.y * body.gravityScale);
             var singleJumpHeight = motorDefinition.JumpVelocity * motorDefinition.JumpVelocity / (2f * gravity);
-            var requiredRise = lowerPlatform.max.y - markers["훈련_더블점프_시작"].y;
-            if (singleJumpHeight * 2f < requiredRise + 0.25f)
-                throw new InvalidOperationException(
-                    $"더블점프 도달 높이가 부족합니다: 가능 {singleJumpHeight * 2f:F2}, 필요 {requiredRise:F2}");
+            var reachableHeight = markers["훈련_더블점프_시작"].y;
+            foreach (var platform in platformRenderers
+                         .Select(renderer => renderer.bounds)
+                         .OrderBy(bounds => bounds.max.y))
+            {
+                var requiredRise = platform.max.y - reachableHeight;
+                if (requiredRise > singleJumpHeight * 2f - 0.25f)
+                    throw new InvalidOperationException(
+                        $"더블점프 발판 간 높이가 너무 큽니다: 가능 {singleJumpHeight * 2f:F2}, " +
+                        $"필요 {requiredRise:F2}, 발판={platform.center}");
+                reachableHeight = Mathf.Max(reachableHeight, platform.max.y);
+            }
 
-            if (markers["훈련_근접적_등장"].y <= markers["훈련_근접적_착지"].y)
-                throw new InvalidOperationException("근접 훈련 적 등장점은 착지점보다 높아야 합니다.");
+            if (Vector2.Distance(
+                    markers["훈련_근접적_등장"],
+                    markers["훈련_근접적_착지"]) > 0.05f)
+                throw new InvalidOperationException("정지 허수아비의 등장점과 착지점은 같아야 합니다.");
 
             var rangedRoot = Require(scene, "RangedAttackRoot");
             var ranged = RequireComponent<PlayerRangedAttackHost>(rangedRoot);
@@ -443,7 +472,7 @@ namespace Narthex.Tools
             Debug.Log(
                 $"[sragon000][훈련장][마커 검증 통과] 방 경계, 단계 순서, 낙하 3점, " +
                 $"오른쪽→왼쪽 점프 투사체, 더블점프 높이 {singleJumpHeight * 2f:F2}, " +
-                $"근접 낙하, 원거리 사거리 {travelDistance:F1} 정상.");
+                $"정지 허수아비, 원거리 사거리 {travelDistance:F1} 정상.");
         }
 
         private static void TryAutoApply()
@@ -507,7 +536,7 @@ namespace Narthex.Tools
                 AssetDatabase.SaveAssets();
                 ValidateAppliedScene(scene);
                 Debug.Log(
-                    $"[sragon000][훈련장] 1차 연동 완료: 대시→점프→더블점프→기본 공격→원거리 공격, " +
+                    $"[sragon000][훈련장] 마커 연동 완료: 대시→더블점프→점프→기본 공격→원거리 공격, " +
                     $"구역 제한, 실패 재시작, 표적 3기, 기술 부모 영어 명칭을 적용했습니다. flow={flowHost.name}");
             }
             catch (Exception exception)
@@ -535,10 +564,10 @@ namespace Narthex.Tools
             Collider2D dashArea)
         {
             var host = RequireComponent<TutorialTrainingSpawnHost>(controller);
-            var restartPosition = Require(scene, "훈련_대시_재시작").transform.position;
-            var restart = GetOrCreateAnchor(controller.transform, "DashTrainingRestartPoint", restartPosition);
             var serialized = new SerializedObject(host);
-            serialized.FindProperty("dashRestartPoint").objectReferenceValue = restart;
+            serialized.FindProperty("fallingQuestId").stringValue = "QST-TUTO-DISABLED-FALLING";
+            serialized.FindProperty("dashRestartPoint").objectReferenceValue =
+                Require(scene, "훈련_대시_재시작").transform;
             serialized.FindProperty("activationArea").objectReferenceValue = dashArea;
 
             var startPoints = serialized.FindProperty("fallingStartPoints");
@@ -563,8 +592,21 @@ namespace Narthex.Tools
             var enemyLanding = serialized.FindProperty("enemyLandingPoint").objectReferenceValue as Transform;
             if (enemySpawn == null || enemyLanding == null)
                 throw new InvalidOperationException("기본 공격 훈련 적 앵커가 비어 있습니다.");
-            enemySpawn.position = Require(scene, "훈련_근접적_등장").transform.position;
-            enemyLanding.position = Require(scene, "훈련_근접적_착지").transform.position;
+            serialized.FindProperty("enemySpawnPoint").objectReferenceValue =
+                Require(scene, "훈련_근접적_등장").transform;
+            serialized.FindProperty("enemyLandingPoint").objectReferenceValue =
+                Require(scene, "훈련_근접적_착지").transform;
+            var meleeDummyVisuals = Require(scene, "근접공격훈련")
+                .GetComponentsInChildren<SpriteRenderer>(true)
+                .Where(renderer => renderer.gameObject.name.StartsWith("Enemy", StringComparison.Ordinal))
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .ToArray();
+            if (meleeDummyVisuals.Length != 1)
+                throw new InvalidOperationException(
+                    $"근접공격훈련에는 원형 허수아비 도형이 정확히 1개여야 합니다. 현재={meleeDummyVisuals.Length}");
+            var meleePosition = meleeDummyVisuals[0].bounds.center;
+            Require(scene, "훈련_근접적_등장").transform.position = meleePosition;
+            Require(scene, "훈련_근접적_착지").transform.position = meleePosition;
             var tutorialEnemy = Require(scene, "TutorialEnemy").GetComponent<CombatActorHost>();
             if (tutorialEnemy == null)
                 throw new InvalidOperationException("기본 공격 훈련 적의 CombatActorHost가 없습니다.");
@@ -576,6 +618,9 @@ namespace Narthex.Tools
             var enemyActor = new SerializedObject(tutorialEnemy);
             enemyActor.FindProperty("maxHealth").intValue = 100;
             enemyActor.ApplyModifiedPropertiesWithoutUndo();
+            foreach (var renderer in tutorialEnemy.GetComponentsInChildren<Renderer>(true))
+                renderer.enabled = false;
+            serialized.FindProperty("stationaryEnemy").boolValue = true;
             serialized.FindProperty("fallingStartDelay").floatValue = 0.3f;
             serialized.FindProperty("fallingWarningDuration").floatValue = 0.45f;
             serialized.FindProperty("fallingDuration").floatValue = 1.15f;
@@ -586,17 +631,70 @@ namespace Narthex.Tools
 
         private static void ConfigureJumpTraining(GameObject trainingController)
         {
-            var jumpController = RequireChild(trainingController.transform, "JumpProjectileController");
+            var jumpController = Require(
+                EditorSceneManager.GetActiveScene(),
+                "JumpProjectileController").transform;
             jumpController.gameObject.SetActive(true);
             var host = RequireComponent<TutorialJumpTrainingHost>(jumpController.gameObject);
             var serialized = new SerializedObject(host);
             var scene = EditorSceneManager.GetActiveScene();
-            SetTransformPosition(serialized, "restartPoint", Require(scene, "훈련_점프_재시작").transform.position);
-            SetTransformPosition(serialized, "launchPoint", Require(scene, "훈련_점프_발사").transform.position);
-            SetTransformPosition(serialized, "endPoint", Require(scene, "훈련_점프_도착").transform.position);
-            serialized.FindProperty("initialDelay").floatValue = 0.55f;
-            serialized.FindProperty("travelDuration").floatValue = 2.2f;
-            serialized.FindProperty("repeatDelay").floatValue = 0.5f;
+            var trainingRenderers = Require(scene, "훈련장 수정버전")
+                .GetComponentsInChildren<Renderer>(true);
+            var roomBounds = trainingRenderers[0].bounds;
+            for (var index = 1; index < trainingRenderers.Length; index++)
+                roomBounds.Encapsulate(trainingRenderers[index].bounds);
+            Require(scene, "훈련_점프_발사").transform.position =
+                new Vector3(roomBounds.max.x - 1.8f, -3.25f, 0f);
+            Require(scene, "훈련_점프_도착").transform.position =
+                new Vector3(roomBounds.min.x + 1.8f, -3.25f, 0f);
+            serialized.FindProperty("restartPoint").objectReferenceValue =
+                Require(scene, "훈련_점프_재시작").transform;
+            serialized.FindProperty("launchPoint").objectReferenceValue =
+                Require(scene, "훈련_점프_발사").transform;
+            serialized.FindProperty("endPoint").objectReferenceValue =
+                Require(scene, "훈련_점프_도착").transform;
+            var sourceProjectile = serialized.FindProperty("projectile").objectReferenceValue as GameObject;
+            if (sourceProjectile == null)
+                throw new InvalidOperationException("점프 회피 훈련의 원본 투사체가 없습니다.");
+            var poolRoot = GetOrCreateChild(jumpController, "JumpProjectilePool");
+            const int poolSize = 5;
+            var projectileObjects = new GameObject[poolSize];
+            var projectileBodies = new Rigidbody2D[poolSize];
+            var projectileHazards = new TutorialJumpProjectileHazardHost[poolSize];
+            for (var index = 0; index < poolSize; index++)
+            {
+                var current = index == 0
+                    ? sourceProjectile
+                    : poolRoot.transform.Find($"JumpProjectile_{index + 1:00}")?.gameObject;
+                if (current == null)
+                {
+                    current = UnityEngine.Object.Instantiate(sourceProjectile, poolRoot.transform);
+                    current.name = $"JumpProjectile_{index + 1:00}";
+                }
+                else
+                {
+                    current.transform.SetParent(poolRoot.transform, true);
+                }
+                current.SetActive(false);
+                projectileObjects[index] = current;
+                projectileBodies[index] = RequireComponent<Rigidbody2D>(current);
+                projectileHazards[index] = RequireComponent<TutorialJumpProjectileHazardHost>(current);
+            }
+            var projectilePool = serialized.FindProperty("projectilePool");
+            var bodyPool = serialized.FindProperty("projectileBodyPool");
+            var hazardPool = serialized.FindProperty("projectileHazardPool");
+            projectilePool.arraySize = poolSize;
+            bodyPool.arraySize = poolSize;
+            hazardPool.arraySize = poolSize;
+            for (var index = 0; index < poolSize; index++)
+            {
+                projectilePool.GetArrayElementAtIndex(index).objectReferenceValue = projectileObjects[index];
+                bodyPool.GetArrayElementAtIndex(index).objectReferenceValue = projectileBodies[index];
+                hazardPool.GetArrayElementAtIndex(index).objectReferenceValue = projectileHazards[index];
+            }
+            serialized.FindProperty("initialDelay").floatValue = 0.75f;
+            serialized.FindProperty("travelDuration").floatValue = 3.8f;
+            serialized.FindProperty("launchInterval").floatValue = 1f;
             serialized.FindProperty("restartDelay").floatValue = 0.4f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -608,27 +706,29 @@ namespace Narthex.Tools
         {
             var root = RequireChild(trainingController.transform, "TrainingActionScopes").gameObject;
             root.SetActive(true);
-            var names = new[] { "Dash", "Jump", "DoubleJump", "Attack", "Ranged" };
-            var markerPrefixes = new[] { "대시", "점프", "더블점프", "근접", "원거리" };
+            var names = new[] { "Dash", "DoubleJump", "Jump", "Attack", "Ranged" };
             var questIds = TrainingQuestOrder;
             var colliders = new Collider2D[names.Length];
+            var trainingArea = Require(EditorSceneManager.GetActiveScene(), "TrainingActivationArea")
+                .GetComponent<BoxCollider2D>();
+            if (trainingArea == null)
+                throw new InvalidOperationException("TrainingActivationArea의 BoxCollider2D가 없습니다.");
             for (var index = 0; index < names.Length; index++)
             {
                 var scope = GetOrCreateChild(root.transform, $"TrainingScope_{names[index]}");
-                var scene = EditorSceneManager.GetActiveScene();
-                var start = Require(scene, $"훈련_{markerPrefixes[index]}_시작").transform.position;
-                var end = Require(scene, $"훈련_{markerPrefixes[index]}_끝").transform.position;
-                var minimumX = Mathf.Min(start.x, end.x);
-                var maximumX = Mathf.Max(start.x, end.x);
                 scope.transform.SetPositionAndRotation(
-                    new Vector3((minimumX + maximumX) * 0.5f, 3f, 0f),
+                    new Vector3(trainingArea.bounds.center.x, trainingArea.bounds.center.y, 0f),
                     Quaternion.identity);
                 scope.transform.localScale = Vector3.one;
                 var collider = scope.GetComponent<BoxCollider2D>();
                 if (collider == null) collider = scope.AddComponent<BoxCollider2D>();
                 collider.isTrigger = true;
                 collider.offset = Vector2.zero;
-                collider.size = new Vector2(Mathf.Max(1.5f, maximumX - minimumX + 0.6f), 15f);
+                collider.size = trainingArea.bounds.size;
+                ConfigureFunctionMarker(
+                    scope,
+                    $"TRAINING-SCOPE-{names[index].ToUpperInvariant()}",
+                    TutorialFunctionMarkerKind.Point);
                 colliders[index] = collider;
             }
 
@@ -718,13 +818,19 @@ namespace Narthex.Tools
             var manager = GetOrCreateChild(integration, "TrainingFlowManager");
             var targetRoot = GetOrCreateChild(manager.transform, "RangedTrainingTargets");
             var sourceEnemy = Require(scene, "TutorialEnemy");
+            var importedTargetRenderers = Require(scene, "원거리공격훈련")
+                .GetComponentsInChildren<SpriteRenderer>(true)
+                .Where(renderer => renderer.gameObject.name.StartsWith("Enemy", StringComparison.Ordinal))
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .ToArray();
+            if (importedTargetRenderers.Length != 3)
+                throw new InvalidOperationException(
+                    $"원거리공격훈련에는 원형 허수아비 도형이 정확히 3개여야 합니다. 현재={importedTargetRenderers.Length}");
             var targets = new GameObject[3];
-            var positions = new[]
-            {
-                Require(scene, "훈련_원거리_01").transform.position,
-                Require(scene, "훈련_원거리_02").transform.position,
-                Require(scene, "훈련_원거리_03").transform.position
-            };
+            var targetRenderers = new Renderer[3];
+            var positions = importedTargetRenderers
+                .Select(renderer => renderer.bounds.center)
+                .ToArray();
             for (var index = 0; index < targets.Length; index++)
             {
                 var name = $"RangedTarget_{index + 1:00}";
@@ -757,6 +863,8 @@ namespace Narthex.Tools
                 actorSerialized.ApplyModifiedPropertiesWithoutUndo();
                 target.SetActive(false);
                 targets[index] = target;
+                targetRenderers[index] = importedTargetRenderers[index];
+                Require(scene, $"훈련_원거리_{index + 1:00}").transform.position = positions[index];
             }
 
             var host = manager.GetComponent<TutorialImportedTrainingFlowHost>();
@@ -774,6 +882,10 @@ namespace Narthex.Tools
             targetArray.arraySize = targets.Length;
             for (var index = 0; index < targets.Length; index++)
                 targetArray.GetArrayElementAtIndex(index).objectReferenceValue = targets[index];
+            var rendererArray = serialized.FindProperty("rangedTargetRenderers");
+            rendererArray.arraySize = targetRenderers.Length;
+            for (var index = 0; index < targetRenderers.Length; index++)
+                rendererArray.GetArrayElementAtIndex(index).objectReferenceValue = targetRenderers[index];
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return host;
         }
@@ -792,6 +904,20 @@ namespace Narthex.Tools
                 stageSystems.GetComponent<Narthex.Core.ServiceRoot>();
             serialized.FindProperty("questSequenceHost").objectReferenceValue =
                 stageSystems.GetComponent<TutorialQuestSequenceHost>();
+            serialized.FindProperty("questManagerHost").objectReferenceValue =
+                stageSystems.GetComponent<QuestManagerHost>();
+
+            var scene = EditorSceneManager.GetActiveScene();
+            var player = Require(scene, "PlayerRoot");
+            serialized.FindProperty("playerInputHost").objectReferenceValue =
+                player.GetComponent<PlayerInputHost>();
+            serialized.FindProperty("playerMotor").objectReferenceValue =
+                player.GetComponent<PlayerMotorHost>();
+            serialized.FindProperty("player").objectReferenceValue = player.transform;
+            serialized.FindProperty("playerBody").objectReferenceValue =
+                player.GetComponent<Rigidbody2D>();
+            serialized.FindProperty("fadeCanvasGroup").objectReferenceValue =
+                Require(scene, "TutorialZoneFadeOverlay").GetComponent<CanvasGroup>();
 
             var questIds = serialized.FindProperty("trainingQuestIds");
             questIds.arraySize = TrainingQuestOrder.Length;
@@ -803,58 +929,276 @@ namespace Narthex.Tools
             for (var index = 0; index < phaseAreas.Length; index++)
                 phaseAreaProperty.GetArrayElementAtIndex(index).objectReferenceValue = phaseAreas[index];
 
+            var phaseRoots = ConfigurePhaseContentRoots(scene, trainingController, flowHost, host, player);
+            var phaseRootProperty = serialized.FindProperty("phaseContentRoots");
+            phaseRootProperty.arraySize = phaseRoots.Length;
+            for (var index = 0; index < phaseRoots.Length; index++)
+                phaseRootProperty.GetArrayElementAtIndex(index).objectReferenceValue = phaseRoots[index];
+
+            var commonStart = Require(scene, "훈련_진입").transform;
+            ConfigureFunctionMarker(
+                commonStart.gameObject,
+                "TRAINING-COMMON-START",
+                TutorialFunctionMarkerKind.TrainingStart);
+            var startMarkers = serialized.FindProperty("phaseStartMarkers");
+            startMarkers.arraySize = TrainingQuestOrder.Length;
+            for (var index = 0; index < TrainingQuestOrder.Length; index++)
+                startMarkers.GetArrayElementAtIndex(index).objectReferenceValue = commonStart;
+
             serialized.FindProperty("exitGateCollider").objectReferenceValue =
                 exitGate.GetComponent<Collider2D>();
             serialized.FindProperty("exitGateRenderer").objectReferenceValue =
                 exitGate.GetComponent<Renderer>();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static GameObject[] ConfigurePhaseContentRoots(
+            Scene scene,
+            GameObject trainingController,
+            TutorialImportedTrainingFlowHost flowHost,
+            TutorialTrainingPhaseControllerHost phaseController,
+            GameObject player)
+        {
+            var contentRoot = GetOrCreateChild(trainingController.transform, "TrainingPhaseContents");
+            var roots = new[]
+            {
+                GetOrCreateChild(contentRoot.transform, "01_대시"),
+                GetOrCreateChild(contentRoot.transform, "02_더블점프"),
+                GetOrCreateChild(contentRoot.transform, "03_점프"),
+                GetOrCreateChild(contentRoot.transform, "04_근접공격"),
+                GetOrCreateChild(contentRoot.transform, "05_원거리공격")
+            };
+
+            var trainingLevel = Require(scene, "훈련장 수정버전");
+            var floorRenderer = trainingLevel.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer.bounds.size.x >= 20f && renderer.bounds.center.y < 0f)
+                .OrderBy(renderer => renderer.bounds.center.y)
+                .FirstOrDefault();
+            if (floorRenderer == null)
+                throw new InvalidOperationException("불기둥 높이 기준으로 사용할 훈련장 바닥을 찾지 못했습니다.");
+            var floorTop = floorRenderer.bounds.max.y;
+            const float fireWidth = 0.55f;
+            const float fireHeight = 8.5f;
+            var dashFinish = Require(scene, "훈련_대시_끝");
+            var roomRenderers = trainingLevel.GetComponentsInChildren<Renderer>(true);
+            var trainingBounds = roomRenderers[0].bounds;
+            for (var index = 1; index < roomRenderers.Length; index++)
+                trainingBounds.Encapsulate(roomRenderers[index].bounds);
+            dashFinish.transform.position =
+                new Vector3(trainingBounds.max.x - 2.3f, dashFinish.transform.position.y, 0f);
+            dashFinish.tag = "Untagged";
+            ConfigureFunctionMarker(
+                dashFinish,
+                DashFinishSignalId,
+                TutorialFunctionMarkerKind.TrainingFinish);
+            var finishCollider = dashFinish.GetComponent<BoxCollider2D>();
+            if (finishCollider == null) finishCollider = dashFinish.AddComponent<BoxCollider2D>();
+            finishCollider.isTrigger = true;
+            finishCollider.size = new Vector2(1.5f, 8f);
+            var legacyArrival = dashFinish.GetComponent<TutorialTrainingArrivalMarkerHost>();
+            if (legacyArrival != null) legacyArrival.enabled = false;
+            var dashObjective = dashFinish.GetComponent<TutorialTrainingDashObjectiveHost>();
+            if (dashObjective == null) dashObjective = dashFinish.AddComponent<TutorialTrainingDashObjectiveHost>();
+            var objectiveSerialized = new SerializedObject(dashObjective);
+            objectiveSerialized.FindProperty("serviceRoot").objectReferenceValue =
+                Require(scene, "StageSystems").GetComponent<Narthex.Core.ServiceRoot>();
+            objectiveSerialized.FindProperty("questSequenceHost").objectReferenceValue =
+                Require(scene, "StageSystems").GetComponent<TutorialQuestSequenceHost>();
+            objectiveSerialized.FindProperty("phaseController").objectReferenceValue = phaseController;
+            objectiveSerialized.FindProperty("player").objectReferenceValue = player.transform;
+            objectiveSerialized.FindProperty("questId").stringValue = "QST-TUTO-004";
+            objectiveSerialized.FindProperty("signalTargetId").stringValue = DashFinishSignalId;
+            objectiveSerialized.FindProperty("requiredFireCount").intValue = 3;
+            objectiveSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var dashSources = trainingLevel.GetComponentsInChildren<Renderer>(true)
+                .Concat(roots[0].GetComponentsInChildren<Renderer>(true))
+                .Where(IsTrainingFireSource)
+                .Distinct()
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .Take(3)
+                .ToArray();
+            if (dashSources.Length != 3)
+                throw new InvalidOperationException(
+                    $"훈련장의 빨간 불기둥 도형은 정확히 3개가 필요합니다. 현재 감지={dashSources.Length}");
+
+            for (var index = 0; index < dashSources.Length; index++)
+            {
+                var source = dashSources[index];
+                source.transform.SetParent(roots[0].transform, true);
+                source.transform.localScale = new Vector3(fireWidth, fireHeight, 1f);
+                source.transform.position = new Vector3(
+                    source.transform.position.x,
+                    floorTop + fireHeight * 0.5f,
+                    source.transform.position.z);
+                var collider = source.GetComponent<BoxCollider2D>();
+                if (collider == null) collider = source.gameObject.AddComponent<BoxCollider2D>();
+                collider.isTrigger = true;
+                collider.offset = Vector2.zero;
+                collider.size = Vector2.one;
+                var fire = source.GetComponent<TutorialTrainingDashFireHost>();
+                if (fire == null) fire = source.gameObject.AddComponent<TutorialTrainingDashFireHost>();
+                var fireSerialized = new SerializedObject(fire);
+                fireSerialized.FindProperty("phaseController").objectReferenceValue = phaseController;
+                fireSerialized.FindProperty("dashObjective").objectReferenceValue = dashObjective;
+                fireSerialized.FindProperty("playerMotor").objectReferenceValue =
+                    player.GetComponent<PlayerMotorHost>();
+                fireSerialized.FindProperty("player").objectReferenceValue = player.transform;
+                fireSerialized.FindProperty("fireIndex").intValue = index;
+                fireSerialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            objectiveSerialized = new SerializedObject(dashObjective);
+            var fireReferences = objectiveSerialized.FindProperty("fires");
+            fireReferences.arraySize = dashSources.Length;
+            for (var index = 0; index < dashSources.Length; index++)
+                fireReferences.GetArrayElementAtIndex(index).objectReferenceValue =
+                    dashSources[index].GetComponent<TutorialTrainingDashFireHost>();
+            objectiveSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var elevatedPlatforms = trainingLevel.GetComponentsInChildren<Renderer>(true)
+                .Concat(roots[1].GetComponentsInChildren<Renderer>(true))
+                .Where(IsTrainingPlatform)
+                .Distinct()
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .ToArray();
+            foreach (var platform in elevatedPlatforms)
+            {
+                platform.transform.SetParent(roots[1].transform, true);
+                ConfigureSolidPlatformCollider(platform);
+            }
+            var importedDoubleJumpGroup = Require(scene, "더블점프훈련");
+            importedDoubleJumpGroup.transform.SetParent(roots[1].transform, true);
+            var importedDoubleJumpPlatforms = importedDoubleJumpGroup
+                .GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer != null && !IsTrainingFireSource(renderer))
+                .OrderByDescending(renderer => renderer.bounds.max.y)
+                .ToArray();
+            foreach (var platform in importedDoubleJumpPlatforms)
+                ConfigureSolidPlatformCollider(platform);
+            if (importedDoubleJumpPlatforms.Length == 0)
+                throw new InvalidOperationException("더블점프 훈련에 사용할 높은 발판이 없습니다.");
+            var highestPlatform = importedDoubleJumpPlatforms[0];
+            var doubleJumpFinish = Require(scene, "훈련_더블점프_끝");
+            doubleJumpFinish.transform.position = new Vector3(
+                highestPlatform.bounds.center.x,
+                highestPlatform.bounds.max.y + 0.65f,
+                0f);
+            var doubleJumpCollider = doubleJumpFinish.GetComponent<BoxCollider2D>();
+            if (doubleJumpCollider == null)
+                doubleJumpCollider = doubleJumpFinish.AddComponent<BoxCollider2D>();
+            doubleJumpCollider.isTrigger = true;
+            doubleJumpCollider.size = new Vector2(
+                Mathf.Max(1f, highestPlatform.bounds.size.x),
+                1.5f);
+            var doubleJumpArrival =
+                doubleJumpFinish.GetComponent<TutorialTrainingArrivalMarkerHost>();
+            if (doubleJumpArrival == null)
+                doubleJumpArrival = doubleJumpFinish.AddComponent<TutorialTrainingArrivalMarkerHost>();
+            var doubleJumpSerialized = new SerializedObject(doubleJumpArrival);
+            doubleJumpSerialized.FindProperty("serviceRoot").objectReferenceValue =
+                Require(scene, "StageSystems").GetComponent<Narthex.Core.ServiceRoot>();
+            doubleJumpSerialized.FindProperty("questSequenceHost").objectReferenceValue =
+                Require(scene, "StageSystems").GetComponent<TutorialQuestSequenceHost>();
+            doubleJumpSerialized.FindProperty("player").objectReferenceValue = player.transform;
+            doubleJumpSerialized.FindProperty("questId").stringValue = "QST-TUTO-006";
+            doubleJumpSerialized.FindProperty("signalTargetId").stringValue = DoubleJumpFinishSignalId;
+            doubleJumpSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var jumpController = Require(scene, "JumpProjectileController");
+            jumpController.transform.SetParent(roots[2].transform, true);
+            Require(scene, "점프훈련").transform.SetParent(roots[2].transform, true);
 
             var spawnHost = RequireComponent<TutorialTrainingSpawnHost>(trainingController);
             var spawnSerialized = new SerializedObject(spawnHost);
-            CopyReferenceArray(
-                spawnSerialized.FindProperty("fallingObjects"),
-                serialized.FindProperty("fallingObjects"));
-            CopyReferenceArray(
-                spawnSerialized.FindProperty("fallingWarnings"),
-                serialized.FindProperty("fallingWarnings"));
-            var meleeEnemy =
-                spawnSerialized.FindProperty("tutorialEnemy").objectReferenceValue as GameObject;
-            serialized.FindProperty("meleeEnemy").objectReferenceValue = meleeEnemy;
-            serialized.FindProperty("meleeAreaRoot").objectReferenceValue =
-                meleeEnemy != null && meleeEnemy.transform.parent != null
-                    ? meleeEnemy.transform.parent.gameObject
-                    : null;
-
-            var jumpHost = RequireComponent<TutorialJumpTrainingHost>(
-                RequireChild(trainingController.transform, "JumpProjectileController").gameObject);
-            var jumpSerialized = new SerializedObject(jumpHost);
-            serialized.FindProperty("jumpProjectile").objectReferenceValue =
-                jumpSerialized.FindProperty("projectile").objectReferenceValue;
+            var meleeEnemy = spawnSerialized.FindProperty("tutorialEnemy").objectReferenceValue as GameObject;
+            if (meleeEnemy == null || meleeEnemy.transform.parent == null)
+                throw new InvalidOperationException("근접 훈련 적 또는 근접 훈련 루트를 찾지 못했습니다.");
+            meleeEnemy.transform.parent.SetParent(roots[3].transform, true);
+            Require(scene, "근접공격훈련").transform.SetParent(roots[3].transform, true);
 
             var flowSerialized = new SerializedObject(flowHost);
-            CopyReferenceArray(
-                flowSerialized.FindProperty("rangedTargets"),
-                serialized.FindProperty("rangedTargets"));
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var rangedTargets = flowSerialized.FindProperty("rangedTargets");
+            for (var index = 0; index < rangedTargets.arraySize; index++)
+            {
+                var target = rangedTargets.GetArrayElementAtIndex(index).objectReferenceValue as GameObject;
+                if (target != null) target.transform.SetParent(roots[4].transform, true);
+            }
+            Require(scene, "원거리공격훈련").transform.SetParent(roots[4].transform, true);
+
+            RemoveLegacyTrainingPropColliderProxies(scene, trainingBounds);
+            foreach (var root in roots) root.SetActive(false);
+            return roots;
+        }
+
+        private static void ConfigureSolidPlatformCollider(Renderer platform)
+        {
+            var platformCollider = platform.GetComponent<BoxCollider2D>();
+            if (platformCollider == null)
+                platformCollider = platform.gameObject.AddComponent<BoxCollider2D>();
+            platformCollider.isTrigger = false;
+            platformCollider.offset = Vector2.zero;
+            var lossyScale = platform.transform.lossyScale;
+            platformCollider.size = new Vector2(
+                platform.bounds.size.x / Mathf.Max(0.001f, Mathf.Abs(lossyScale.x)),
+                platform.bounds.size.y / Mathf.Max(0.001f, Mathf.Abs(lossyScale.y)));
+        }
+
+        private static void RemoveLegacyTrainingPropColliderProxies(Scene scene, Bounds trainingBounds)
+        {
+            var proxyRoot = FindSceneObject(scene, "훈련장 충돌체");
+            if (proxyRoot == null) return;
+
+            var proxies = proxyRoot.GetComponentsInChildren<BoxCollider2D>(true);
+            var removedCount = 0;
+            foreach (var proxy in proxies)
+            {
+                var size = proxy.size;
+                var isRoomShell =
+                    size.x >= trainingBounds.size.x * 0.7f ||
+                    size.y >= trainingBounds.size.y * 0.7f;
+                if (!isRoomShell)
+                {
+                    UnityEngine.Object.DestroyImmediate(proxy.gameObject);
+                    removedCount++;
+                }
+            }
+
+            Debug.Log(
+                $"[sragon000][훈련장][충돌체 정리] 단계와 무관하게 남던 내부 프록시 {removedCount}개 제거, " +
+                $"방 외곽 프록시 {proxyRoot.GetComponentsInChildren<BoxCollider2D>(true).Length}개 유지.");
         }
 
         private static void ConfigureQuestDefinitions()
         {
+            var dashCondition = RequireAsset<QuestConditionDefinition>(
+                "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-004-DASH.asset");
+            dashCondition.SignalType = QuestSignalType.PortalUsed;
+            dashCondition.TargetId = DashFinishSignalId;
+            dashCondition.RequiredAmount = 1;
+            EditorUtility.SetDirty(dashCondition);
+
+            var dashQuest = RequireAsset<QuestDefinition>(
+                "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Quests/QST-TUTO-004.asset");
+            dashQuest.Conditions = new[] { dashCondition };
+            dashQuest.NextQuestIds = new[] { "QST-TUTO-006" };
+            EditorUtility.SetDirty(dashQuest);
+
             var doubleJump = RequireAsset<QuestConditionDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-006-DOUBLE-JUMP.asset");
-            doubleJump.SignalType = QuestSignalType.DoubleJumpPerformed;
-            doubleJump.TargetId = "PLAYER-001";
+            doubleJump.SignalType = QuestSignalType.PortalUsed;
+            doubleJump.TargetId = DoubleJumpFinishSignalId;
             doubleJump.RequiredAmount = 1;
             EditorUtility.SetDirty(doubleJump);
 
             var doubleJumpQuest = RequireAsset<QuestDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Quests/QST-TUTO-006.asset");
             doubleJumpQuest.Conditions = new[] { doubleJump };
-            doubleJumpQuest.NextQuestIds = new[] { "QST-TUTO-003" };
+            doubleJumpQuest.NextQuestIds = new[] { "QST-TUTO-002" };
             EditorUtility.SetDirty(doubleJumpQuest);
 
             var jumpQuest = RequireAsset<QuestDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Quests/QST-TUTO-002.asset");
-            jumpQuest.NextQuestIds = new[] { "QST-TUTO-006" };
+            jumpQuest.NextQuestIds = new[] { "QST-TUTO-003" };
             EditorUtility.SetDirty(jumpQuest);
 
             var meleeCondition = RequireAsset<QuestConditionDefinition>(
@@ -909,8 +1253,8 @@ namespace Narthex.Tools
             {
                 "QST-TUTO-001",
                 "QST-TUTO-004",
-                "QST-TUTO-002",
                 "QST-TUTO-006",
+                "QST-TUTO-002",
                 "QST-TUTO-003",
                 "QST-TUTO-005",
                 "QST-TUTO-007",
@@ -920,11 +1264,16 @@ namespace Narthex.Tools
             };
             var trainingObjectives = new Dictionary<string, string>
             {
-                ["QST-TUTO-004"] = "훈련장 안에서 낙하물 3회 회피",
+                ["QST-TUTO-001"] = "비행선 패스키를 확보하고 훈련장 입구로 이동",
+                ["QST-TUTO-004"] = "무적 대시로 불기둥 3개를 통과해 도착점에 도달",
+                ["QST-TUTO-006"] = "더블 점프로 가장 높은 발판의 도착 마커에 도달",
                 ["QST-TUTO-002"] = "훈련장 안에서 전방 투사체 3회 점프 회피",
-                ["QST-TUTO-006"] = "발판을 이용해 더블 점프 1회 성공",
-                ["QST-TUTO-003"] = "훈련 적에게 기본 공격 3회 적중",
-                ["QST-TUTO-005"] = "2번 원거리 공격 한 발로 표적 3기 동시 관통"
+                ["QST-TUTO-003"] = "훈련용 에너미에게 기본 공격 3콤보 적중",
+                ["QST-TUTO-005"] = "원거리 공격 한 발로 훈련용 에너미 3기 동시 타격",
+                ["QST-TUTO-007"] = "습격 경보에 따라 회의장과 외부 출구로 대피",
+                ["QST-TUTO-007-A"] = "본부 외곽 통로의 판도라 개체 전원 처치",
+                ["QST-TUTO-007-B"] = "나디르 선착장 진입로의 판도라 개체 전원 처치",
+                ["QST-TUTO-008"] = "헬테와 조우해 전투를 완료"
             };
             quests.arraySize = order.Length;
             objectives.arraySize = order.Length;
@@ -947,17 +1296,24 @@ namespace Narthex.Tools
             {
                 var beat = beats.GetArrayElementAtIndex(index);
                 var questId = beat.FindPropertyRelative("questId").stringValue;
-                if (questId == "QST-TUTO-006")
+                if (questId == "QST-TUTO-004")
+                {
+                    SetLines(beat,
+                        "테우스: 첫 훈련은 대시야. 빨간 훈련 장치 세 개에서 불기둥이 계속 올라올 거야.",
+                        "테우스: 대시 중에는 피해를 받지 않아. 불기둥을 관통해서 반대편 도착점까지 가 봐.");
+                    beat.FindPropertyRelative("deferUntilPortalTargetId").stringValue = string.Empty;
+                }
+                else if (questId == "QST-TUTO-006")
                 {
                     SetLines(beat,
                         "테우스: 부츠 동기화 완료. 이제 공중에서 SPACE를 한 번 더 눌러 더블 점프할 수 있어.",
-                        "테우스: 앞의 높은 발판을 향해 더블 점프해 봐.");
+                        "테우스: 발판을 타고 가장 높은 곳의 도착 마커까지 올라가 봐.");
                     beat.FindPropertyRelative("deferUntilPortalTargetId").stringValue = string.Empty;
                 }
                 else if (questId == "QST-TUTO-003")
                 {
                     SetLines(beat,
-                        "테우스: 다음은 기본 공격이야. 훈련 표적 가까이 이동해.",
+                        "테우스: 다음은 기본 공격이야. 움직이지 않는 원형 허수아비 가까이 이동해.",
                         "테우스: 마우스 왼쪽 버튼을 0.5초 안에 연속 입력해서 1·2·3단 공격을 모두 적중시켜.");
                 }
                 else if (questId == "QST-TUTO-005")
@@ -965,7 +1321,7 @@ namespace Narthex.Tools
                     SetLines(beat,
                         "테우스: 마지막은 원거리 공격이야.",
                         "테우스: 2번 키를 누르면 바라보는 방향으로 관통 투사체를 발사해. 재사용 대기시간은 1.5초야.",
-                        "테우스: 위치를 맞춰 한 발로 표적 세 기를 모두 관통해 봐.");
+                        "테우스: 일렬로 선 원형 허수아비 세 기를 한 발로 모두 관통해 봐.");
                 }
                 else if (questId == "QST-TUTO-007")
                 {
@@ -1023,19 +1379,13 @@ namespace Narthex.Tools
             var targetMarkers = new Dictionary<string, string>
             {
                 ["QST-TUTO-004"] = "훈련_대시_시작",
-                ["QST-TUTO-002"] = "훈련_점프_시작",
                 ["QST-TUTO-006"] = "훈련_더블점프_끝",
+                ["QST-TUTO-002"] = "훈련_점프_시작",
                 ["QST-TUTO-003"] = "훈련_근접_시작",
                 ["QST-TUTO-005"] = "훈련_원거리_시작"
             };
             foreach (var pair in targetMarkers)
-            {
-                var anchor = GetOrCreateAnchor(
-                    integration,
-                    $"Objective_{pair.Key}",
-                    Require(scene, pair.Value).transform.position);
-                SetBeaconTarget(targets, pair.Key, anchor);
-            }
+                SetBeaconTarget(targets, pair.Key, Require(scene, pair.Value).transform);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -1047,8 +1397,8 @@ namespace Narthex.Tools
             var markerNames = new Dictionary<string, string>
             {
                 ["QST-TUTO-004"] = "훈련_대시_재시작",
-                ["QST-TUTO-002"] = "훈련_점프_재시작",
                 ["QST-TUTO-006"] = "훈련_더블점프_시작",
+                ["QST-TUTO-002"] = "훈련_점프_재시작",
                 ["QST-TUTO-003"] = "훈련_근접_시작",
                 ["QST-TUTO-005"] = "훈련_원거리_시작"
             };
@@ -1058,9 +1408,8 @@ namespace Narthex.Tools
                 var checkpoint = checkpoints.GetArrayElementAtIndex(index);
                 var questId = checkpoint.FindPropertyRelative("questId").stringValue;
                 if (!markerNames.TryGetValue(questId, out var markerName)) continue;
-                var position = Require(scene, markerName).transform.position;
-                var anchor = GetOrCreateAnchor(integration, $"Restart_{questId}", position);
-                checkpoint.FindPropertyRelative("spawnPoint").objectReferenceValue = anchor;
+                checkpoint.FindPropertyRelative("spawnPoint").objectReferenceValue =
+                    Require(scene, markerName).transform;
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -1106,9 +1455,70 @@ namespace Narthex.Tools
                     $"훈련 퀘스트 순서가 다릅니다: {string.Join(" → ", actualTrainingOrder)}");
 
             Debug.Log(
-                "[sragon000][훈련장][검증 통과] 대시→점프→더블점프→기본 공격→원거리 공격, " +
+                "[sragon000][훈련장][검증 통과] 대시→더블점프→점프→기본 공격→원거리 공격, " +
                 "단계별 행동 범위 1개만 활성화, 단일 출구 문, 이전 단계 정리, " +
                 "원거리 표적 3개, 체크포인트와 입력 참조 정상.");
+        }
+
+        private static bool IsTrainingFireSource(Renderer renderer)
+        {
+            if (renderer == null) return false;
+            var color = ResolveRendererColor(renderer);
+            return color.r >= 0.55f && color.r >= color.g * 1.35f && color.r >= color.b * 1.35f;
+        }
+
+        private static bool IsTrainingPlatform(Renderer renderer)
+        {
+            if (renderer == null || IsTrainingFireSource(renderer)) return false;
+            var bounds = renderer.bounds;
+            var color = ResolveRendererColor(renderer);
+            var nearWhite = color.r >= 0.65f && color.g >= 0.65f && color.b >= 0.65f;
+            return nearWhite &&
+                   bounds.center.y > -3f &&
+                   bounds.size.y <= 1.6f &&
+                   bounds.size.x >= 0.5f &&
+                   bounds.size.x <= 8f;
+        }
+
+        private static Color ResolveRendererColor(Renderer renderer)
+        {
+            if (renderer is SpriteRenderer spriteRenderer) return spriteRenderer.color;
+            if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty("_Color"))
+                return renderer.sharedMaterial.color;
+            return Color.white;
+        }
+
+        private static TutorialFunctionMarkerKind ResolveTrainingMarkerKind(string markerName)
+        {
+            if (markerName.Contains("등장")) return TutorialFunctionMarkerKind.EnemySpawn;
+            if (markerName.Contains("재시작") || markerName.Contains("진입"))
+                return TutorialFunctionMarkerKind.Checkpoint;
+            if (markerName.Contains("끝") || markerName.Contains("도착") || markerName.Contains("종료"))
+                return TutorialFunctionMarkerKind.TrainingFinish;
+            if (markerName.Contains("시작")) return TutorialFunctionMarkerKind.TrainingStart;
+            if (markerName.Contains("원거리")) return TutorialFunctionMarkerKind.Objective;
+            return TutorialFunctionMarkerKind.Point;
+        }
+
+        private static void ConfigureFunctionMarker(
+            GameObject target,
+            string markerId,
+            TutorialFunctionMarkerKind markerKind)
+        {
+            var current = target.transform;
+            while (current != null)
+            {
+                if (current.CompareTag("EditorOnly")) current.gameObject.tag = "Untagged";
+                if (current.name == "훈련장 배치 마커") break;
+                current = current.parent;
+            }
+
+            var marker = target.GetComponent<TutorialFunctionMarkerHost>();
+            if (marker == null) marker = target.AddComponent<TutorialFunctionMarkerHost>();
+            var serialized = new SerializedObject(marker);
+            serialized.FindProperty("markerId").stringValue = markerId;
+            serialized.FindProperty("kind").enumValueIndex = (int)markerKind;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void SetLines(SerializedProperty beat, params string[] values)

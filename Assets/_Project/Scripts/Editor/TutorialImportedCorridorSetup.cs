@@ -165,9 +165,12 @@ namespace Narthex.Tools
             if (transition == null || !transition.HasValidSetup)
                 throw new InvalidOperationException("복도→훈련장 구역 전환 설정이 유효하지 않습니다.");
 
-            var loreHosts = corridorIntegration.GetComponentsInChildren<TutorialLoreSubtitleTriggerHost>(true);
+            var loreRoot = corridorIntegration.transform.Find("테우스 세계관 자막");
+            var loreHosts = loreRoot != null
+                ? loreRoot.GetComponentsInChildren<TutorialLoreSubtitleTriggerHost>(true)
+                : Array.Empty<TutorialLoreSubtitleTriggerHost>();
             if (loreHosts.Length != 3 || loreHosts.Any(host => host == null || !host.HasValidSetup))
-                throw new InvalidOperationException("복도 테우스 자막 트리거 3개의 설정이 유효하지 않습니다.");
+                throw new InvalidOperationException("C01 복도 테우스 자막 트리거 3개의 설정이 유효하지 않습니다.");
 
             var corridorColliderRoot = Require(scene, "복도 충돌체");
             var trainingColliderRoot = Require(scene, "훈련장 충돌체");
@@ -208,9 +211,20 @@ namespace Narthex.Tools
             foreach (var collider in existing)
                 UnityEngine.Object.DestroyImmediate(collider.gameObject);
 
-            var renderers = levelRoot.GetComponentsInChildren<Renderer>(true)
+            var allRenderers = levelRoot.GetComponentsInChildren<Renderer>(true)
                 .Where(renderer => renderer != null && renderer.bounds.size.x > 0.02f && renderer.bounds.size.y > 0.02f)
-                .Where(renderer => !whiteShapesOnly || IsWhiteBlockout(renderer))
+                .ToArray();
+            if (allRenderers.Length == 0)
+                throw new InvalidOperationException($"{levelRoot.name}에 충돌 프록시를 만들 렌더러가 없습니다.");
+
+            var levelBounds = allRenderers[0].bounds;
+            for (var index = 1; index < allRenderers.Length; index++)
+                levelBounds.Encapsulate(allRenderers[index].bounds);
+
+            var renderers = allRenderers
+                .Where(renderer =>
+                    !whiteShapesOnly ||
+                    IsWhiteBlockout(renderer) && IsStructuralShell(renderer, levelBounds))
                 .OrderBy(renderer => renderer.transform.GetSiblingIndex())
                 .ThenBy(renderer => renderer.name, StringComparer.Ordinal)
                 .ToArray();
@@ -229,6 +243,13 @@ namespace Narthex.Tools
                 collider.size = new Vector2(bounds.size.x, bounds.size.y);
                 collider.isTrigger = false;
             }
+        }
+
+        private static bool IsStructuralShell(Renderer renderer, Bounds levelBounds)
+        {
+            var bounds = renderer.bounds;
+            return bounds.size.x >= levelBounds.size.x * 0.7f ||
+                   bounds.size.y >= levelBounds.size.y * 0.7f;
         }
 
         private static bool IsWhiteBlockout(Renderer renderer)

@@ -167,7 +167,7 @@ namespace Narthex.Presentation
             ResolveMissingParentReferences();
             DisableProceduralVisualMotion();
             if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
-            if (meleeAttack != null) meleeAttack.ComboStageChanged += HandleComboStageChanged;
+            if (meleeAttack != null) meleeAttack.AttackStarted += HandleAttackStarted;
             if (heltePattern != null) heltePattern.StateChanged += HandleHelteStateChanged;
             TrySubscribeCombatEvents();
             ApplyInitialFacing();
@@ -176,7 +176,7 @@ namespace Narthex.Presentation
         private void OnDisable()
         {
             if (playerInput != null) playerInput.AimDirectionChanged -= HandleAimDirectionChanged;
-            if (meleeAttack != null) meleeAttack.ComboStageChanged -= HandleComboStageChanged;
+            if (meleeAttack != null) meleeAttack.AttackStarted -= HandleAttackStarted;
             if (heltePattern != null) heltePattern.StateChanged -= HandleHelteStateChanged;
             if (subscribedToCombatEvents && actor != null && actor.Events != null)
                 actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
@@ -223,17 +223,11 @@ namespace Narthex.Presentation
                 PlayState("Idle");
         }
 
-        private void HandleComboStageChanged(int comboStage)
+        private void HandleAttackStarted()
         {
-            var resolvedStage = Mathf.Clamp(comboStage, 1, 3);
-            var stateName = $"Attack{resolvedStage:00}";
-            var duration = resolvedStage switch
-            {
-                2 => attackTwoDuration,
-                3 => attackThreeDuration,
-                _ => attackOneDuration
-            };
-            PlayLockedState(stateName, duration);
+            if (spriteRenderer != null && playerInput != null)
+                spriteRenderer.flipX = ShouldFlipForDirection(playerInput.AimDirectionX);
+            PlayLockedState("Attack01", attackOneDuration);
         }
 
         private void HandleHelteStateChanged(HelteCombatState state)
@@ -267,6 +261,10 @@ namespace Narthex.Presentation
 
         private void HandleAimDirectionChanged(float direction)
         {
+            if (preset == CharacterPngAnimationPreset.Prome &&
+                meleeAttack != null &&
+                meleeAttack.IsAttackDirectionLocked)
+                return;
             if (spriteRenderer != null && !Mathf.Approximately(direction, 0f))
                 spriteRenderer.flipX = ShouldFlipForDirection(direction);
         }

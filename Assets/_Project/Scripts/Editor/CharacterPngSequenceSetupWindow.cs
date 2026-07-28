@@ -19,7 +19,7 @@ namespace Narthex.Tools
         private static readonly Regex TrailingNumber =
             new Regex(@"(?<number>\d+)(?=\.png$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private static readonly string[] PromeRequired = { "Idle", "Run", "Attack01", "Attack02", "Attack03" };
+        private static readonly string[] PromeRequired = { "Idle", "Run", "Attack01" };
         private static readonly string[] PromeOptional = { "Jump", "Fall", "Glide", "Dash", "Hit", "Death" };
         private static readonly string[] HelteRequired =
         {
@@ -65,6 +65,10 @@ namespace Narthex.Tools
             EditorGUILayout.HelpBox(
                 "캐릭터와 PNG 상위 폴더를 선택한 뒤 검사하고 적용하세요. 준비된 모션만 부분 적용할 수 있으며, 씬은 적용 버튼을 누를 때만 변경됩니다.",
                 MessageType.Info);
+            if (preset == CharacterPngAnimationPreset.Prome)
+                EditorGUILayout.HelpBox(
+                    "프로메 기본 공격은 클릭 1회당 Attack01 모션 1회만 재생합니다. Attack02/Attack03 폴더는 필요하지 않습니다.",
+                    MessageType.None);
 
             EditorGUI.BeginChangeCheck();
             preset = (CharacterPngAnimationPreset)EditorGUILayout.EnumPopup("Character Preset", preset);

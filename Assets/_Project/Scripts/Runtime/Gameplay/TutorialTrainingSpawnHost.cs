@@ -43,6 +43,7 @@ namespace Narthex.Gameplay
         [SerializeField] private Collider2D enemyCollider;
         [SerializeField] private Behaviour enemyAttackBehaviour;
         [SerializeField] private GameObject enemySpawnWarning;
+        [SerializeField] private bool stationaryEnemy;
         [SerializeField, Min(0f)] private float enemyWarningDuration = 0.55f;
         [SerializeField, Min(0.05f)] private float enemyFallDuration = 0.45f;
 
@@ -174,6 +175,16 @@ namespace Narthex.Gameplay
         private IEnumerator EnemyArrivalSequence()
         {
             enemySequenceStarted = true;
+            if (stationaryEnemy)
+            {
+                enemySpawnWarning.SetActive(false);
+                tutorialEnemy.transform.position = enemyLandingPoint.position;
+                tutorialEnemy.SetActive(true);
+                enemyCollider.enabled = true;
+                enemyAttackBehaviour.enabled = false;
+                yield break;
+            }
+
             enemySpawnWarning.SetActive(true);
             if (enemyWarningDuration > 0f) yield return new WaitForSeconds(enemyWarningDuration);
 

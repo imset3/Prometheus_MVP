@@ -13,7 +13,7 @@ namespace Narthex.Tools
     public static class TutorialImportedEnvironmentHazardSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
-        private const string CompletionMarkerName = "G02_환경위험물연동완료";
+        private const string CompletionMarkerName = "G03_방향성마커연동완료";
         private const string RuntimeSmokeSessionKey = "sragon000.G02.RuntimeSmoke";
 
         static TutorialImportedEnvironmentHazardSetup()
@@ -75,16 +75,17 @@ namespace Narthex.Tools
                 var coordinator = Require(scene, "G02_HazardController")
                     .GetComponent<TutorialEnvironmentHazardCoordinatorHost>();
                 var fires = FindSceneComponents<TutorialFireHazardHost>(scene);
-                var winds = FindSceneComponents<TutorialWindHazardHost>(scene);
+                var winds = Require(scene, "G02_EnvironmentHazards")
+                    .GetComponentsInChildren<TutorialWindHazardHost>(true);
                 var lavas = FindSceneComponents<TutorialLavaHazardHost>(scene);
                 if (coordinator == null || !coordinator.enabled ||
                     fires.Length != 2 || fires.Any(host => !host.enabled) ||
-                    winds.Length != 2 || winds.Any(host => !host.enabled) ||
+                    winds.Length < 3 || winds.Any(host => !host.enabled) ||
                     lavas.Length != 1 || lavas.Any(host => !host.enabled))
                     throw new InvalidOperationException("G 환경 위험물 런타임 활성화 또는 Awake 검증에 실패했습니다.");
 
                 Debug.Log(
-                    "[sragon000][G02][런타임 검증 통과] G 활성화 시 화염 2, 바람 2, " +
+                    "[sragon000][G02][런타임 검증 통과] G 활성화 시 화염 2, 바람 3개 이상, " +
                     "용암 1, 안전지점 조정자가 오류 없이 시작되었습니다.");
             }
             catch (Exception exception)
@@ -158,7 +159,6 @@ namespace Narthex.Tools
                         $"G 색상 위험물 분석 실패: 화염 {fireSources.Length}, 바람 {windSources.Length}, 용암 {lavaSources.Length}");
 
                 var hazardRoot = GetOrCreateChild(gIntegration.transform, "G02_EnvironmentHazards");
-                ClearGeneratedChildren(hazardRoot.transform);
                 var controllerObject = GetOrCreateChild(hazardRoot.transform, "G02_HazardController");
                 var coordinator = ConfigureCoordinator(
                     scene,
@@ -167,7 +167,13 @@ namespace Narthex.Tools
                     stageSystems,
                     Require(scene, "G01_Spawn_FromF").transform);
                 ConfigureFireHazards(hazardRoot.transform, fireSources, player, stageSystems, coordinator);
-                ConfigureWindHazards(hazardRoot.transform, windSources, player);
+                ConfigureWindHazards(
+                    hazardRoot.transform,
+                    windSources,
+                    renderers,
+                    player,
+                    Require(scene, "G01_Spawn_FromF").transform,
+                    Require(scene, "G01_Exit_ToH").transform);
                 ConfigureLavaHazards(
                     hazardRoot.transform,
                     lavaSources,
@@ -251,31 +257,142 @@ namespace Narthex.Tools
         private static void ConfigureWindHazards(
             Transform root,
             ClassifiedRenderer[] sources,
-            GameObject player)
+            Renderer[] allRenderers,
+            GameObject player,
+            Transform stageStart,
+            Transform stageExit)
         {
             var parent = GetOrCreateChild(root, "바람 상승기류");
+            var ascentTopY = stageExit.position.y + 2f;
+            ConfigureWindMarker(
+                parent.transform,
+                "G02_바람_시작_MARKER",
+                stageStart.position + Vector3.up * 5f,
+                Quaternion.identity,
+                new Vector2(6f, 12f),
+                player);
             for (var index = 0; index < sources.Length; index++)
             {
                 var source = sources[index].renderer;
                 var bounds = source.bounds;
-                var height = Mathf.Max(bounds.size.y, 6f);
-                var size = new Vector3(Mathf.Max(bounds.size.x, 1f), height, bounds.size.z);
-                var center = new Vector3(bounds.center.x, bounds.min.y + height * 0.5f, 0f);
-                var proxy = CreateTriggerProxy(
+                var height = Mathf.Max(bounds.size.y, 8f);
+                var localWidth = Mathf.Abs(source.localBounds.size.x * source.transform.lossyScale.x);
+                var markerName = $"G02_바람_{index + 1:00}_MARKER";
+                var legacy = parent.transform.Find($"G02_바람_{index + 1:00}_PROXY");
+                if (parent.transform.Find(markerName) == null && legacy != null)
+                {
+                    legacy.name = markerName;
+                    legacy.SetPositionAndRotation(
+                        new Vector3(bounds.center.x, bounds.min.y + height * 0.5f, 0f),
+                        source.transform.rotation);
+                    var legacyCollider = legacy.GetComponent<BoxCollider2D>();
+                    if (legacyCollider != null)
+                        legacyCollider.size = new Vector2(Mathf.Max(localWidth, 6f), height);
+                }
+                var windMarker = ConfigureWindMarker(
                     parent.transform,
-                    $"G02_바람_{index + 1:00}_PROXY",
-                    center,
-                    size);
-                var hazard = proxy.GetComponent<TutorialWindHazardHost>();
-                if (hazard == null) hazard = proxy.AddComponent<TutorialWindHazardHost>();
-                var serialized = new SerializedObject(hazard);
-                SetObject(serialized, "playerBody", player.GetComponent<Rigidbody2D>());
-                SetObject(serialized, "player", player.transform);
-                SetObject(serialized, "playerMotor", player.GetComponent<PlayerMotorHost>());
-                serialized.FindProperty("liftAcceleration").floatValue = 24f;
-                serialized.FindProperty("maximumRiseSpeed").floatValue = 8f;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
+                    markerName,
+                    new Vector3(bounds.center.x, bounds.min.y + height * 0.5f, 0f),
+                    source.transform.rotation,
+                    new Vector2(Mathf.Max(localWidth, 6f), height),
+                    player);
+                EnsureVerticalCoverage(windMarker, ascentTopY);
             }
+
+            var leftWall = allRenderers.FirstOrDefault(renderer => renderer.name == "Square (21)");
+            var rightWall = allRenderers.FirstOrDefault(renderer => renderer.name == "Square (28)");
+            if (leftWall != null && rightWall != null)
+            {
+                var leftBounds = leftWall.bounds;
+                var rightBounds = rightWall.bounds;
+                var passageLeft = leftBounds.max.x;
+                var passageRight = rightBounds.min.x;
+                var passageBottom = Mathf.Min(leftBounds.min.y, rightBounds.min.y);
+                var passageTop = Mathf.Max(leftBounds.max.y, rightBounds.max.y) + 1f;
+                if (passageRight > passageLeft + 0.5f)
+                {
+                    ConfigureWindMarker(
+                        parent.transform,
+                        "G02_바람_중간통로_MARKER",
+                        new Vector3(
+                            (passageLeft + passageRight) * 0.5f,
+                            (passageBottom + passageTop) * 0.5f,
+                            0f),
+                        Quaternion.identity,
+                        new Vector2(
+                            Mathf.Max(1f, passageRight - passageLeft - 0.2f),
+                            passageTop - passageBottom),
+                        player);
+                }
+            }
+        }
+
+        private static GameObject ConfigureWindMarker(
+            Transform parent,
+            string name,
+            Vector3 suggestedCenter,
+            Quaternion suggestedRotation,
+            Vector2 suggestedSize,
+            GameObject player)
+        {
+            var existing = parent.Find(name);
+            var marker = existing != null ? existing.gameObject : GetOrCreateChild(parent, name);
+            if (existing == null)
+            {
+                marker.transform.SetPositionAndRotation(suggestedCenter, suggestedRotation);
+                marker.transform.localScale = Vector3.one;
+            }
+
+            var collider = marker.GetComponent<BoxCollider2D>();
+            if (collider == null) collider = marker.AddComponent<BoxCollider2D>();
+            collider.isTrigger = true;
+            if (existing == null) collider.size = suggestedSize;
+            else if (collider.size.x < suggestedSize.x)
+                collider.size = new Vector2(suggestedSize.x, collider.size.y);
+
+            var functionMarker = marker.GetComponent<TutorialFunctionMarkerHost>();
+            if (functionMarker == null) functionMarker = marker.AddComponent<TutorialFunctionMarkerHost>();
+            var markerSerialized = new SerializedObject(functionMarker);
+            markerSerialized.FindProperty("markerId").stringValue = name;
+            markerSerialized.FindProperty("kind").enumValueIndex =
+                (int)TutorialFunctionMarkerKind.Wind;
+            markerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var hazard = marker.GetComponent<TutorialWindHazardHost>();
+            if (hazard == null) hazard = marker.AddComponent<TutorialWindHazardHost>();
+            var serialized = new SerializedObject(hazard);
+            SetObject(serialized, "playerBody", player.GetComponent<Rigidbody2D>());
+            SetObject(serialized, "player", player.transform);
+            SetObject(serialized, "playerMotor", player.GetComponent<PlayerMotorHost>());
+            serialized.FindProperty("liftAcceleration").floatValue = 32f;
+            serialized.FindProperty("maximumRiseSpeed").floatValue = 12f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return marker;
+        }
+
+        private static void EnsureVerticalCoverage(GameObject marker, float requiredTopY)
+        {
+            var collider = marker.GetComponent<BoxCollider2D>();
+            if (collider == null || marker.transform.parent == null) return;
+
+            // Collider2D.bounds is empty while G's integration root is inactive in edit mode.
+            // Work in the marker parent's local space so setup remains deterministic.
+            var requiredTopLocalY = marker.transform.parent
+                .InverseTransformPoint(new Vector3(marker.transform.position.x, requiredTopY, 0f)).y;
+            var verticalScale = Mathf.Max(0.0001f, Mathf.Abs(marker.transform.localScale.y));
+            var colliderCenterLocalY =
+                marker.transform.localPosition.y + collider.offset.y * verticalScale;
+            var bottomLocalY = colliderCenterLocalY - collider.size.y * verticalScale * 0.5f;
+            var currentTopLocalY = colliderCenterLocalY + collider.size.y * verticalScale * 0.5f;
+            if (currentTopLocalY >= requiredTopLocalY - 0.05f) return;
+
+            collider.size = new Vector2(
+                collider.size.x,
+                (requiredTopLocalY - bottomLocalY) / verticalScale);
+            var requiredCenterLocalY = (bottomLocalY + requiredTopLocalY) * 0.5f;
+            var localPosition = marker.transform.localPosition;
+            localPosition.y = requiredCenterLocalY - collider.offset.y * verticalScale;
+            marker.transform.localPosition = localPosition;
         }
 
         private static void ConfigureLavaHazards(
@@ -420,7 +537,8 @@ namespace Narthex.Tools
                 throw new InvalidOperationException("G 환경 위험물 조정자 참조 또는 용암 피해율이 유효하지 않습니다.");
 
             var fires = FindSceneComponents<TutorialFireHazardHost>(scene);
-            var winds = FindSceneComponents<TutorialWindHazardHost>(scene);
+            var winds = Require(scene, "G02_EnvironmentHazards")
+                .GetComponentsInChildren<TutorialWindHazardHost>(true);
             var lavas = FindSceneComponents<TutorialLavaHazardHost>(scene);
             var safePoints = FindSceneComponents<TutorialSafePointTriggerHost>(scene);
             if (fires.Length == 0 || fires.Any(host => !host.HasValidSetup ||

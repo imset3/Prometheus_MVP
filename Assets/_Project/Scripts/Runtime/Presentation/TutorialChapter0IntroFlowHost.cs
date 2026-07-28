@@ -130,6 +130,7 @@ namespace Narthex.Presentation
         [SerializeField] private Collider2D ledgeTrigger;
         [SerializeField] private Collider2D passkeyTrigger;
         [SerializeField] private Collider2D hiddenRoomReturnTrigger;
+        [SerializeField] private GameObject hiddenRoomExitAvailabilityRoot;
 
         [Header("Pre-placed visuals")]
         [SerializeField] private GameObject passkeyVisual;
@@ -139,6 +140,7 @@ namespace Narthex.Presentation
         [SerializeField] private GameObject glideInstructionRoot;
         [SerializeField] private RectTransform glideKeyVisual;
         [SerializeField] private GameObject updraftVisual;
+        [SerializeField] private TutorialWindHazardHost hiddenRoomWindMarker;
 
         [Header("Room camera")]
         [SerializeField] private float hiddenCameraMinX = -213f;
@@ -198,13 +200,33 @@ namespace Narthex.Presentation
                                      hiddenRoomSpawn != null && meetingReturnSpawn != null && hiddenRoomEntryTarget != null &&
                                      ledgeTarget != null && passkeyTarget != null && hiddenRoomReturnTarget != null && trainingExitTarget != null &&
                                      hiddenRoomEntryTrigger != null && ledgeTrigger != null && passkeyTrigger != null && hiddenRoomReturnTrigger != null &&
+                                     hiddenRoomExitAvailabilityRoot != null &&
+                                     HasCoherentHiddenRoomLayout &&
                                      passkeyVisual != null && (theusLightForm != null || theusFlashlightVisual != null) &&
                                      wrongWayAlarmVisual != null &&
                                      glideInstructionRoot != null && updraftVisual != null;
         public bool UsesTheusLightForm => theusLightForm != null && theusLightForm.HasValidSetup;
+        public bool UsesMarkerDrivenUpdraft => hiddenRoomWindMarker != null &&
+                                               hiddenRoomWindMarker.HasValidSetup;
+        public bool HasCoherentHiddenRoomLayout =>
+            hiddenRoomRoot != null &&
+            (hiddenRoomRoot.transform.parent == null ||
+             hiddenRoomRoot.transform.parent.gameObject.activeInHierarchy) &&
+            hiddenRoomSpawn != null && hiddenRoomSpawn.IsChildOf(hiddenRoomRoot.transform) &&
+            ledgeTarget != null && ledgeTarget.IsChildOf(hiddenRoomRoot.transform) &&
+            passkeyTarget != null && passkeyTarget.IsChildOf(hiddenRoomRoot.transform) &&
+            hiddenRoomReturnTarget != null && hiddenRoomReturnTarget.IsChildOf(hiddenRoomRoot.transform) &&
+            hiddenCameraMinX <= hiddenRoomSpawn.position.x &&
+            hiddenCameraMaxX >= hiddenRoomSpawn.position.x &&
+            hiddenCameraMinX <= passkeyTarget.position.x &&
+            hiddenCameraMaxX >= passkeyTarget.position.x &&
+            hiddenCameraMinY <= hiddenRoomSpawn.position.y &&
+            hiddenCameraMaxY >= passkeyTarget.position.y &&
+            passkeyTarget.position.y >= hiddenRoomSpawn.position.y + 3f;
         public float UpdraftLiftSpeed => updraftLiftSpeed;
         public float UpdraftMaxRiseSpeed => updraftMaxRiseSpeed;
-        public bool HasValidUpdraftSetup => updraftMax.x > updraftMin.x &&
+        public bool HasValidUpdraftSetup => UsesMarkerDrivenUpdraft ||
+                                           (updraftMax.x > updraftMin.x &&
                                             updraftMax.y > updraftMin.y &&
                                             updraftMax.y <= hiddenCameraMaxY + 0.01f &&
                                             passkeyTarget != null && updraftMax.y > passkeyTarget.position.y &&
@@ -212,7 +234,7 @@ namespace Narthex.Presentation
                                             TutorialUpdraftPolicy.HasReturnClearance(
                                                 updraftMax.y,
                                                 hiddenRoomReturnTarget.position.y) &&
-                                            updraftLiftSpeed > 0f && updraftMaxRiseSpeed > 0f;
+                                            updraftLiftSpeed > 0f && updraftMaxRiseSpeed > 0f);
 
         private void Awake()
         {
@@ -233,6 +255,7 @@ namespace Narthex.Presentation
             legacyGuideRoute.enabled = false;
             trainingExitTransitionTrigger.enabled = false;
             hiddenRoomRoot.SetActive(false);
+            hiddenRoomExitAvailabilityRoot.SetActive(false);
             SetTheusLightForm(false);
             wrongWayAlarmVisual.SetActive(false);
             glideInstructionRoot.SetActive(false);
@@ -244,11 +267,13 @@ namespace Narthex.Presentation
         private void OnEnable()
         {
             if (dialoguePresenter != null) dialoguePresenter.DialogueClosed += HandleDialogueClosed;
+            if (playerInputHost != null) playerInputHost.InteractRequested += HandleInteractRequested;
         }
 
         private void OnDisable()
         {
             if (dialoguePresenter != null) dialoguePresenter.DialogueClosed -= HandleDialogueClosed;
+            if (playerInputHost != null) playerInputHost.InteractRequested -= HandleInteractRequested;
             objectiveBeacon?.ClearExternalTarget();
         }
 
@@ -311,13 +336,12 @@ namespace Narthex.Presentation
                     if (HasReachedHiddenRoomEntry()) StartCoroutine(TransitionToHiddenRoom());
                     break;
                 case TutorialChapter0IntroState.SeekPasskey:
-                    if (HasReachedTrigger(passkeyTrigger)) CollectPasskey();
+                    if (HasReachedTrigger(passkeyTrigger, passkeyTarget)) CollectPasskey();
                     break;
                 case TutorialChapter0IntroState.SeekLedge:
-                    if (HasReachedTrigger(ledgeTrigger)) BeginGlideBriefing();
+                    if (HasReachedTrigger(ledgeTrigger, ledgeTarget)) BeginGlideBriefing();
                     break;
                 case TutorialChapter0IntroState.ReturnToMeeting:
-                    if (HasReachedTrigger(hiddenRoomReturnTrigger)) StartCoroutine(ReturnToMeetingRoom());
                     break;
             }
             previousPlayerPosition = player.position;
@@ -326,7 +350,9 @@ namespace Narthex.Presentation
         private void FixedUpdate()
         {
             if (!enabled || transitionRunning || dialoguePresenter.IsShowing) return;
-            if (state == TutorialChapter0IntroState.SeekPasskey || state == TutorialChapter0IntroState.ReturnToMeeting)
+            if (!UsesMarkerDrivenUpdraft &&
+                (state == TutorialChapter0IntroState.SeekPasskey ||
+                 state == TutorialChapter0IntroState.ReturnToMeeting))
                 ApplyUpdraftRecovery();
         }
 
@@ -363,7 +389,7 @@ namespace Narthex.Presentation
             else if (state == TutorialChapter0IntroState.HiddenRoomEntryDialogue)
             {
                 state = TutorialChapter0IntroState.SeekLedge;
-                objectiveBeacon.SetExternalTarget(ledgeTarget);
+                objectiveBeacon.SetExternalTarget(passkeyTarget);
             }
             else if (state == TutorialChapter0IntroState.HiddenRoomBriefing)
             {
@@ -409,6 +435,7 @@ namespace Narthex.Presentation
             UnlockPlayer();
             transitionRunning = false;
             state = TutorialChapter0IntroState.HiddenRoomEntryDialogue;
+            objectiveBeacon.SetExternalTarget(passkeyTarget);
             serviceRoot.Events.Publish(new TutorialNarrativeChanged(
                 TutorialChapter0IntroProgress.HiddenRoomStageId,
                 "숨겨진 활공 훈련실",
@@ -428,6 +455,7 @@ namespace Narthex.Presentation
             cameraFollowHost.SetBounds(meetingCameraMinX, meetingCameraMaxX, meetingCameraY, true);
             serviceRoot.Events.Publish(new TutorialLocationChanged("회의장"));
             hiddenRoomRoot.SetActive(false);
+            hiddenRoomExitAvailabilityRoot.SetActive(false);
             SetTheusLightForm(false);
             trainingExitTransitionTrigger.enabled = true;
             SaveStage(TutorialChapter0IntroProgress.ReturnStageId, "TutorialIntroReturnedToMeeting");
@@ -469,7 +497,6 @@ namespace Narthex.Presentation
 
         private void CollectPasskey()
         {
-            if (HasPasskey) return;
             var run = saveSystemHost.System.Current.Run;
             run.CollectedItemIds ??= new List<string>();
             if (!run.CollectedItemIds.Contains(TutorialChapter0IntroProgress.PasskeyItemId))
@@ -477,8 +504,8 @@ namespace Narthex.Presentation
             run.TutorialIntroStageId = TutorialChapter0IntroProgress.ReturnStageId;
             saveSystemHost.System.Save("TutorialAirshipPasskeyCollected");
             passkeyVisual.SetActive(false);
-            SetTheusLightForm(false);
             glideInstructionRoot.SetActive(false);
+            hiddenRoomExitAvailabilityRoot.SetActive(true);
             state = TutorialChapter0IntroState.ReturnToMeeting;
             objectiveBeacon.SetExternalTarget(hiddenRoomReturnTarget);
             auxiliaryDialogue = true;
@@ -489,6 +516,27 @@ namespace Narthex.Presentation
                 {
                     "프로메: 이제 돌아가자."
                 }));
+        }
+
+        private void HandleInteractRequested()
+        {
+            if (state != TutorialChapter0IntroState.ReturnToMeeting || transitionRunning ||
+                dialoguePresenter.IsShowing || !HasReachedInteractionMarker(
+                    hiddenRoomReturnTrigger,
+                    hiddenRoomReturnTarget))
+                return;
+            StartCoroutine(ReturnToMeetingRoom());
+        }
+
+        private bool HasReachedInteractionMarker(Collider2D trigger, Transform marker)
+        {
+            if (IsOverlapping(trigger)) return true;
+            if (marker == null) return false;
+
+            var triggerRadius = trigger != null
+                ? Mathf.Max(trigger.bounds.extents.x, trigger.bounds.extents.y)
+                : 0f;
+            return Vector2.Distance(player.position, marker.position) <= Mathf.Max(1.25f, triggerRadius);
         }
 
         private void UpdateWrongWayResponse()
@@ -551,6 +599,7 @@ namespace Narthex.Presentation
         private void RestoreHiddenRoom()
         {
             hiddenRoomRoot.SetActive(true);
+            hiddenRoomExitAvailabilityRoot.SetActive(false);
             MovePlayer(hiddenRoomSpawn.position);
             cameraFollowHost.SetTrackingBounds(hiddenCameraMinX, hiddenCameraMaxX, hiddenCameraMinY, hiddenCameraMaxY, true);
             serviceRoot.Events.Publish(new TutorialLocationChanged("숨겨진 방"));
@@ -559,6 +608,7 @@ namespace Narthex.Presentation
             passkeyVisual.SetActive(true);
             updraftVisual.SetActive(true);
             trainingExitTransitionTrigger.enabled = false;
+            objectiveBeacon.SetExternalTarget(passkeyTarget);
             StartCoroutine(PublishRestoredHiddenRoomDialogue());
         }
 
@@ -574,6 +624,7 @@ namespace Narthex.Presentation
         private void RestoreMeetingReturn()
         {
             hiddenRoomRoot.SetActive(false);
+            hiddenRoomExitAvailabilityRoot.SetActive(false);
             MovePlayer(meetingReturnSpawn.position);
             cameraFollowHost.SetBounds(meetingCameraMinX, meetingCameraMaxX, meetingCameraY, true);
             serviceRoot.Events.Publish(new TutorialLocationChanged("회의장"));
@@ -620,14 +671,17 @@ namespace Narthex.Presentation
 
         private bool IsOverlapping(Collider2D trigger)
         {
-            return trigger != null && trigger.enabled && trigger.Distance(playerCollider).isOverlapped;
+            return trigger != null && trigger.enabled &&
+                   (trigger.OverlapPoint(player.position) ||
+                    trigger.Distance(playerCollider).isOverlapped);
         }
 
-        private bool HasReachedTrigger(Collider2D trigger)
+        private bool HasReachedTrigger(Collider2D trigger, Transform marker = null)
         {
             return IsOverlapping(trigger) ||
                    (trigger != null && trigger.enabled &&
-                    TutorialTriggerSweepPolicy.Intersects(trigger.bounds, previousPlayerPosition, player.position));
+                    TutorialTriggerSweepPolicy.Intersects(trigger.bounds, previousPlayerPosition, player.position)) ||
+                   (marker != null && Vector2.Distance(player.position, marker.position) <= 1.25f);
         }
 
         private bool HasReachedHiddenRoomEntry()

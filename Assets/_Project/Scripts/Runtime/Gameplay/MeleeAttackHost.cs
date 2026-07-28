@@ -14,7 +14,7 @@ namespace Narthex.Gameplay
         [SerializeField] private int damage = 25;
         [SerializeField] private float cooldownSeconds = 0.25f;
         [SerializeField] private float activeSeconds = 0.08f;
-        [SerializeField, Min(0.05f)] private float comboWindowSeconds = 0.5f;
+        [SerializeField, Min(0.01f)] private float directionLockSeconds = 0.22f;
 
         private readonly Collider2D[] results = new Collider2D[8];
         private float cooldownEndsAt;
@@ -22,13 +22,14 @@ namespace Narthex.Gameplay
         private float attackDirectionLockedUntil;
         private Vector3 attackAnchorLocalPosition;
         private Vector3 attackAnchorLocalScale;
-        private AttackComboTracker comboTracker;
+        private uint attackSequence;
 
         public bool HasValidSetup => inputHost != null && sourceActor != null && attackHitbox != null && attackAnchor != null;
-        public int CurrentComboStage => comboTracker != null ? comboTracker.CurrentStage : 0;
-        public float ComboWindowSeconds => comboWindowSeconds;
+        public bool UsesSingleHitAttacks => true;
+        public float CooldownSeconds => cooldownSeconds;
+        public float DirectionLockSeconds => directionLockSeconds;
         public bool IsAttackDirectionLocked => Time.time < attackDirectionLockedUntil;
-        public event System.Action<int> ComboStageChanged;
+        public event System.Action AttackStarted;
 
         private void Awake()
         {
@@ -42,7 +43,6 @@ namespace Narthex.Gameplay
             attackHitbox.enabled = false;
             attackAnchorLocalPosition = attackAnchor.localPosition;
             attackAnchorLocalScale = attackAnchor.localScale;
-            comboTracker = new AttackComboTracker(comboWindowSeconds);
             ApplyAimDirection(inputHost.AimDirectionX);
         }
 
@@ -57,7 +57,6 @@ namespace Narthex.Gameplay
             if (inputHost != null) inputHost.AttackRequested -= TryAttack;
             if (inputHost != null) inputHost.AimDirectionChanged -= ApplyAimDirection;
             if (attackHitbox != null) attackHitbox.enabled = false;
-            comboTracker?.Reset();
         }
 
         private void Update()
@@ -74,12 +73,13 @@ namespace Narthex.Gameplay
             if (Time.time < cooldownEndsAt || sourceActor.Runtime == null || sourceActor.CombatSystem == null) return;
             if (!sourceActor.Runtime.IsAlive || sourceActor.Runtime.State is CombatState.Hit or CombatState.Stun) return;
 
+            ApplyAimDirection(inputHost.AimDirectionX);
             cooldownEndsAt = Time.time + cooldownSeconds;
             deactivateAt = Time.time + activeSeconds;
-            attackDirectionLockedUntil = deactivateAt;
+            attackDirectionLockedUntil = Time.time + Mathf.Max(activeSeconds, directionLockSeconds);
             attackHitbox.enabled = true;
-            var comboStage = comboTracker.RegisterAttack(Time.time);
-            ComboStageChanged?.Invoke(comboStage);
+            attackSequence++;
+            AttackStarted?.Invoke();
             Physics2D.SyncTransforms();
 
             var filter = ContactFilter2D.noFilter;
@@ -94,13 +94,11 @@ namespace Narthex.Gameplay
 
                 hitEnemy |= sourceActor.CombatSystem.TryApplyDamage(
                     target.ActorId,
-                    new DamagePacket(sourceActor.ActorId, $"{attackId}-COMBO-{comboStage:00}", damage));
+                    new DamagePacket(sourceActor.ActorId, $"{attackId}-{attackSequence:000000}", damage));
             }
 
             if (!hitEnemy) return;
             sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.AttackPerformed, sourceActor.ActorId));
-            if (comboStage == 3)
-                sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.MeleeComboCompleted, sourceActor.ActorId));
         }
 
         private void ApplyAimDirection(float direction)

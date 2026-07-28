@@ -23,17 +23,22 @@ namespace Narthex.Gameplay
         [SerializeField] private GameObject projectile;
         [SerializeField] private Rigidbody2D projectileBody;
         [SerializeField] private TutorialJumpProjectileHazardHost projectileHazard;
+        [SerializeField] private GameObject[] projectilePool = System.Array.Empty<GameObject>();
+        [SerializeField] private Rigidbody2D[] projectileBodyPool = System.Array.Empty<Rigidbody2D>();
+        [SerializeField] private TutorialJumpProjectileHazardHost[] projectileHazardPool =
+            System.Array.Empty<TutorialJumpProjectileHazardHost>();
         [SerializeField, Min(0f)] private float initialDelay = 0.45f;
         [SerializeField, Min(0.1f)] private float travelDuration = 1.55f;
-        [SerializeField, Min(0f)] private float repeatDelay = 0.5f;
+        [SerializeField, Min(0.1f)] private float launchInterval = 1f;
         [SerializeField, Min(0f)] private float restartDelay = 0.4f;
 
         private Coroutine trainingRoutine;
+        private int nextProjectileIndex;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
                                      !string.IsNullOrWhiteSpace(jumpQuestId) && player != null && playerBody != null &&
                                      playerMotor != null && restartPoint != null && launchPoint != null && endPoint != null &&
-                                     projectile != null && projectileBody != null && projectileHazard != null;
+                                     HasValidProjectilePool();
 
         private void Awake()
         {
@@ -46,7 +51,7 @@ namespace Narthex.Gameplay
 
             serviceRoot.Initialize();
             questManagerHost.Initialize();
-            HideProjectile();
+            HideProjectiles();
         }
 
         private void OnEnable()
@@ -63,7 +68,8 @@ namespace Narthex.Gameplay
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             if (trainingRoutine != null) StopCoroutine(trainingRoutine);
             trainingRoutine = null;
-            HideProjectile();
+            StopAllCoroutines();
+            HideProjectiles();
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => SetTrainingActive(message.QuestId == jumpQuestId);
@@ -75,7 +81,8 @@ namespace Narthex.Gameplay
                 StopCoroutine(trainingRoutine);
                 trainingRoutine = null;
             }
-            HideProjectile();
+            StopAllCoroutines();
+            HideProjectiles();
             if (active) trainingRoutine = StartCoroutine(TrainingLoop(initialDelay));
         }
 
@@ -84,24 +91,35 @@ namespace Narthex.Gameplay
             if (delay > 0f) yield return new WaitForSeconds(delay);
             while (questSequenceHost.CurrentQuestId == jumpQuestId)
             {
-                projectileBody.position = launchPoint.position;
-                projectile.transform.position = launchPoint.position;
-                projectile.SetActive(true);
-                projectileHazard.SetArmed(true);
-
-                var elapsed = 0f;
-                while (elapsed < travelDuration && questSequenceHost.CurrentQuestId == jumpQuestId)
-                {
-                    elapsed += Time.deltaTime;
-                    var progress = Mathf.Clamp01(elapsed / travelDuration);
-                    projectileBody.position = Vector3.Lerp(launchPoint.position, endPoint.position, progress);
-                    yield return null;
-                }
-
-                HideProjectile();
-                if (repeatDelay > 0f) yield return new WaitForSeconds(repeatDelay);
+                var index = nextProjectileIndex;
+                nextProjectileIndex = (nextProjectileIndex + 1) % projectilePool.Length;
+                if (projectilePool[index].activeSelf) HideProjectile(index);
+                StartCoroutine(FlyProjectile(index));
+                yield return new WaitForSeconds(launchInterval);
             }
             trainingRoutine = null;
+        }
+
+        private IEnumerator FlyProjectile(int index)
+        {
+            var projectileObject = projectilePool[index];
+            var body = projectileBodyPool[index];
+            var hazard = projectileHazardPool[index];
+            body.position = launchPoint.position;
+            projectileObject.transform.position = launchPoint.position;
+            projectileObject.SetActive(true);
+            hazard.SetArmed(true);
+
+            var elapsed = 0f;
+            while (elapsed < travelDuration && questSequenceHost.CurrentQuestId == jumpQuestId)
+            {
+                elapsed += Time.deltaTime;
+                var progress = Mathf.Clamp01(elapsed / travelDuration);
+                body.position = Vector3.Lerp(launchPoint.position, endPoint.position, progress);
+                yield return null;
+            }
+
+            HideProjectile(index);
         }
 
         public bool TryRestartJumpSection(Collider2D other)
@@ -110,9 +128,9 @@ namespace Narthex.Gameplay
                 (other.transform != player && !other.transform.IsChildOf(player)))
                 return false;
 
-            if (trainingRoutine != null) StopCoroutine(trainingRoutine);
+            StopAllCoroutines();
             trainingRoutine = null;
-            HideProjectile();
+            HideProjectiles();
             questManagerHost.System.ResetProgress(jumpQuestId);
             playerMotor.ResetTransientInput();
             playerBody.linearVelocity = Vector2.zero;
@@ -123,10 +141,34 @@ namespace Narthex.Gameplay
             return true;
         }
 
-        private void HideProjectile()
+        private void HideProjectiles()
         {
-            if (projectileHazard != null) projectileHazard.SetArmed(false);
-            if (projectile != null) projectile.SetActive(false);
+            nextProjectileIndex = 0;
+            if (projectilePool == null) return;
+            for (var index = 0; index < projectilePool.Length; index++)
+                HideProjectile(index);
+        }
+
+        private void HideProjectile(int index)
+        {
+            if (projectileHazardPool != null && index < projectileHazardPool.Length &&
+                projectileHazardPool[index] != null)
+                projectileHazardPool[index].SetArmed(false);
+            if (projectilePool != null && index < projectilePool.Length && projectilePool[index] != null)
+                projectilePool[index].SetActive(false);
+        }
+
+        private bool HasValidProjectilePool()
+        {
+            if (projectilePool == null || projectileBodyPool == null || projectileHazardPool == null ||
+                projectilePool.Length < 2 || projectileBodyPool.Length != projectilePool.Length ||
+                projectileHazardPool.Length != projectilePool.Length)
+                return false;
+            for (var index = 0; index < projectilePool.Length; index++)
+                if (projectilePool[index] == null || projectileBodyPool[index] == null ||
+                    projectileHazardPool[index] == null)
+                    return false;
+            return true;
         }
     }
 }

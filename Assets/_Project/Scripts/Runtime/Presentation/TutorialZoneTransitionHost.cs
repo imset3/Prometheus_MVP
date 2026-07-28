@@ -71,6 +71,11 @@ namespace Narthex.Presentation
 
         public bool UsesLadderSequence => useLadderSequence;
         public bool RequiresInteraction => requireInteractInput;
+        public bool LadderMovesUp => !useLadderSequence || ladderEntry != null && ladderExit != null &&
+                                     ladderExit.position.y > ladderEntry.position.y;
+        public bool DestinationTracksVertical => destinationCameraTracksVertical;
+        public float DestinationCameraMinY => destinationCameraMinY;
+        public float DestinationCameraMaxY => destinationCameraMaxY;
         public bool UsesSweptPlayerDetection => true;
         public bool HasValidLadderSetup => !useLadderSequence ||
                                            (ladderEntry != null && ladderExit != null && ladderVisual != null);
@@ -193,7 +198,12 @@ namespace Narthex.Presentation
             if (useLadderSequence)
             {
                 guideCompanion.CancelGuide();
+                playerBody.linearVelocity = Vector2.zero;
+                playerBody.angularVelocity = 0f;
                 playerBody.simulated = false;
+                playerBody.position = ladderEntry.position;
+                player.position = ladderEntry.position;
+                Physics2D.SyncTransforms();
                 yield return PlayLadderSequence();
             }
 
@@ -264,13 +274,19 @@ namespace Narthex.Presentation
                 var eased = progress * progress * (3f - (2f * progress));
                 var position = Vector3.Lerp(ladderEntry.position, ladderExit.position, eased);
                 position.x += Mathf.Sin(progress * Mathf.PI * 8f) * ladderStepSway;
+                playerBody.position = position;
                 player.position = position;
                 guideCompanion.transform.position = position + new Vector3(-0.85f, 0.75f, 0f);
+                Physics2D.SyncTransforms();
                 yield return null;
             }
 
+            playerBody.position = ladderExit.position;
             player.position = ladderExit.position;
+            playerBody.linearVelocity = Vector2.zero;
+            playerBody.angularVelocity = 0f;
             guideCompanion.transform.position = ladderExit.position + new Vector3(-0.85f, 0.75f, 0f);
+            Physics2D.SyncTransforms();
             if (ladderExitHoldDuration > 0f)
                 yield return new WaitForSecondsRealtime(ladderExitHoldDuration);
         }

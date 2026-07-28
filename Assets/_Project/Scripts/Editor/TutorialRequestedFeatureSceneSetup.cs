@@ -507,10 +507,6 @@ namespace Narthex.Tools
 
         private static void ConfigurePlayerCombat(GameObject player, PlayerInputHost input, MeleeAttackHost melee)
         {
-            var meleeSerialized = new SerializedObject(melee);
-            meleeSerialized.FindProperty("comboWindowSeconds").floatValue = 0.5f;
-            meleeSerialized.ApplyModifiedPropertiesWithoutUndo();
-
             var visualMotion = player.GetComponent<CombatVisualMotionHost>();
             SetReference(visualMotion, "meleeAttackHost", melee);
 

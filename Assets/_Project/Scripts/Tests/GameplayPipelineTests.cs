@@ -32,8 +32,8 @@ namespace Narthex.Tests
             var questIds = new[]
             {
                 "QST-TUTO-004",
-                "QST-TUTO-002",
                 "QST-TUTO-006",
+                "QST-TUTO-002",
                 "QST-TUTO-003",
                 "QST-TUTO-005"
             };
@@ -160,6 +160,16 @@ namespace Narthex.Tests
                     29.43f,
                     0.02f),
                 Is.EqualTo(8f).Within(0.001f));
+            var rightwardWind = TutorialEnvironmentHazardPolicy.ResolveDirectionalWindVelocity(
+                new Vector2(0f, -2f),
+                Vector2.right,
+                24f,
+                8f,
+                Physics2D.gravity,
+                0.02f);
+            Assert.That(rightwardWind.x, Is.GreaterThan(0f));
+            Assert.That(rightwardWind.y, Is.EqualTo(-2f).Within(0.001f),
+                "Rotating a wind marker must rotate only its authored force direction.");
 
             Assert.That(TutorialEnvironmentHazardPolicy.ShouldReturnToSafePoint(true), Is.True);
             Assert.That(
@@ -304,8 +314,8 @@ namespace Narthex.Tests
         {
             var questIds = new[]
             {
-                "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-002", "QST-TUTO-003", "QST-TUTO-005",
-                "QST-TUTO-006", "QST-TUTO-007", "QST-TUTO-007-A", "QST-TUTO-007-B", "QST-TUTO-008"
+                "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-006", "QST-TUTO-002", "QST-TUTO-003",
+                "QST-TUTO-005", "QST-TUTO-007", "QST-TUTO-007-A", "QST-TUTO-007-B", "QST-TUTO-008"
             };
             var run = new RunSaveData();
             for (var index = 0; index < 8; index++) run.QuestIds.Add(questIds[index]);
@@ -470,36 +480,37 @@ namespace Narthex.Tests
         }
 
         [Test]
-        public void EquipmentQuest_RequiresActualDoubleJumpSignal()
+        public void DoubleJumpTrainingQuest_RequiresSummitArrivalSignal()
         {
             var events = new GameEventBus();
-            var package = CreateCondition("COND-PACKAGE", QuestSignalType.PortalUsed, "CRYON-EQUIPMENT-PACKAGE");
-            var moduleTree = CreateCondition("COND-TREE", QuestSignalType.ModuleTreeOpened, "TREE-BASIC-001");
-            var doubleJump = CreateCondition("COND-DOUBLE-JUMP", QuestSignalType.DoubleJumpPerformed, "PLAYER-001");
+            var summit = CreateCondition(
+                "COND-DOUBLE-JUMP-SUMMIT",
+                QuestSignalType.PortalUsed,
+                "TRAINING-DOUBLE-JUMP-SUMMIT");
             var quest = ScriptableObject.CreateInstance<QuestDefinition>();
             quest.ConfigureIdentity("QST-TUTO-006");
-            quest.Conditions = new[] { package, moduleTree, doubleJump };
+            quest.Conditions = new[] { summit };
             var quests = new QuestManager(events);
             quests.Register(quest);
 
             Assert.That(quests.Start(quest.StableId), Is.True);
-            events.Publish(new GameplaySignal(QuestSignalType.PortalUsed, "CRYON-EQUIPMENT-PACKAGE"));
-            events.Publish(new GameplaySignal(QuestSignalType.ModuleTreeOpened, "TREE-BASIC-001"));
-            Assert.That(quests.TryGetState(quest.StableId, out var beforeJump), Is.True);
-            Assert.That(beforeJump.Status, Is.EqualTo(QuestRuntimeStatus.InProgress));
-            Assert.That(quests.GetConditionProgress(quest.StableId, doubleJump.StableId), Is.Zero);
-
             events.Publish(new GameplaySignal(QuestSignalType.DoubleJumpPerformed, "PLAYER-001"));
-            Assert.That(quests.TryGetState(quest.StableId, out var afterJump), Is.True);
-            Assert.That(afterJump.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
-            Assert.That(quests.GetConditionProgress(quest.StableId, doubleJump.StableId), Is.EqualTo(1));
+            Assert.That(quests.TryGetState(quest.StableId, out var beforeSummit), Is.True);
+            Assert.That(beforeSummit.Status, Is.EqualTo(QuestRuntimeStatus.InProgress),
+                "Performing a double jump alone must not finish the marker-authored lesson.");
+            Assert.That(quests.GetConditionProgress(quest.StableId, summit.StableId), Is.Zero);
+
+            events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DOUBLE-JUMP-SUMMIT"));
+            Assert.That(quests.TryGetState(quest.StableId, out var afterSummit), Is.True);
+            Assert.That(afterSummit.Status, Is.EqualTo(QuestRuntimeStatus.Completed));
+            Assert.That(quests.GetConditionProgress(quest.StableId, summit.StableId), Is.EqualTo(1));
 
             quests.Dispose();
             events.Dispose();
             Object.DestroyImmediate(quest);
-            Object.DestroyImmediate(package);
-            Object.DestroyImmediate(moduleTree);
-            Object.DestroyImmediate(doubleJump);
+            Object.DestroyImmediate(summit);
         }
 
         [Test]

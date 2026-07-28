@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Content::Narthex.Content.QuestConditionDefinition
   stableId: COND-TUTO-004-DASH
   displayNameTextKey: 
-  SignalType: 2
-  TargetId: PLAYER-001
-  RequiredAmount: 3
+  SignalType: 8
+  TargetId: TRAINING-DASH-FINISH
+  RequiredAmount: 1

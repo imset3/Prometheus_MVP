@@ -21,6 +21,8 @@ namespace Narthex.Gameplay
         public string CurrentQuestId => currentStep >= 0 && currentStep < questSequence.Length && questSequence[currentStep] != null
             ? questSequence[currentStep].StableId
             : string.Empty;
+        public int CurrentStepIndex => currentStep;
+        public int TotalStepCount => questSequence != null ? questSequence.Length : 0;
         public bool HasValidSequence => serviceRoot != null && saveSystemHost != null && questManagerHost != null && questSequence != null &&
                                         objectiveTexts != null && questSequence.Length > 0 &&
                                         questSequence.Length == objectiveTexts.Length;
@@ -110,6 +112,35 @@ namespace Narthex.Gameplay
                 questSequence[currentStep].StableId,
                 CurrentObjectiveText,
                 currentStep));
+        }
+
+        public bool TryDebugJumpToQuest(string questId)
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            return false;
+#else
+            if (!HasValidSequence || string.IsNullOrWhiteSpace(questId))
+                return false;
+            serviceRoot.Initialize();
+            if (!saveSystemHost.Initialize() || !questManagerHost.Initialize())
+                return false;
+
+            var targetStep = -1;
+            for (var index = 0; index < questSequence.Length; index++)
+            {
+                if (questSequence[index] == null || questSequence[index].StableId != questId) continue;
+                targetStep = index;
+                break;
+            }
+
+            if (targetStep < 0) return false;
+            if (!questManagerHost.System.TryGetState(questId, out _))
+                questManagerHost.System.Register(questSequence[targetStep]);
+            if (!questManagerHost.System.ForceStartForDebug(questId)) return false;
+            currentStep = targetStep;
+            PublishCurrentObjective();
+            return true;
+#endif
         }
 
         private int FindFirstIncompleteStep()

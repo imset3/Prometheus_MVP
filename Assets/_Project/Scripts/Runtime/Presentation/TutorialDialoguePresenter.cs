@@ -216,6 +216,22 @@ namespace Narthex.Presentation
             TryShowPendingNarrative();
         }
 
+        public void CancelForDebugSkip()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            pendingNarratives.Clear();
+            pendingIntroduction = null;
+            introductionShowing = false;
+            finishAfterIntroduction = false;
+            completingNarrative = false;
+            lines = Array.Empty<string>();
+            lineIndex = 0;
+            introductionCard?.Hide();
+            dialogueView.SetVisible(false);
+            playerInputHost.SetDialogueInputClaimed(false);
+#endif
+        }
+
         private void TryShowPendingNarrative()
         {
             if (IsShowing || completingNarrative || pendingNarratives.Count == 0) return;

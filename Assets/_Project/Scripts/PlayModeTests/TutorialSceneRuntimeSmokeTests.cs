@@ -43,6 +43,7 @@ namespace Narthex.PlayModeTests
             Assert.That(introFlow.enabled, Is.True);
             Assert.That(introFlow.HasValidSetup, Is.True);
             Assert.That(introFlow.HasValidUpdraftSetup, Is.True);
+            Assert.That(introFlow.HasCoherentHiddenRoomLayout, Is.True);
             Assert.That(dialogue, Is.Not.Null);
             Assert.That(dialogue.enabled, Is.True);
             Assert.That(playerInput, Is.Not.Null);
@@ -90,6 +91,235 @@ namespace Narthex.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator DeveloperSectionSkip_JumpsFromFToGAndHelteWithoutCompletingSkippedQuests()
+        {
+            var loadOperation = SceneManager.LoadSceneAsync("TutorialScene", LoadSceneMode.Single);
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+
+            var tutorialScene = SceneManager.GetActiveScene();
+            var skip = FindSceneComponent<TutorialDebugSectionSkipHost>(tutorialScene);
+            var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+            var saveSystem = FindSceneComponent<SaveSystemHost>(tutorialScene);
+            var dialogue = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
+            var intro = FindSceneComponent<TutorialChapter0IntroFlowHost>(tutorialScene);
+            var playerMotor = FindSceneComponent<PlayerMotorHost>(tutorialScene);
+            var player = FindSceneTransform(tutorialScene, "PlayerRoot");
+            var initialCompletedQuestCount = saveSystem.System.Current.Run.QuestIds?.Count ?? 0;
+
+            Assert.That(skip, Is.Not.Null);
+            Assert.That(skip.HasValidSetup, Is.True);
+            Assert.That(skip.SectionCount, Is.EqualTo(3));
+
+            Assert.That(skip.JumpToFSection(), Is.True);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-007-A"));
+            Assert.That(FindSceneTransform(tutorialScene, "F스테이지").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
+            Assert.That(FindSceneTransform(tutorialScene, "선착장").gameObject.activeInHierarchy, Is.False);
+            Assert.That(
+                GetPrivateField<bool>(FindSceneComponent<TutorialSimultaneousEncounterHost>(tutorialScene), "encounterStarted"),
+                Is.True,
+                "F enemies and gate logic must start immediately after the skip.");
+            Assert.That(dialogue.IsShowing, Is.False);
+            Assert.That(intro.enabled, Is.False);
+            Assert.That(playerMotor.IsDoubleJumpUnlocked, Is.True,
+                "Late-section debug testing must receive the already-taught double-jump ability without saving it.");
+
+            Assert.That(skip.JumpToNextSection(), Is.True);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-007-B"));
+            Assert.That(FindSceneTransform(tutorialScene, "F스테이지").gameObject.activeInHierarchy, Is.False);
+            Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneComponent<TutorialWaveEncounterHost>(tutorialScene).EncounterStarted, Is.True);
+
+            Assert.That(skip.JumpToNextSection(), Is.True);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-008"));
+            Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
+            Assert.That(FindSceneTransform(tutorialScene, "선착장").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransform(tutorialScene, "TutorialHelte").gameObject.activeInHierarchy, Is.True);
+            Assert.That(skip.ActiveSectionIndex, Is.EqualTo(2));
+            Assert.That(saveSystem.System.Current.Run.QuestIds?.Count ?? 0, Is.EqualTo(initialCompletedQuestCount),
+                "Debug skipping must not write skipped quest completion into the save.");
+            Assert.That(player.gameObject.activeInHierarchy, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator GWindRoute_LiftsPromeThroughAllColumnsAndReachesHNormally()
+        {
+            var loadOperation = SceneManager.LoadSceneAsync("TutorialScene", LoadSceneMode.Single);
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+
+            var tutorialScene = SceneManager.GetActiveScene();
+            var skip = FindSceneComponent<TutorialDebugSectionSkipHost>(tutorialScene);
+            var playerMotor = FindSceneComponent<PlayerMotorHost>(tutorialScene);
+            var playerInput = FindSceneComponent<PlayerInputHost>(tutorialScene);
+            var playerBody = playerInput.GetComponent<Rigidbody2D>();
+            var combatSystem = FindSceneComponent<CombatSystemHost>(tutorialScene);
+            var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+
+            Assert.That(skip.JumpToFSection(), Is.True);
+            yield return null;
+            Assert.That(skip.JumpToNextSection(), Is.True);
+            yield return null;
+
+            var gExit = FindSceneTransform(tutorialScene, "G01_Exit_ToH");
+            var windNames = new[]
+            {
+                "G02_바람_시작_MARKER",
+                "G02_바람_01_MARKER",
+                "G02_바람_중간통로_MARKER",
+                "G02_바람_02_MARKER"
+            };
+            foreach (var windName in windNames)
+            {
+                var wind = FindSceneTransform(tutorialScene, windName);
+                var windCollider = wind.GetComponent<Collider2D>();
+                Assert.That(windCollider, Is.Not.Null, $"{windName} must have a wind trigger.");
+                if (windName == "G02_바람_시작_MARKER")
+                {
+                    Assert.That(
+                        windCollider.bounds.size.y,
+                        Is.GreaterThanOrEqualTo(6f),
+                        "The entry wind must provide a short, readable lift into G.");
+                }
+                else if (windName == "G02_바람_중간통로_MARKER")
+                {
+                    Assert.That(
+                        windCollider.bounds.size.y,
+                        Is.GreaterThanOrEqualTo(30f),
+                        "The middle wind must cover its full vertical passage.");
+                }
+                else
+                {
+                    Assert.That(
+                        windCollider.bounds.max.y,
+                        Is.GreaterThanOrEqualTo(gExit.position.y + 1.5f),
+                        $"{windName} must not end before the top of G's authored ascent route.");
+                }
+
+                var initialPosition = new Vector2(
+                    windCollider.bounds.center.x,
+                    windCollider.bounds.min.y + 1.25f);
+                MovePlayer(playerBody, initialPosition);
+                playerMotor.SetGlideHeld(true);
+                var lifted = false;
+                for (var frame = 0; frame < 90 && !lifted; frame++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    lifted = playerBody.position.y >= initialPosition.y + 2f;
+                }
+                playerMotor.SetGlideHeld(false);
+                Assert.That(lifted, Is.True, $"{windName} did not lift Prome while Space/glide was held.");
+            }
+
+            var encounterB = FindSceneComponent<TutorialWaveEncounterHost>(tutorialScene);
+            var phaseTrigger = FindSceneTransform(tutorialScene, "G01_후반부진입_TRIGGER")
+                .GetComponent<TutorialEncounterPhaseTriggerHost>();
+            var playerCollider = playerBody.GetComponent<Collider2D>();
+            var enemies = GetPrivateField<CombatActorHost[]>(encounterB, "enemies");
+            var enemySpawns = GetPrivateField<Transform[]>(encounterB, "spawnPoints");
+            var waveEnemyCounts = GetPrivateField<int[]>(encounterB, "waveEnemyCounts");
+            var firstGateCollider = GetPrivateField<Collider2D>(encounterB, "internalGateCollider");
+            var firstGateRenderer = GetPrivateField<Renderer>(encounterB, "internalGateRenderer");
+            var secondGateCollider = GetPrivateField<Collider2D>(encounterB, "exitGateCollider");
+            var secondGateRenderer = GetPrivateField<Renderer>(encounterB, "exitGateRenderer");
+            Assert.That(firstGateRenderer.name, Is.EqualTo("Square (39)"));
+            Assert.That(secondGateRenderer.name, Is.EqualTo("Square (43)"));
+            Assert.That(enemySpawns.Take(2).All(spawn =>
+                    spawn.position.x < firstGateRenderer.bounds.min.x),
+                Is.True,
+                "G wave 1 enemies must spawn before Square (39).");
+            Assert.That(enemySpawns.Skip(2).All(spawn =>
+                    spawn.position.x > firstGateRenderer.bounds.max.x &&
+                    spawn.position.x < secondGateRenderer.bounds.min.x),
+                Is.True,
+                "G wave 2 enemies must spawn between Square (39) and Square (43).");
+            var enemyOffset = 0;
+            for (var waveIndex = 0; waveIndex < waveEnemyCounts.Length; waveIndex++)
+            {
+                var expectedWave = waveIndex;
+                yield return WaitForConditionRealtime(
+                    () => encounterB.CurrentWaveIndex == expectedWave &&
+                          encounterB.ActiveEnemyCount == waveEnemyCounts[expectedWave],
+                    3f,
+                    $"G wave {expectedWave + 1} did not activate.");
+                if (waveIndex == 0)
+                    yield return VerifyPursuingEnemyStopsAtSolidWall(enemies[enemyOffset], playerBody);
+                for (var offset = 0; offset < waveEnemyCounts[waveIndex]; offset++)
+                    KillActor(combatSystem, enemies[enemyOffset + offset]);
+                enemyOffset += waveEnemyCounts[waveIndex];
+                if (waveIndex != 0) continue;
+                yield return WaitForConditionRealtime(
+                    () => encounterB.IsWaitingForTraversal,
+                    2f,
+                    "G did not open the traversal route after wave 1.");
+                Assert.That(firstGateCollider.enabled, Is.False,
+                    "Square (39) must open after wave 1 is defeated.");
+                Assert.That(firstGateRenderer.enabled, Is.False,
+                    "Square (39) visual must disappear after wave 1 is defeated.");
+                Assert.That(secondGateCollider.enabled, Is.True,
+                    "Square (43) must remain closed until wave 2 is defeated.");
+                InvokePrivateMethod(phaseTrigger, "OnTriggerEnter2D", playerCollider);
+            }
+
+            yield return WaitForConditionRealtime(
+                () => encounterB.IsCleared,
+                2f,
+                "G did not clear after both enemy groups were defeated.");
+            Assert.That(secondGateCollider.enabled, Is.False,
+                "Square (43) must open after wave 2 is defeated.");
+            Assert.That(secondGateRenderer.enabled, Is.False,
+                "Square (43) visual must disappear after wave 2 is defeated.");
+            yield return WaitForQuest(questSequence, "QST-TUTO-008");
+            yield return UseZoneTransition(
+                tutorialScene,
+                playerBody,
+                playerInput,
+                "TUTORIAL-ENCOUNTER-B-EXIT");
+
+            Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
+            Assert.That(FindSceneTransform(tutorialScene, "선착장").gameObject.activeInHierarchy, Is.True);
+            Assert.That(
+                Vector2.Distance(
+                    playerBody.position,
+                    FindSceneTransform(tutorialScene, "H01_Spawn_FromG").position),
+                Is.LessThan(0.5f),
+                "Normal G-to-H transition must place Prome at H's authored spawn.");
+        }
+
+        private static IEnumerator VerifyPursuingEnemyStopsAtSolidWall(
+            CombatActorHost enemy,
+            Rigidbody2D playerBody)
+        {
+            var enemyCollider = enemy.GetComponent<Collider2D>();
+            Assert.That(enemyCollider, Is.Not.Null, "G pursuit enemy needs a body collider.");
+
+            var isolatedOrigin = new Vector2(10000f, 10000f);
+            enemy.transform.position = isolatedOrigin;
+            MovePlayer(playerBody, isolatedOrigin + Vector2.right * 6f);
+
+            var wall = new GameObject("G_PursuitCollision_TestWall");
+            wall.transform.position = isolatedOrigin + Vector2.right * 2f;
+            var wallCollider = wall.AddComponent<BoxCollider2D>();
+            wallCollider.size = new Vector2(0.4f, 4f);
+            Physics2D.SyncTransforms();
+
+            var startingX = enemy.transform.position.x;
+            for (var frame = 0; frame < 90; frame++)
+                yield return new WaitForFixedUpdate();
+
+            Assert.That(enemy.transform.position.x, Is.GreaterThan(startingX + 0.5f),
+                "G pursuit enemy did not approach Prome.");
+            Assert.That(enemyCollider.bounds.max.x, Is.LessThanOrEqualTo(wallCollider.bounds.min.x + 0.04f),
+                "G pursuit enemy crossed a solid wall instead of stopping at it.");
+            UnityEngine.Object.Destroy(wall);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator Chapter0Intro_ReachesTheTrainingRoomThroughThePasskeyRoute()
         {
             var loadOperation = SceneManager.LoadSceneAsync("TutorialScene", LoadSceneMode.Single);
@@ -101,7 +331,8 @@ namespace Narthex.PlayModeTests
             var dialogue = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
             var introductionCard = FindSceneComponent<DialogueIntroductionCardModule>(tutorialScene);
             var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
-            var playerBody = FindSceneComponent<PlayerInputHost>(tutorialScene).GetComponent<Rigidbody2D>();
+            var playerInput = FindSceneComponent<PlayerInputHost>(tutorialScene);
+            var playerBody = playerInput.GetComponent<Rigidbody2D>();
 
             yield return WaitForCondition(() => dialogue.IsShowing, 120, "Opening dialogue did not start.");
             AdvanceDialogue(dialogue, 10);
@@ -135,15 +366,41 @@ namespace Narthex.PlayModeTests
                 () => introFlow.State == TutorialChapter0IntroState.HiddenRoomEntryDialogue && dialogue.IsShowing,
                 2f,
                 "The hidden glide room transition did not complete.");
+            var hiddenRoomRoot = GetPrivateField<GameObject>(introFlow, "hiddenRoomRoot");
+            var hiddenRoomSpawn = GetPrivateField<Transform>(introFlow, "hiddenRoomSpawn");
+            var passkeyTarget = GetPrivateField<Transform>(introFlow, "passkeyTarget");
+            var passkeyVisual = GetPrivateField<GameObject>(introFlow, "passkeyVisual");
+            var cameraFollow = FindSceneComponent<CameraFollowHost>(tutorialScene);
+            Assert.That(hiddenRoomRoot.activeInHierarchy, Is.True);
+            Assert.That(hiddenRoomSpawn.IsChildOf(hiddenRoomRoot.transform), Is.True);
+            Assert.That(passkeyTarget.IsChildOf(hiddenRoomRoot.transform), Is.True);
+            Assert.That(passkeyTarget.position.y, Is.GreaterThan(hiddenRoomSpawn.position.y + 3f));
+            Assert.That(passkeyTarget.position.x, Is.LessThan(hiddenRoomSpawn.position.x - 15f),
+                "The passkey must sit diagonally above-left of the low room entrance.");
+            Assert.That(passkeyVisual.transform.IsChildOf(passkeyTarget), Is.True,
+                "The single imported passkey visual must follow the upper passkey marker.");
+            Assert.That(Vector2.Distance(passkeyVisual.transform.position, passkeyTarget.position),
+                Is.LessThan(0.05f),
+                "The passkey visual must not remain at the player entrance.");
+            Assert.That(Vector2.Distance(playerBody.position, hiddenRoomSpawn.position), Is.LessThan(0.25f));
+            Assert.That(Mathf.Abs(cameraFollow.transform.position.x - hiddenRoomSpawn.position.x), Is.LessThan(0.25f));
+            Assert.That(Mathf.Abs(cameraFollow.transform.position.y - hiddenRoomSpawn.position.y), Is.LessThan(0.25f));
+            var objectiveBeacon = FindSceneComponent<TutorialObjectiveBeaconHost>(tutorialScene);
+            Assert.That(objectiveBeacon.CurrentTarget, Is.EqualTo(passkeyTarget),
+                "The overhead arrow must point diagonally toward the passkey as soon as the room is entered.");
+            yield return null;
+            var beaconVisual = GetPrivateField<GameObject>(objectiveBeacon, "beaconVisual");
+            var expectedArrowDirection =
+                ((Vector2)(passkeyTarget.position - hiddenRoomSpawn.position)).normalized;
+            Assert.That(Vector2.Dot(beaconVisual.transform.right, expectedArrowDirection),
+                Is.GreaterThan(0.98f),
+                "The overhead arrow must rotate toward both the horizontal and vertical passkey offset.");
 
             AdvanceDialogue(dialogue, 3);
             Assert.That(introFlow.State, Is.EqualTo(TutorialChapter0IntroState.SeekLedge));
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B02_LedgeTarget",
-                    "LedgeStop").position);
+                GetPrivateField<Transform>(introFlow, "ledgeTarget").position);
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.HiddenRoomBriefing && dialogue.IsShowing,
                 1f,
@@ -156,34 +413,31 @@ namespace Narthex.PlayModeTests
 
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B03_PasskeyTarget",
-                    "PasskeyTarget").position);
+                GetPrivateField<Transform>(introFlow, "passkeyTarget").position);
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.ReturnToMeeting && introFlow.HasPasskey,
                 1f,
                 "The airship passkey was not collected.");
+            Assert.That(passkeyVisual.activeSelf, Is.False,
+                "The passkey visual must disappear immediately after collection.");
             Assert.That(dialogue.IsShowing, Is.True);
             AdvanceDialogue(dialogue, 1);
+            yield return WaitForConditionRealtime(
+                () => !dialogue.IsShowing,
+                1f,
+                "The passkey pickup line did not close.");
 
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B04_HiddenRoomReturnTarget",
-                    "HiddenReturnTarget").position);
+                GetPrivateField<Transform>(introFlow, "hiddenRoomReturnTarget").position);
+            InvokePrivateMethod(introFlow, "HandleInteractRequested");
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.SeekTrainingExit && dialogue.IsShowing,
                 2f,
                 "The meeting-room return transition did not complete.");
             AdvanceDialogue(dialogue, 2);
 
-            var hqExit = Resources.FindObjectsOfTypeAll<Collider2D>()
-                .First(candidate => candidate != null && candidate.gameObject.scene == tutorialScene &&
-                                    candidate.name == "ExitTrigger" && HasAncestor(candidate.transform, "Z01_HQ_Prologue"));
-            Assert.That(hqExit.enabled, Is.True);
-            MovePlayer(playerBody, hqExit.bounds.center);
+            yield return UseZoneTransition(tutorialScene, playerBody, playerInput, "TUTORIAL-HQ-EXIT");
             yield return WaitForConditionRealtime(
                 () => questSequence.CurrentQuestId == "QST-TUTO-004",
                 3f,
@@ -211,9 +465,11 @@ namespace Narthex.PlayModeTests
             var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
             var questManager = FindSceneComponent<QuestManagerHost>(tutorialScene);
             var inputHost = FindSceneComponent<PlayerInputHost>(tutorialScene);
+            var playerMotor = inputHost.GetComponent<PlayerMotorHost>();
             var playerBody = inputHost.GetComponent<Rigidbody2D>();
             var playerCollider = inputHost.GetComponent<Collider2D>();
             var trainingSpawn = FindSceneComponent<TutorialTrainingSpawnHost>(tutorialScene);
+            var trainingFlow = FindSceneComponent<TutorialImportedTrainingFlowHost>(tutorialScene);
             var jumpTraining = FindSceneComponent<TutorialJumpTrainingHost>(tutorialScene);
             var phaseController = FindSceneComponent<TutorialTrainingPhaseControllerHost>(tutorialScene);
             var actionScopes = FindSceneComponent<TutorialTrainingActionScopeHost>(tutorialScene);
@@ -221,6 +477,7 @@ namespace Narthex.PlayModeTests
             var rangedAttack = FindSceneComponent<PlayerRangedAttackHost>(tutorialScene);
 
             Assert.That(trainingSpawn.HasValidSetup, Is.True);
+            Assert.That(trainingFlow.HasValidSetup, Is.True);
             Assert.That(jumpTraining.HasValidSetup, Is.True);
             Assert.That(phaseController.HasValidSetup, Is.True);
             Assert.That(actionScopes.HasValidSetup, Is.True);
@@ -237,46 +494,108 @@ namespace Narthex.PlayModeTests
                 playerBody);
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
 
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
-            yield return WaitForConditionRealtime(
-                () => trainingSpawn.FallingSequenceStarted,
-                2f,
-                "Entering the dash lesson did not start the falling-object sequence.");
-            var fallingWarnings = Enumerable.Range(1, 3)
-                .Select(index => FindSceneTransform(
-                    tutorialScene,
-                    $"ART_SLOT_FallingWarning_0{index}").gameObject)
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
+            var dashFires = GetPrivateField<GameObject[]>(phaseController, "phaseContentRoots")[0]
+                .transform
+                .GetComponentsInChildren<TutorialTrainingDashFireHost>(true);
+            Assert.That(dashFires.Length, Is.EqualTo(3));
+            Assert.That(dashFires.All(fire => fire.gameObject.activeInHierarchy), Is.True);
+            Assert.That(
+                dashFires.All(fire =>
+                {
+                    var bounds = fire.GetComponent<Renderer>().bounds;
+                    return bounds.size.x <= 0.65f && bounds.size.y >= 8f;
+                }),
+                Is.True,
+                "Dash fire pillars must be narrow enough to cross within one dash and tall enough to read as pillars.");
+            Assert.That(FindSceneTransform(tutorialScene, "점프훈련").gameObject.activeInHierarchy, Is.False,
+                "The imported jump-training circle must stay hidden during dash training.");
+            Assert.That(FindSceneTransform(tutorialScene, "더블점프훈련").gameObject.activeInHierarchy, Is.False,
+                "The imported double-jump platform must stay hidden during dash training.");
+            var doubleJumpPlatformCollider = FindSceneTransform(tutorialScene, "더블점프훈련")
+                .GetComponentInChildren<Collider2D>(true);
+            Assert.That(doubleJumpPlatformCollider, Is.Not.Null,
+                "The imported double-jump platform must own its phase-controlled collider.");
+            Assert.That(doubleJumpPlatformCollider.gameObject.activeInHierarchy, Is.False,
+                "The double-jump platform collider must stay disabled with its phase root during dash training.");
+            var dashLaneBlockers = Resources.FindObjectsOfTypeAll<Collider2D>()
+                .Where(collider => collider != null && collider.gameObject.scene == tutorialScene &&
+                                   collider.enabled && collider.gameObject.activeInHierarchy &&
+                                   !collider.isTrigger &&
+                                   collider.transform != playerBody.transform &&
+                                   !collider.transform.IsChildOf(playerBody.transform) &&
+                                   collider.bounds.max.x > 185.5f && collider.bounds.min.x < 214.5f &&
+                                   collider.bounds.max.y > -4.35f && collider.bounds.min.y < -2.5f)
                 .ToArray();
-            yield return WaitForConditionRealtime(
-                () => fallingWarnings.Any(warning => warning.activeInHierarchy),
-                2f,
-                "The dash lesson did not show a falling-object warning.");
+            Assert.That(
+                dashLaneBlockers,
+                Is.Empty,
+                "Unexpected physical blockers remain between dash pillars: " +
+                string.Join(", ", dashLaneBlockers.Select(blocker => GetTransformPath(blocker.transform))));
             Assert.That(phaseController.CurrentPhaseIndex, Is.EqualTo(0));
             Assert.That(phaseController.ActivePhaseAreaCount, Is.EqualTo(1));
             Assert.That(phaseController.IsExitLocked, Is.True);
+            var dashObjective = FindSceneComponent<TutorialTrainingDashObjectiveHost>(tutorialScene);
+            Assert.That(dashObjective.HasValidSetup, Is.True);
+            Assert.That(dashObjective.RequiredFireCount, Is.EqualTo(3));
+            SetPrivateField(playerMotor, "dashEndsAt", Time.time + 1f);
+            InvokePrivateMethod(dashFires[0], "HandleContact", playerCollider);
+            Assert.That(dashFires[0].gameObject.activeSelf, Is.False,
+                "A fire pillar must turn itself off immediately after a valid dash pass.");
+            Assert.That(dashObjective.PassedFireCount, Is.EqualTo(1));
+            dashObjective.ResetProgress();
+            Assert.That(dashFires.All(fire => fire.gameObject.activeSelf), Is.True,
+                "Restarting dash progress must reactivate all three fire pillars.");
+            playerMotor.ResetTransientInput();
 
-            serviceRoot.Events.Publish(new GameplaySignal(
-                QuestSignalType.DashPerformed,
-                "PLAYER-001"));
-            Assert.That(trainingSpawn.TryRestartDashSection(playerCollider), Is.True);
-            yield return new WaitForFixedUpdate();
+            Assert.That(phaseController.TryRestartCurrentPhase(), Is.True);
+            yield return WaitForConditionRealtime(
+                () => !phaseController.IsTransitioning,
+                2f,
+                "Dash phase marker restart did not finish.");
             Assert.That(
                 Vector2.Distance(
                     playerBody.position,
-                    FindSceneTransform(tutorialScene, "Restart_QST-TUTO-004").position),
-                Is.LessThan(0.05f),
+                    FindSceneTransform(tutorialScene, "훈련_진입").position),
+                Is.LessThan(0.15f),
                 "Dash failure must return the player to the dash checkpoint.");
 
             MovePlayer(playerBody, new Vector2(170f, -3.4f));
-            PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DASH-FINISH"));
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-004"),
-                "Dash actions outside the active lesson scope must not count after retry.");
+                "Dash finish signals outside the active training room must not count.");
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
-            PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
+            Assert.That(dashObjective.TryNotifyFirePassed(0), Is.True);
+            Assert.That(dashObjective.TryNotifyFirePassed(1), Is.True);
+            Assert.That(dashObjective.TryNotifyFirePassed(2), Is.True);
+            InvokePrivateMethod(dashObjective, "OnTriggerEnter2D", playerCollider);
+            yield return WaitForQuest(questSequence, "QST-TUTO-006");
+
+            yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 1);
+            Assert.That(FindSceneTransform(tutorialScene, "더블점프훈련").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransform(tutorialScene, "점프훈련").gameObject.activeInHierarchy, Is.False);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DOUBLE-JUMP-SUMMIT"));
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-006"),
+                "Double jump outside its active full-room scope must not count.");
+            var doubleJumpFinish = FindSceneTransform(tutorialScene, "훈련_더블점프_끝");
+            MovePlayer(playerBody, doubleJumpFinish.position);
+            var doubleJumpArrival = doubleJumpFinish.GetComponent<TutorialTrainingArrivalMarkerHost>();
+            Assert.That(doubleJumpArrival, Is.Not.Null);
+            InvokePrivateMethod(doubleJumpArrival, "OnTriggerEnter2D", playerCollider);
             yield return WaitForQuest(questSequence, "QST-TUTO-002");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 2);
+            Assert.That(FindSceneTransform(tutorialScene, "점프훈련").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransform(tutorialScene, "더블점프훈련").gameObject.activeInHierarchy, Is.False);
             var jumpProjectile = FindSceneTransform(
                 tutorialScene,
                 "ART_SLOT_JumpProjectile").gameObject;
@@ -289,32 +608,19 @@ namespace Narthex.PlayModeTests
             Assert.That(
                 Vector2.Distance(
                     playerBody.position,
-                    FindSceneTransform(tutorialScene, "Restart_QST-TUTO-002").position),
-                Is.LessThan(0.05f),
+                    FindSceneTransform(tutorialScene, "훈련_점프_재시작").position),
+                Is.LessThan(0.15f),
                 "Jump failure must return the player to the jump checkpoint.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"));
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
-            yield return WaitForQuest(questSequence, "QST-TUTO-006");
-
-            yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
-            serviceRoot.Events.Publish(new GameplaySignal(
-                QuestSignalType.DoubleJumpPerformed,
-                "PLAYER-001"));
-            yield return null;
-            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-006"),
-                "Double jump before entering its lesson scope must not count.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_DoubleJump").position);
-            serviceRoot.Events.Publish(new GameplaySignal(
-                QuestSignalType.DoubleJumpPerformed,
-                "PLAYER-001"));
             yield return WaitForQuest(questSequence, "QST-TUTO-003");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 3);
             yield return WaitForConditionRealtime(
                 () => trainingSpawn.EnemySequenceStarted,
                 2f,
@@ -326,7 +632,7 @@ namespace Narthex.PlayModeTests
                 () => tutorialEnemy.activeInHierarchy && tutorialEnemyCollider.enabled,
                 2f,
                 "The melee-training enemy did not finish its arrival.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_DoubleJump").position);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.AttackPerformed, "PLAYER-001", 3);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-003"),
@@ -336,6 +642,7 @@ namespace Narthex.PlayModeTests
             tutorialEnemy.GetComponent<CombatActorHost>().ResetRuntime();
             GetPrivateField<CombatActorHost>(meleeAttack, "sourceActor").ResetRuntime();
             var attackHitbox = GetPrivateField<Collider2D>(meleeAttack, "attackHitbox");
+            var attackAnchor = GetPrivateField<Transform>(meleeAttack, "attackAnchor");
             var attackPoint = (Vector2)attackHitbox.transform.TransformPoint(attackHitbox.offset);
             tutorialEnemy.transform.position = attackPoint;
             Physics2D.SyncTransforms();
@@ -347,6 +654,8 @@ namespace Narthex.PlayModeTests
             var overlapFilter = ContactFilter2D.noFilter;
             overlapFilter.useTriggers = true;
             var overlapCount = attackHitbox.Overlap(overlapFilter, overlapResults);
+            var acceptedAttackCount = 0;
+            meleeAttack.AttackStarted += () => acceptedAttackCount++;
             Assert.That(
                 overlapResults.Take(overlapCount).Contains(tutorialEnemyCollider),
                 Is.True,
@@ -354,6 +663,8 @@ namespace Narthex.PlayModeTests
             attackHitbox.enabled = false;
             for (var hitIndex = 1; hitIndex <= 3; hitIndex++)
             {
+                if (hitIndex == 3)
+                    InvokePrivateMethod(inputHost, "UpdateAimDirection", 1f);
                 attackPoint = attackHitbox.transform.TransformPoint(attackHitbox.offset);
                 tutorialEnemy.transform.position = attackPoint;
                 Physics2D.SyncTransforms();
@@ -381,10 +692,12 @@ namespace Narthex.PlayModeTests
                 attackHitbox.enabled = false;
                 InvokePrivateMethod(meleeAttack, "TryAttack");
                 yield return null;
+                Assert.That(meleeAttack.IsAttackDirectionLocked, Is.True,
+                    "The player's facing must stay locked while the single attack animation is readable.");
                 Assert.That(
-                    meleeAttack.CurrentComboStage,
+                    acceptedAttackCount,
                     Is.EqualTo(hitIndex),
-                    $"Melee input {hitIndex} did not advance the combo stage.");
+                    $"Melee input {hitIndex} did not produce exactly one accepted attack.");
                 Assert.That(
                     tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth,
                     Is.EqualTo(100 - 25 * hitIndex),
@@ -396,19 +709,52 @@ namespace Narthex.PlayModeTests
                     Is.EqualTo(hitIndex),
                     $"Successful melee hit {hitIndex} did not update the visible quest count.");
                 if (hitIndex < 3)
+                {
+                    var healthAfterInput = tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth;
+                    InvokePrivateMethod(meleeAttack, "TryAttack");
+                    yield return null;
+                    Assert.That(acceptedAttackCount, Is.EqualTo(hitIndex),
+                        "Repeated input during the attack cooldown must not start another attack.");
+                    Assert.That(
+                        tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth,
+                        Is.EqualTo(healthAfterInput),
+                        "Repeated input during the attack cooldown must not deal extra damage.");
                     yield return new WaitForSeconds(0.27f);
+                    Assert.That(acceptedAttackCount, Is.EqualTo(hitIndex),
+                        "One melee input must not schedule follow-up combo attacks.");
+                    Assert.That(
+                        tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth,
+                        Is.EqualTo(healthAfterInput),
+                        "One melee input dealt additional delayed damage without another press.");
+                    Assert.That(meleeAttack.IsAttackDirectionLocked, Is.False,
+                        "The player facing lock must release before the next independent attack.");
+                }
             }
+            InvokePrivateMethod(inputHost, "UpdateAimDirection", -1f);
+            Assert.That(attackAnchor.localScale.x, Is.GreaterThan(0f),
+                "Changing aim during an attack must not flip the active hit direction.");
+            yield return new WaitForSeconds(0.27f);
+            tutorialEnemyCollider.enabled = false;
+            InvokePrivateMethod(meleeAttack, "TryAttack");
+            Assert.That(acceptedAttackCount, Is.EqualTo(4),
+                "The first input after cooldown must start one new independent attack.");
+            Assert.That(attackAnchor.localScale.x, Is.LessThan(0f),
+                "The next accepted attack must resync its hitbox to the latest facing direction.");
             yield return WaitForQuest(questSequence, "QST-TUTO-005");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
-            Assert.That(phaseController.CurrentPhaseIndex, Is.EqualTo(4));
+            yield return WaitForTrainingPhase(phaseController, 4);
+            yield return WaitForConditionRealtime(
+                () => trainingFlow.VisibleRangedTargetCount == 3,
+                2f,
+                "The ranged lesson did not display all three training targets.");
             var rangedDirection = Vector2.zero;
             rangedAttack.RangedAttackStarted += direction => rangedDirection = direction;
             InvokePrivateMethod(inputHost, "UpdateAimDirection", -1f);
             Assert.That(rangedAttack.TryFire(), Is.True);
             Assert.That(rangedDirection.x, Is.LessThan(-0.99f),
                 "The ranged projectile must launch toward the player's current facing direction.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Attack").position);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             serviceRoot.Events.Publish(new GameplaySignal(
                 QuestSignalType.RangedTripleHitPerformed,
                 "PLAYER-001"));
@@ -472,6 +818,11 @@ namespace Narthex.PlayModeTests
             var stageCaption = FindSceneTransform(tutorialScene, "TutorialStageCaptionText")
                 .GetComponent<Text>();
             var cameraFollow = FindSceneComponent<CameraFollowHost>(tutorialScene);
+            var statusPresenter = FindSceneComponent<TutorialStatusPresenter>(tutorialScene);
+            var c03ExteriorTransition = FindSceneTransform(tutorialScene, "C03_Exit_ExteriorSide")
+                .GetComponent<TutorialZoneTransitionHost>();
+            var exteriorToFTransition = FindSceneTransform(tutorialScene, "E01_Exit_ToF")
+                .GetComponent<TutorialZoneTransitionHost>();
 
             Assert.That(serviceRoot, Is.Not.Null);
             Assert.That(playerCollider, Is.Not.Null);
@@ -493,6 +844,11 @@ namespace Narthex.PlayModeTests
             Assert.That(completionFlow.HasValidSetup, Is.True);
             Assert.That(stageCaption, Is.Not.Null);
             Assert.That(cameraFollow, Is.Not.Null);
+            Assert.That(statusPresenter, Is.Not.Null);
+            Assert.That(c03ExteriorTransition.LadderMovesUp, Is.True,
+                "The C03 exterior ladder must move Prome upward.");
+            Assert.That(exteriorToFTransition.DestinationTracksVertical, Is.True,
+                "Entering F must enable vertical camera tracking.");
             Assert.That(cameraFollow.CinematicMovementEnabled, Is.False,
                 "Tutorial camera look-ahead, shake, smoothing, and boss framing must remain disabled.");
 
@@ -511,62 +867,63 @@ namespace Narthex.PlayModeTests
                 inputHost,
                 "TUTORIAL-CORRIDOR-TO-TRAINING");
             Assert.That(stageCaption.text, Is.EqualTo("훈련장"));
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
-            yield return WaitForConditionRealtime(
-                () => trainingSpawn.FallingSequenceStarted,
-                2f,
-                "Dash training did not start its falling-object sequence after dialogue closed.");
-            var fallingWarnings = Enumerable.Range(1, 3)
-                .Select(index => FindSceneTransform(tutorialScene, $"ART_SLOT_FallingWarning_0{index}").gameObject)
-                .ToArray();
-            yield return WaitForConditionRealtime(
-                () => fallingWarnings.Any(warning => warning.activeInHierarchy),
-                2f,
-                "Dash training must telegraph each falling object's landing lane before the drop.");
             MovePlayer(playerBody, new Vector2(170f, -3.4f));
-            PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
+            var activeDashFires = GetPrivateField<GameObject[]>(phaseController, "phaseContentRoots")[0]
+                .transform
+                .GetComponentsInChildren<TutorialTrainingDashFireHost>(true);
+            Assert.That(activeDashFires.Length, Is.EqualTo(3));
+            Assert.That(activeDashFires.All(fire => fire.gameObject.activeInHierarchy), Is.True);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DASH-FINISH"));
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-004"),
-                "Dash actions before the authored dash lane must not count.");
+                "Dash arrival outside the marker-authored training room must not count.");
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
-            PublishSignals(serviceRoot, QuestSignalType.DashPerformed, "PLAYER-001", 3);
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DASH-FINISH"));
+            yield return WaitForQuest(questSequence, "QST-TUTO-006");
+
+            yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 1);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DOUBLE-JUMP-SUMMIT"));
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-006"),
+                "Double jump outside the marker-authored room must not count.");
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_DoubleJump").position);
+            serviceRoot.Events.Publish(new GameplaySignal(
+                QuestSignalType.PortalUsed,
+                "TRAINING-DOUBLE-JUMP-SUMMIT"));
             yield return WaitForQuest(questSequence, "QST-TUTO-002");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 2);
             var jumpProjectile = FindSceneTransform(tutorialScene, "ART_SLOT_JumpProjectile").gameObject;
             yield return WaitForConditionRealtime(
                 () => jumpProjectile.activeInHierarchy,
                 2f,
                 "Jump training projectile did not become visible.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Dash").position);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"),
                 "Jump actions outside the authored jump lane must not count.");
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
-            yield return WaitForQuest(questSequence, "QST-TUTO-006");
-
-            yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
-            serviceRoot.Events.Publish(new GameplaySignal(
-                QuestSignalType.DoubleJumpPerformed,
-                "PLAYER-001"));
-            yield return null;
-            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-006"),
-                "Double jump before entering its lesson scope must not count.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_DoubleJump").position);
-            serviceRoot.Events.Publish(new GameplaySignal(
-                QuestSignalType.DoubleJumpPerformed,
-                "PLAYER-001"));
             yield return WaitForQuest(questSequence, "QST-TUTO-003");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
+            yield return WaitForTrainingPhase(phaseController, 3);
             yield return WaitForConditionRealtime(
                 () => trainingSpawn.EnemySequenceStarted,
                 2f,
                 "Attack-training enemy arrival did not start.");
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_DoubleJump").position);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.AttackPerformed, "PLAYER-001", 3);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-003"),
@@ -576,7 +933,8 @@ namespace Narthex.PlayModeTests
             yield return WaitForQuest(questSequence, "QST-TUTO-005");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
-            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Attack").position);
+            yield return WaitForTrainingPhase(phaseController, 4);
+            MovePlayer(playerBody, new Vector2(170f, -3.4f));
             serviceRoot.Events.Publish(new GameplaySignal(
                 QuestSignalType.RangedTripleHitPerformed,
                 "PLAYER-001"));
@@ -619,7 +977,16 @@ namespace Narthex.PlayModeTests
                 playerBody,
                 inputHost,
                 "TUTORIAL-C03-TO-E01");
-            Assert.That(stageCaption.text, Is.EqualTo("외부"));
+            Assert.That(stageCaption.text, Is.EqualTo("본부 외곽"));
+            Assert.That(statusPresenter.CurrentProgressId, Is.EqualTo("TUTO_E_01"));
+            Assert.That(playerBody.simulated, Is.True,
+                "The ladder transition must restore Rigidbody2D simulation after reaching the exterior.");
+            Assert.That(
+                Vector2.Distance(
+                    playerBody.position,
+                    FindSceneTransform(tutorialScene, "E01_Spawn_HQExit").position),
+                Is.LessThan(0.1f),
+                "The ladder transition must finish at the authored exterior spawn.");
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
 
             MovePlayer(playerBody, invasionView.GetComponent<Collider2D>().bounds.center);
@@ -634,8 +1001,50 @@ namespace Narthex.PlayModeTests
                 playerBody,
                 inputHost,
                 "TUTORIAL-EXTERIOR-TO-ENCOUNTER-A");
-            Assert.That(stageCaption.text, Is.EqualTo("외부 전투 구역 1"));
+            Assert.That(stageCaption.text, Is.EqualTo("본부 외곽 통로"));
             yield return WaitForQuest(questSequence, "QST-TUTO-007-A");
+            Assert.That(statusPresenter.CurrentProgressId, Is.EqualTo("TUTO_F_01"));
+            Assert.That(cameraFollow.TracksVertical, Is.True,
+                "The F camera must follow Prome while rising through the opening wind.");
+            var fOpeningWind = FindSceneTransform(tutorialScene, "F01_시작활공바람_MARKER")
+                .GetComponent<Collider2D>();
+            var fStageRenderers = FindSceneTransform(tutorialScene, "F스테이지")
+                .GetComponentsInChildren<Renderer>(true);
+            Assert.That(fOpeningWind.bounds.max.y,
+                Is.GreaterThanOrEqualTo(fStageRenderers.Max(renderer => renderer.bounds.max.y) - 0.5f),
+                "The F opening wind must continue to the top of the authored ascent route.");
+            var fCameraTestY = Mathf.Clamp(
+                fOpeningWind.bounds.max.y - 0.75f,
+                cameraFollow.MinimumY,
+                cameraFollow.MaximumY);
+            MovePlayer(playerBody, new Vector2(fOpeningWind.bounds.center.x, fCameraTestY));
+            cameraFollow.SnapToTarget();
+            Assert.That(cameraFollow.transform.position.y, Is.EqualTo(fCameraTestY).Within(0.05f),
+                "The F camera must vertically follow Prome during the ascent.");
+            var fSpawn = FindSceneTransform(tutorialScene, "F01_Spawn_ExteriorSide");
+            var fFallRecovery = FindSceneTransform(tutorialScene, "F01_낙사복귀_MARKER")
+                .GetComponent<TutorialFallRestartHost>();
+            var restartHost = FindSceneComponent<TutorialRestartHost>(tutorialScene);
+            Assert.That(fFallRecovery, Is.Not.Null);
+            Assert.That(fFallRecovery.HasValidSetup, Is.True);
+            MovePlayer(
+                playerBody,
+                new Vector2(fFallRecovery.transform.position.x, fFallRecovery.RecoveryHeight - 1f));
+            yield return WaitForConditionRealtime(
+                () => !restartHost.IsRestarting &&
+                      Vector2.Distance(playerBody.position, fSpawn.position) < 0.15f,
+                3f,
+                "F-stage falling did not restore Prome to the authored stage checkpoint.");
+            yield return null;
+            MovePlayer(
+                playerBody,
+                new Vector2(fFallRecovery.transform.position.x, fFallRecovery.RecoveryHeight - 1f));
+            yield return WaitForConditionRealtime(
+                () => !restartHost.IsRestarting &&
+                      Vector2.Distance(playerBody.position, fSpawn.position) < 0.15f,
+                3f,
+                "F-stage recovery did not remain reusable after a second fall.");
+            MovePlayer(playerBody, fSpawn.position);
             Assert.That(GetPrivateField<GameObject>(bossEncounter, "bossRoot").activeSelf, Is.False,
                 "Helte must remain hidden until both exterior encounters are cleared.");
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
@@ -651,7 +1060,8 @@ namespace Narthex.PlayModeTests
             yield return WaitForQuest(questSequence, "QST-TUTO-007-B");
 
             yield return UseZoneTransition(tutorialScene, playerBody, inputHost, "TUTORIAL-ENCOUNTER-A-EXIT");
-            Assert.That(stageCaption.text, Is.EqualTo("외부 전투 구역 2"));
+            Assert.That(stageCaption.text, Is.EqualTo("나디르 선착장 진입로"));
+            Assert.That(statusPresenter.CurrentProgressId, Is.EqualTo("TUTO_G_01"));
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
             var encounterBEnemies = GetPrivateField<CombatActorHost[]>(encounterB, "enemies");
             var waveEnemyCounts = GetPrivateField<int[]>(encounterB, "waveEnemyCounts");
@@ -681,9 +1091,13 @@ namespace Narthex.PlayModeTests
                 "Clearing both exterior encounters must unlock the pre-placed boss root.");
 
             yield return UseZoneTransition(tutorialScene, playerBody, inputHost, "TUTORIAL-ENCOUNTER-B-EXIT");
-            Assert.That(stageCaption.text, Is.EqualTo("선착장"));
+            Assert.That(stageCaption.text, Is.EqualTo("나디르 선착장"));
+            Assert.That(statusPresenter.CurrentProgressId, Is.EqualTo("TUTO_H_01"));
             yield return DismissCurrentPresentation(dialogue, introductionCard, 6f);
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-008"));
+            Assert.That(helteDialogue.isActiveAndEnabled, Is.True);
             MovePlayer(playerBody, helteDialogue.GetComponent<Collider2D>().bounds.center);
+            InvokePrivateMethod(helteDialogue, "Update");
             yield return WaitForConditionRealtime(
                 () => helteDialogue.EncounterPresented && dialogue.IsShowing,
                 2f,
@@ -760,10 +1174,7 @@ namespace Narthex.PlayModeTests
                 "The hidden-room entry dialogue did not release the ledge objective.");
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B02_LedgeTarget",
-                    "LedgeStop").position);
+                GetPrivateField<Transform>(introFlow, "ledgeTarget").position);
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.HiddenRoomBriefing && dialogue.IsShowing,
                 3f,
@@ -771,21 +1182,20 @@ namespace Narthex.PlayModeTests
             AdvanceDialogue(dialogue, 6);
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B03_PasskeyTarget",
-                    "PasskeyTarget").position);
+                GetPrivateField<Transform>(introFlow, "passkeyTarget").position);
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.ReturnToMeeting && dialogue.IsShowing,
                 1f,
                 "The passkey route did not enter its return state.");
             AdvanceDialogue(dialogue, 1);
+            yield return WaitForConditionRealtime(
+                () => !dialogue.IsShowing,
+                1f,
+                "The passkey pickup line did not close.");
             MovePlayer(
                 playerBody,
-                FindSceneTransformAny(
-                    tutorialScene,
-                    "B04_HiddenRoomReturnTarget",
-                    "HiddenReturnTarget").position);
+                GetPrivateField<Transform>(introFlow, "hiddenRoomReturnTarget").position);
+            InvokePrivateMethod(introFlow, "HandleInteractRequested");
             yield return WaitForConditionRealtime(
                 () => introFlow.State == TutorialChapter0IntroState.SeekTrainingExit && dialogue.IsShowing,
                 2f,
@@ -924,6 +1334,17 @@ namespace Narthex.PlayModeTests
                 () => questSequence.CurrentQuestId == questId,
                 30,
                 $"Expected quest '{questId}', but current quest is '{questSequence.CurrentQuestId}'.");
+        }
+
+        private static IEnumerator WaitForTrainingPhase(
+            TutorialTrainingPhaseControllerHost phaseController,
+            int phaseIndex)
+        {
+            yield return WaitForConditionRealtime(
+                () => phaseController.CurrentPhaseIndex == phaseIndex &&
+                      !phaseController.IsTransitioning,
+                3f,
+                $"Training phase {phaseIndex} did not finish its marker transition.");
         }
 
         private static void PublishSignals(
@@ -1070,6 +1491,15 @@ namespace Narthex.PlayModeTests
             for (var current = transform; current != null; current = current.parent)
                 if (current.name == ancestorName) return true;
             return false;
+        }
+
+        private static string GetTransformPath(Transform transform)
+        {
+            var names = new System.Collections.Generic.List<string>();
+            for (var current = transform; current != null; current = current.parent)
+                names.Add(current.name);
+            names.Reverse();
+            return string.Join("/", names);
         }
     }
 }

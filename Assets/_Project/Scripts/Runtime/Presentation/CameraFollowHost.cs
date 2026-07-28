@@ -75,6 +75,9 @@ namespace Narthex.Presentation
         public float BossOrthographicSize => bossOrthographicSize;
         public float MotionIntensity => motionIntensity;
         public bool CinematicMovementEnabled => cinematicMovementEnabled;
+        public bool TracksVertical => followVertical;
+        public float MinimumY => minY;
+        public float MaximumY => maxY;
 
         private void Awake()
         {

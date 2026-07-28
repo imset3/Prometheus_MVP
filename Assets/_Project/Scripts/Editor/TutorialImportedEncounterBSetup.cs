@@ -74,7 +74,7 @@ namespace Narthex.Tools
                     integration.transform,
                     "G01_후반부진입_TRIGGER",
                     new Vector3(geometry.internalGate.bounds.center.x + 2f,
-                        FindFloorY(geometry.renderers, geometry.internalGate.bounds.center.x + 2f) + 1.2f,
+                        geometry.internalGate.bounds.min.y + 1.2f,
                         0f));
                 var gExit = GetOrCreateAnchor(
                     integration.transform,
@@ -101,6 +101,7 @@ namespace Narthex.Tools
                     enemies.warnings,
                     gates.internalGate,
                     gates.exitGate,
+                    gates.auxiliaryExitGates,
                     phaseTrigger,
                     gExit);
                 ConfigurePhaseTrigger(phaseTrigger, player.transform, encounter);
@@ -138,34 +139,17 @@ namespace Narthex.Tools
             if (renderers.Length == 0)
                 throw new InvalidOperationException("G스테이지에 분석할 도형 Renderer가 없습니다.");
 
-            var thinDoors = renderers
-                .Where(IsWhiteBlockout)
-                .Where(renderer => renderer.bounds.size.x <= 1.6f &&
-                                   renderer.bounds.size.y >= 2.2f &&
-                                   renderer.bounds.size.y <= 12f)
-                .OrderBy(renderer => renderer.bounds.center.x)
-                .ToArray();
-            if (thinDoors.Length < 2)
-                throw new InvalidOperationException("G스테이지의 내부 통로문과 출구문 도형을 찾지 못했습니다.");
+            var internalGate = renderers.FirstOrDefault(renderer => renderer.name == "Square (39)");
+            var exitGate = renderers.FirstOrDefault(renderer => renderer.name == "Square (43)");
+            if (internalGate == null || exitGate == null)
+                throw new InvalidOperationException(
+                    "G스테이지의 전투문 Square (39), Square (43)을 찾지 못했습니다.");
+            if (internalGate.bounds.center.x >= exitGate.bounds.center.x)
+                throw new InvalidOperationException(
+                    "G스테이지 전투문은 Square (39) 다음 Square (43) 순서여야 합니다.");
             Debug.Log(
-                "[sragon000][G01][문 후보] " +
-                string.Join(
-                    " | ",
-                    thinDoors.Select(renderer =>
-                        $"{renderer.name} center={renderer.bounds.center:F1} size={renderer.bounds.size:F1}")));
-
-            var exitGate = thinDoors[^1];
-            var internalGate = thinDoors
-                .Where(renderer => renderer.bounds.size.x <= 0.35f)
-                .Where(renderer => renderer.bounds.center.x < exitGate.bounds.center.x - 2f)
-                .OrderByDescending(renderer => renderer.bounds.center.x)
-                .FirstOrDefault();
-            internalGate ??= thinDoors
-                .Where(renderer => renderer.bounds.center.x < exitGate.bounds.center.x - 2f)
-                .OrderByDescending(renderer => renderer.bounds.center.x)
-                .FirstOrDefault();
-            if (internalGate == null)
-                throw new InvalidOperationException("G스테이지의 두 전투 공간을 나누는 얇은 문 도형을 찾지 못했습니다.");
+                $"[sragon000][G01][전투문] 1차={internalGate.name} {internalGate.bounds.center:F1}, " +
+                $"2차={exitGate.name} {exitGate.bounds.center:F1}");
 
             return new GeometryAnalysis(
                 renderers.Min(renderer => renderer.bounds.min.x),
@@ -199,7 +183,8 @@ namespace Narthex.Tools
                 .ToArray();
         }
 
-        private static (GameObject internalGate, GameObject exitGate) ConfigureCollisionAndGates(
+        private static (GameObject internalGate, GameObject exitGate, GameObject[] auxiliaryExitGates)
+            ConfigureCollisionAndGates(
             GameObject gRoot,
             Transform integration,
             GeometryAnalysis geometry)
@@ -211,10 +196,17 @@ namespace Narthex.Tools
             foreach (var collider in proxyRoot.GetComponentsInChildren<BoxCollider2D>(true))
                 UnityEngine.Object.DestroyImmediate(collider.gameObject);
 
+            var auxiliaryExitSources = gRoot.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer != null &&
+                                   (renderer.name == "Square (40)" ||
+                                    renderer.name == "Square (21)"))
+                .OrderBy(renderer => renderer.bounds.center.x)
+                .ToArray();
             var collisionRenderers = gRoot.GetComponentsInChildren<Renderer>(true)
                 .Where(renderer => renderer != null &&
                                    renderer != geometry.internalGate &&
                                    renderer != geometry.exitGate &&
+                                   !auxiliaryExitSources.Contains(renderer) &&
                                    renderer.bounds.size.x > 0.02f &&
                                    renderer.bounds.size.y > 0.02f &&
                                    IsWhiteBlockout(renderer))
@@ -237,7 +229,13 @@ namespace Narthex.Tools
 
             return (
                 ConfigureGate(integration, "G01_내부통로잠금문_PROXY", geometry.internalGate),
-                ConfigureGate(integration, "G01_출구잠금문_PROXY", geometry.exitGate));
+                ConfigureGate(integration, "G01_출구잠금문_PROXY", geometry.exitGate),
+                auxiliaryExitSources.Select((source, index) =>
+                        ConfigureGate(
+                            integration,
+                            $"G01_보조출구잠금문_{index + 1:00}_PROXY",
+                            source))
+                    .ToArray());
         }
 
         private static GameObject ConfigureGate(Transform parent, string name, Renderer source)
@@ -275,12 +273,21 @@ namespace Narthex.Tools
                 Require(scene, "ExteriorB_Enemy_04_ART_SLOT")
             };
             var internalX = geometry.internalGate.bounds.center.x;
+            var exitX = geometry.exitGate.bounds.center.x;
+            var firstWaveStartX = Mathf.Max(geometry.minX + 1f, internalX - 10f);
+            var firstWaveEndX = internalX - 1.5f;
+            var secondWaveStartX = internalX + 1.5f;
+            var secondWaveEndX = exitX - 1.5f;
+            var firstWaveFloorY = geometry.internalGate.bounds.min.y;
+            var secondWaveFloorY = Mathf.Min(
+                geometry.internalGate.bounds.min.y,
+                geometry.exitGate.bounds.min.y);
             var positions = new[]
             {
-                GetGroundedPosition(geometry.renderers, Mathf.Lerp(geometry.minX + 1f, internalX - 1f, 0.38f)),
-                GetGroundedPosition(geometry.renderers, Mathf.Lerp(geometry.minX + 1f, internalX - 1f, 0.72f)),
-                GetGroundedPosition(geometry.renderers, Mathf.Lerp(internalX + 1f, geometry.maxX - 1f, 0.36f)),
-                GetGroundedPosition(geometry.renderers, Mathf.Lerp(internalX + 1f, geometry.maxX - 1f, 0.72f))
+                GetRoutePosition(Mathf.Lerp(firstWaveStartX, firstWaveEndX, 0.32f), firstWaveFloorY),
+                GetRoutePosition(Mathf.Lerp(firstWaveStartX, firstWaveEndX, 0.74f), firstWaveFloorY),
+                GetRoutePosition(Mathf.Lerp(secondWaveStartX, secondWaveEndX, 0.32f), secondWaveFloorY),
+                GetRoutePosition(Mathf.Lerp(secondWaveStartX, secondWaveEndX, 0.72f), secondWaveFloorY)
             };
             var warningObjects = new[]
             {
@@ -310,8 +317,10 @@ namespace Narthex.Tools
                 var pursuitSerialized = new SerializedObject(pursuit);
                 SetObject(pursuitSerialized, "actor", actors[index]);
                 SetObject(pursuitSerialized, "target", player);
+                SetObject(pursuitSerialized, "bodyCollider", enemy.GetComponent<Collider2D>());
                 pursuitSerialized.FindProperty("moveSpeed").floatValue = 1.9f;
                 pursuitSerialized.FindProperty("stopDistance").floatValue = 1.15f;
+                pursuitSerialized.FindProperty("collisionSkin").floatValue = 0.03f;
                 pursuitSerialized.ApplyModifiedPropertiesWithoutUndo();
 
                 spawns[index] = GetOrCreateAnchor(
@@ -334,6 +343,7 @@ namespace Narthex.Tools
             GameObject[] warnings,
             GameObject internalGate,
             GameObject exitGate,
+            GameObject[] auxiliaryExitGates,
             Transform phaseTrigger,
             Transform exitTarget)
         {
@@ -365,6 +375,14 @@ namespace Narthex.Tools
             SetObject(serialized, "exitGateCollider", exitGate.GetComponent<BoxCollider2D>());
             SetObject(serialized, "exitGateRenderer",
                 exitGate.GetComponent<TutorialGateVisualBindingHost>().BoundRenderer);
+            SetObjectArray(
+                serialized.FindProperty("additionalExitGateColliders"),
+                auxiliaryExitGates.Select(gate => gate.GetComponent<BoxCollider2D>()).ToArray());
+            SetObjectArray(
+                serialized.FindProperty("additionalExitGateRenderers"),
+                auxiliaryExitGates.Select(gate =>
+                        gate.GetComponent<TutorialGateVisualBindingHost>().BoundRenderer)
+                    .ToArray());
             serialized.ApplyModifiedPropertiesWithoutUndo();
             host.enabled = true;
             return host;
@@ -440,7 +458,7 @@ namespace Narthex.Tools
                 geometry.maxX,
                 geometry.minY,
                 geometry.maxY,
-                Array.Empty<GameObject>());
+                new[] { Require(scene, "H_Helte_Integration") });
         }
 
         private static void ConfigureTransition(
@@ -604,7 +622,12 @@ namespace Narthex.Tools
             Require(scene, "H01_Spawn_FromG");
             Debug.Log(
                 "[sragon000][G01][검증 통과] F→G, 전반부 2기, 이동 후 후반부 2기, " +
-                "내부문·출구문, G 체크포인트, G→선착장 전환 정상.");
+                "Square (39)·Square (43) 전투문, G 체크포인트, G→선착장 전환 정상.");
+        }
+
+        private static Vector3 GetRoutePosition(float x, float floorY)
+        {
+            return new Vector3(x, floorY + 0.8f, 0f);
         }
 
         private static Vector3 GetGroundedPosition(Renderer[] renderers, float x)

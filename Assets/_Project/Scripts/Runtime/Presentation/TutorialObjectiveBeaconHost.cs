@@ -48,6 +48,7 @@ namespace Narthex.Presentation
                                        equipmentDoubleJumpTarget != null &&
                                        !string.IsNullOrWhiteSpace(equipmentQuestId) &&
                                        !string.IsNullOrWhiteSpace(doubleJumpConditionId)));
+        public Transform CurrentTarget => currentTarget;
 
         public bool HasTarget(string questId)
         {
@@ -97,8 +98,9 @@ namespace Narthex.Presentation
             var distance = Vector3.Distance(player.position, currentTarget.position);
             if (beaconVisual != null)
             {
-                var direction = currentTarget.position.x < player.position.x ? -1f : 1f;
-                beaconVisual.transform.localRotation = Quaternion.Euler(0f, 0f, direction < 0f ? 180f : 0f);
+                var direction = currentTarget.position - player.position;
+                var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                beaconVisual.transform.localRotation = Quaternion.Euler(0f, 0f, angle);
             }
             SetVisualActive(distance > hideDistance);
         }

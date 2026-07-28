@@ -58,6 +58,25 @@ namespace Narthex.Gameplay
             return true;
         }
 
+        public bool ForceStartForDebug(string questId)
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            return false;
+#else
+            if (!states.TryGetValue(questId, out var targetState)) return false;
+
+            foreach (var state in states.Values)
+            {
+                if (state.Status == QuestRuntimeStatus.InProgress)
+                    state.Status = QuestRuntimeStatus.Locked;
+            }
+
+            targetState.Progress.Clear();
+            targetState.Status = QuestRuntimeStatus.InProgress;
+            return true;
+#endif
+        }
+
         public void SetProgressSignalFilter(Func<string, GameplaySignal, bool> filter)
         {
             progressSignalFilter = filter;

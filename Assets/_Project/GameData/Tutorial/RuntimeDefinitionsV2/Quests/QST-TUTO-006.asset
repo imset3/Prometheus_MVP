@@ -18,4 +18,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8ae171fc1cd42449aa2b52dd505c9e41, type: 2}
   Rewards: []
   NextQuestIds:
-  - QST-TUTO-003
+  - QST-TUTO-002

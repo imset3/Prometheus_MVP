@@ -16,6 +16,7 @@ namespace Narthex.Gameplay
         [SerializeField] private Transform player;
         [SerializeField] private Collider2D trainingArea;
         [SerializeField] private GameObject[] rangedTargets = System.Array.Empty<GameObject>();
+        [SerializeField] private Renderer[] rangedTargetRenderers = System.Array.Empty<Renderer>();
         [SerializeField] private string rangedQuestId = "QST-TUTO-005";
 
         private bool bootsGranted;
@@ -23,15 +24,38 @@ namespace Narthex.Gameplay
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && playerMotor != null &&
                                      player != null && trainingArea != null && trainingArea.isTrigger &&
                                      rangedTargets != null && rangedTargets.Length == 3 &&
+                                     rangedTargetRenderers != null &&
+                                     rangedTargetRenderers.Length == rangedTargets.Length &&
+                                     HasCompleteRenderers(rangedTargetRenderers) &&
                                      !string.IsNullOrWhiteSpace(rangedQuestId);
         public bool BootsGranted => bootsGranted;
         public int RangedTargetCount => rangedTargets?.Length ?? 0;
+        public int VisibleRangedTargetCount
+        {
+            get
+            {
+                var count = 0;
+                if (rangedTargets == null || rangedTargetRenderers == null) return count;
+                for (var index = 0;
+                     index < rangedTargets.Length && index < rangedTargetRenderers.Length;
+                     index++)
+                    if (rangedTargets[index] != null &&
+                        rangedTargets[index].activeInHierarchy &&
+                        rangedTargetRenderers[index] != null &&
+                        rangedTargetRenderers[index].enabled)
+                        count++;
+                return count;
+            }
+        }
 
         private void Awake()
         {
             if (!HasValidSetup)
             {
-                Debug.LogError("TutorialImportedTrainingFlowHost requires training bounds, player, motor, and three ranged targets.", this);
+                Debug.LogError(
+                    "TutorialImportedTrainingFlowHost requires training bounds, player, motor, " +
+                    "three ranged targets, and their visible renderers.",
+                    this);
                 enabled = false;
                 return;
             }
@@ -87,9 +111,23 @@ namespace Narthex.Gameplay
         private void SetRangedTargetsActive(bool active)
         {
             if (rangedTargets == null) return;
-            foreach (var target in rangedTargets)
+            for (var index = 0; index < rangedTargets.Length; index++)
+            {
+                var target = rangedTargets[index];
+                if (rangedTargetRenderers != null && index < rangedTargetRenderers.Length &&
+                    rangedTargetRenderers[index] != null)
+                    rangedTargetRenderers[index].enabled = active;
                 if (target != null && target.activeSelf != active)
                     target.SetActive(active);
+            }
+        }
+
+        private static bool HasCompleteRenderers(Renderer[] renderers)
+        {
+            foreach (var renderer in renderers)
+                if (renderer == null)
+                    return false;
+            return true;
         }
     }
 }

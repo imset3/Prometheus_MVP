@@ -29,6 +29,7 @@ namespace Narthex.Presentation
         };
 
         private bool encounterPresented;
+        private Vector2 previousPlayerPosition;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null &&
                                      dialoguePresenter != null && restartHost != null &&
@@ -53,19 +54,35 @@ namespace Narthex.Presentation
             }
 
             serviceRoot.Initialize();
+            previousPlayerPosition = playerCollider.transform.position;
         }
 
         private void Update()
         {
+            var reachedEncounter = HasPlayerReachedEncounter();
+            previousPlayerPosition = playerCollider.transform.position;
             if (encounterPresented || dialoguePresenter.IsShowing ||
                 questSequenceHost.CurrentQuestId != questId ||
-                !encounterTrigger.Distance(playerCollider).isOverlapped)
+                !reachedEncounter)
                 return;
 
             encounterPresented = true;
             restartHost.SetRuntimeCheckpoint(questId, retryCheckpoint);
             objectiveBeacon.SetExternalTarget(postDialogueObjective);
             serviceRoot.Events.Publish(new TutorialNarrativeChanged(questId + "-HELTE", stageId, lines));
+        }
+
+        private bool HasPlayerReachedEncounter()
+        {
+            if (encounterTrigger.Distance(playerCollider).isOverlapped) return true;
+
+            var playerPoint = (Vector2)playerCollider.transform.position;
+            return encounterTrigger.bounds.Contains(playerPoint) ||
+                   encounterTrigger.bounds.SqrDistance(playerPoint) <= 0.04f ||
+                   TutorialTriggerSweepPolicy.Intersects(
+                       encounterTrigger.bounds,
+                       previousPlayerPosition,
+                       playerPoint);
         }
     }
 }

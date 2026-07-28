@@ -22,7 +22,6 @@ namespace Narthex.Presentation
         private float attackEndsAt;
         private float hitEndsAt;
         private float facingDirection = 1f;
-        private int activeComboStage = 1;
 
         private void Awake()
         {
@@ -40,7 +39,7 @@ namespace Narthex.Presentation
 
         private void OnEnable()
         {
-            if (meleeAttackHost != null) meleeAttackHost.ComboStageChanged += StartComboAttackMotion;
+            if (meleeAttackHost != null) meleeAttackHost.AttackStarted += StartAttackMotion;
             else if (playerInput != null) playerInput.AttackRequested += StartAttackMotion;
             if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
             if (actor != null && actor.Events != null) actor.Events.Subscribe<HitConfirmed>(HandleHitConfirmed);
@@ -49,7 +48,7 @@ namespace Narthex.Presentation
 
         private void OnDisable()
         {
-            if (meleeAttackHost != null) meleeAttackHost.ComboStageChanged -= StartComboAttackMotion;
+            if (meleeAttackHost != null) meleeAttackHost.AttackStarted -= StartAttackMotion;
             else if (playerInput != null) playerInput.AttackRequested -= StartAttackMotion;
             if (playerInput != null) playerInput.AimDirectionChanged -= HandleAimDirectionChanged;
             if (actor != null && actor.Events != null) actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
@@ -83,24 +82,9 @@ namespace Narthex.Presentation
             {
                 var progress = 1f - ((attackEndsAt - Time.time) / attackDuration);
                 var arc = Mathf.Sin(progress * Mathf.PI);
-                switch (activeComboStage)
-                {
-                    case 2:
-                        position += Vector3.right * (0.2f * arc * facingDirection) + Vector3.up * (0.08f * arc);
-                        rotation = Quaternion.Euler(0f, 0f, 58f * arc * facingDirection);
-                        scale = Vector3.Scale(scale, new Vector3(1f + (0.12f * arc), 1f - (0.08f * arc), 1f));
-                        break;
-                    case 3:
-                        position += Vector3.right * (0.36f * arc * facingDirection);
-                        rotation = Quaternion.Euler(0f, 0f, -18f * arc * facingDirection);
-                        scale = Vector3.Scale(scale, new Vector3(1f + (0.3f * arc), 1f - (0.16f * arc), 1f));
-                        break;
-                    default:
-                        position += Vector3.right * (0.18f * arc * facingDirection);
-                        rotation = Quaternion.Euler(0f, 0f, -48f * arc * facingDirection);
-                        scale = Vector3.Scale(scale, new Vector3(1f + (0.16f * arc), 1f - (0.1f * arc), 1f));
-                        break;
-                }
+                position += Vector3.right * (0.18f * arc * facingDirection);
+                rotation = Quaternion.Euler(0f, 0f, -48f * arc * facingDirection);
+                scale = Vector3.Scale(scale, new Vector3(1f + (0.16f * arc), 1f - (0.1f * arc), 1f));
             }
 
             if (Time.time < hitEndsAt)
@@ -132,19 +116,14 @@ namespace Narthex.Presentation
         private void StartAttackMotion()
         {
             if (actor == null || actor.Runtime == null || !actor.Runtime.IsAlive) return;
-            activeComboStage = 1;
-            attackEndsAt = Time.time + attackDuration;
-        }
-
-        private void StartComboAttackMotion(int comboStage)
-        {
-            if (actor == null || actor.Runtime == null || !actor.Runtime.IsAlive) return;
-            activeComboStage = Mathf.Clamp(comboStage, 1, 3);
+            if (playerInput != null)
+                facingDirection = playerInput.AimDirectionX < 0f ? -1f : 1f;
             attackEndsAt = Time.time + attackDuration;
         }
 
         private void HandleAimDirectionChanged(float direction)
         {
+            if (meleeAttackHost != null && meleeAttackHost.IsAttackDirectionLocked) return;
             facingDirection = direction < 0f ? -1f : 1f;
         }
     }

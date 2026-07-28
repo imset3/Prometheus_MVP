@@ -98,16 +98,5 @@ namespace Narthex.Tests
             Object.DestroyImmediate(definition);
         }
 
-        [Test]
-        public void AttackComboTracker_AdvancesWithinHalfSecondAndResetsAfterThirdOrTimeout()
-        {
-            var combo = new AttackComboTracker(0.5f);
-
-            Assert.That(combo.RegisterAttack(0f), Is.EqualTo(1));
-            Assert.That(combo.RegisterAttack(0.49f), Is.EqualTo(2));
-            Assert.That(combo.RegisterAttack(0.99f), Is.EqualTo(3));
-            Assert.That(combo.RegisterAttack(1.2f), Is.EqualTo(1));
-            Assert.That(combo.RegisterAttack(1.71f), Is.EqualTo(1));
-        }
     }
 }

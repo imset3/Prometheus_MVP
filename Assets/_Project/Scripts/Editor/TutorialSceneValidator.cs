@@ -86,6 +86,7 @@ namespace Narthex.Tools
             if (chapter0Intro != null && !chapter0Intro.HasValidUpdraftSetup)
                 issues.Add("Chapter0 updraft must clear the return ledge, reach above the passkey, remain inside the hidden-room camera bounds, and use positive lift speeds.");
             if (chapter0Intro != null &&
+                !chapter0Intro.UsesMarkerDrivenUpdraft &&
                 (chapter0Intro.UpdraftLiftSpeed < 6.5f || chapter0Intro.UpdraftMaxRiseSpeed < 4.5f))
                 issues.Add("Chapter0 hidden-room return updraft must use at least 6.5 lift and 4.5 maximum rise speed.");
             RequireComponent<ModuleSystemHost>(systems, issues);
@@ -126,7 +127,7 @@ namespace Narthex.Tools
             {
                 var expectedOrder = new[]
                 {
-                    "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-002", "QST-TUTO-006", "QST-TUTO-003",
+                    "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-006", "QST-TUTO-002", "QST-TUTO-003",
                     "QST-TUTO-005", "QST-TUTO-007", "QST-TUTO-007-A", "QST-TUTO-007-B", "QST-TUTO-008"
                 };
                 var sequenceSerialized = new SerializedObject(questSequence);
@@ -202,8 +203,11 @@ namespace Narthex.Tools
             var meleeAttack = player != null ? player.GetComponent<MeleeAttackHost>() : null;
             if (meleeAttack != null && !meleeAttack.HasValidSetup)
                 issues.Add("MeleeAttackHost requires the shared AttackAnchor for pointer-facing attacks.");
-            if (meleeAttack != null && !Mathf.Approximately(meleeAttack.ComboWindowSeconds, 0.5f))
-                issues.Add("Prome's three-stage melee combo must use a 0.5 second continuation window.");
+            if (meleeAttack != null && !meleeAttack.UsesSingleHitAttacks)
+                issues.Add("Prome's basic melee input must produce one independent attack per accepted press.");
+            if (meleeAttack != null &&
+                (meleeAttack.CooldownSeconds < 0.22f || meleeAttack.DirectionLockSeconds < 0.2f))
+                issues.Add("Prome's single melee attack must keep its 0.22 second visual readable before accepting a new attack.");
 
             var rangedRoot = RequireChild(player, "RangedAttackRoot", issues);
             RequireComponent<BoxCollider2D>(rangedRoot, issues);
@@ -259,23 +263,19 @@ namespace Narthex.Tools
             if (hqGuideRouteHost != null && hqGuideRouteHost.enabled)
                 issues.Add("Legacy HQ guide route must remain disabled until the hidden-room passkey flow returns to A.");
 
-            var hiddenRoom = RequireObject("Z01B_HiddenGlideRoom", issues);
-            RequireChild(hiddenRoom, "GeometryRoot", issues);
-            RequireChild(hiddenRoom, "NarrativeRoot", issues);
-            var hiddenGameplay = RequireChild(hiddenRoom, "GameplayRoot", issues);
-            var hiddenAnchors = RequireChild(hiddenRoom, "Anchors", issues);
-            RequireChild(hiddenGameplay, "AirshipPasskey_ART_SLOT", issues);
-            RequireChild(hiddenGameplay, "Updraft_ART_SLOT", issues);
-            var passkeyTrigger = RequireChild(hiddenGameplay, "PasskeyPickupTrigger", issues);
-            var ledgeTrigger = RequireChild(hiddenGameplay, "LedgeBriefingTrigger", issues);
-            var returnTrigger = RequireChild(hiddenGameplay, "HiddenRoomReturnTrigger", issues);
+            var hiddenRoom = RequireObject("숨겨진방", issues);
+            RequireObject("AirshipPasskey_ART_SLOT", issues);
+            RequireObject("Updraft_ART_SLOT", issues);
+            var passkeyTrigger = RequireObject("PasskeyPickupTrigger", issues);
+            var ledgeTrigger = RequireObject("B02_LedgeBriefingTrigger", issues);
+            var returnTrigger = RequireObject("HiddenRoomReturnTrigger", issues);
             RequireComponent<BoxCollider2D>(passkeyTrigger, issues);
             RequireComponent<BoxCollider2D>(ledgeTrigger, issues);
             RequireComponent<BoxCollider2D>(returnTrigger, issues);
-            RequireChild(hiddenAnchors, "HiddenRoomSpawn", issues);
-            RequireChild(hiddenAnchors, "LedgeStop", issues);
-            RequireChild(hiddenAnchors, "PasskeyTarget", issues);
-            RequireChild(hiddenAnchors, "HiddenReturnTarget", issues);
+            RequireObject("HiddenRoomSpawn", issues);
+            RequireObject("LedgeStop", issues);
+            RequireObject("PasskeyTarget", issues);
+            RequireObject("HiddenReturnTarget", issues);
             RequireObject("HiddenRoomEntryTrigger", issues);
             RequireObject("TheusWrongWayAlarm_ART_SLOT", issues);
 
@@ -406,12 +406,12 @@ namespace Narthex.Tools
                 if (scopeCollider != null && !scopeCollider.isTrigger)
                     issues.Add($"TrainingScope_{scopeNames[scopeIndex]} must be a trigger area.");
             }
-            var jumpController = RequireChild(trainingSpawnController, "JumpProjectileController", issues);
+            var jumpController = RequireObject("JumpProjectileController", issues);
             RequireComponent<TutorialJumpTrainingHost>(jumpController, issues);
             var jumpTrainingHost = jumpController != null ? jumpController.GetComponent<TutorialJumpTrainingHost>() : null;
             if (jumpTrainingHost != null && !jumpTrainingHost.HasValidSetup)
                 issues.Add("TutorialJumpTrainingHost has invalid quest, player, anchor, or projectile references.");
-            var jumpProjectile = RequireChild(jumpController, "ART_SLOT_JumpProjectile", issues);
+            var jumpProjectile = RequireObject("ART_SLOT_JumpProjectile", issues);
             RequireComponent<BoxCollider2D>(jumpProjectile, issues);
             RequireComponent<Rigidbody2D>(jumpProjectile, issues);
             RequireComponent<TutorialJumpProjectileHazardHost>(jumpProjectile, issues);
@@ -437,19 +437,27 @@ namespace Narthex.Tools
             if (equipmentPickupHost != null && !equipmentPickupHost.HasValidSetup)
                 issues.Add("TutorialBootsPickupHost has invalid equipment package, module, or player references.");
             RequireObject("ART_SLOT_Cryon", issues);
+            var dashArrivalCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
+                "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-004-DASH.asset");
+            if (dashArrivalCondition == null ||
+                dashArrivalCondition.SignalType != QuestSignalType.PortalUsed ||
+                dashArrivalCondition.TargetId != "TRAINING-DASH-FINISH" ||
+                dashArrivalCondition.RequiredAmount != 1)
+                issues.Add("QST-TUTO-004 must complete only at the marker-authored dash finish trigger.");
             var doubleJumpCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-006-DOUBLE-JUMP.asset");
             var equipmentQuest = AssetDatabase.LoadAssetAtPath<QuestDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Quests/QST-TUTO-006.asset");
-            if (doubleJumpCondition == null || doubleJumpCondition.SignalType != QuestSignalType.DoubleJumpPerformed ||
-                doubleJumpCondition.TargetId != "PLAYER-001" || equipmentQuest == null ||
+            if (doubleJumpCondition == null || doubleJumpCondition.SignalType != QuestSignalType.PortalUsed ||
+                doubleJumpCondition.TargetId != "TRAINING-DOUBLE-JUMP-SUMMIT" ||
+                doubleJumpCondition.RequiredAmount != 1 || equipmentQuest == null ||
                 equipmentQuest.Conditions == null || equipmentQuest.Conditions.Length != 1 ||
                 equipmentQuest.Conditions[0] != doubleJumpCondition)
-                issues.Add("QST-TUTO-006 must require only one actual PLAYER-001 double jump.");
-            var meleeComboCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
+                issues.Add("QST-TUTO-006 must complete only at the marker-authored double-jump summit.");
+            var meleeAttackCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-003-ATTACK.asset");
-            if (meleeComboCondition == null || meleeComboCondition.SignalType != QuestSignalType.AttackPerformed ||
-                meleeComboCondition.RequiredAmount != 3)
+            if (meleeAttackCondition == null || meleeAttackCondition.SignalType != QuestSignalType.AttackPerformed ||
+                meleeAttackCondition.RequiredAmount != 3)
                 issues.Add("QST-TUTO-003 must count three successful melee hits against a target.");
             var rangedCondition = AssetDatabase.LoadAssetAtPath<QuestConditionDefinition>(
                 "Assets/_Project/GameData/Tutorial/RuntimeDefinitionsV2/Conditions/COND-TUTO-005-RANGED-TRIPLE-HIT.asset");
@@ -470,6 +478,20 @@ namespace Narthex.Tools
             if (RequireObject("훈련장 배치 마커", issues) != null &&
                 (phaseController == null || !phaseController.HasValidSetup))
                 issues.Add("Imported training room requires one valid sequential phase controller.");
+            var phaseContents = RequireChild(trainingSpawnController, "TrainingPhaseContents", issues);
+            foreach (var phaseName in new[]
+                     {
+                         "01_대시", "02_더블점프", "03_점프", "04_근접공격", "05_원거리공격"
+                     })
+                RequireChild(phaseContents, phaseName, issues);
+            var dashFinishMarker = RequireObject("훈련_대시_끝", issues);
+            RequireComponent<TutorialFunctionMarkerHost>(dashFinishMarker, issues);
+            RequireComponent<TutorialTrainingArrivalMarkerHost>(dashFinishMarker, issues);
+            var dashFires = phaseContents != null
+                ? phaseContents.GetComponentsInChildren<TutorialTrainingDashFireHost>(true)
+                : Array.Empty<TutorialTrainingDashFireHost>();
+            if (dashFires.Length != 3 || dashFires.Any(fire => !fire.HasValidSetup))
+                issues.Add("Dash phase must bind exactly three red fire shapes to invulnerable-dash restart logic.");
             var doubleJumpPractice = RequireObject("DoubleJumpPracticeRoot", issues);
             var lowPracticePlatform = RequireChild(doubleJumpPractice, "DoubleJumpPlatform_Low_ART_SLOT", issues);
             var highPracticePlatform = RequireChild(doubleJumpPractice, "DoubleJumpPlatform_High_ART_SLOT", issues);
@@ -912,12 +934,41 @@ namespace Narthex.Tools
                                         !Mathf.Approximately(host.DamageFraction, 0.1f)))
                 issues.Add("G must have exactly two valid cyclic fire hazards dealing 10% max-health damage.");
 
-            var windHazards = Resources.FindObjectsOfTypeAll<TutorialWindHazardHost>()
-                .Where(host => host != null && host.gameObject.scene.IsValid())
-                .ToArray();
-            if (windHazards.Length != 2 ||
-                windHazards.Any(host => !host.HasValidSetup || !host.RequiresGlideInput))
-                issues.Add("G must have exactly two valid wind volumes that require held Space/glide input.");
+            var gHazardRoot = RequireObject("G02_EnvironmentHazards", issues);
+            var windHazards = gHazardRoot != null
+                ? gHazardRoot.GetComponentsInChildren<TutorialWindHazardHost>(true)
+                : Array.Empty<TutorialWindHazardHost>();
+            var requiredWindNames = new[]
+            {
+                "G02_바람_시작_MARKER",
+                "G02_바람_01_MARKER",
+                "G02_바람_중간통로_MARKER",
+                "G02_바람_02_MARKER"
+            };
+            if (windHazards.Length != requiredWindNames.Length ||
+                windHazards.Any(host => !host.HasValidSetup || !host.RequiresGlideInput) ||
+                requiredWindNames.Any(requiredName =>
+                    windHazards.All(host => host.gameObject.name != requiredName)))
+                issues.Add("G must have four valid route-specific wind markers requiring held Space/glide input.");
+            var gExit = RequireObject("G01_Exit_ToH", issues);
+            foreach (var windHazard in windHazards)
+            {
+                var windCollider = windHazard.GetComponent<BoxCollider2D>();
+                if (windCollider == null) continue;
+                var windHeight = Mathf.Abs(windCollider.size.y * windCollider.transform.lossyScale.y);
+
+                if (windHazard.gameObject.name == "G02_바람_시작_MARKER" &&
+                    windHeight < 6f)
+                    issues.Add("G entry wind must provide a readable lift into the stage.");
+                else if (windHazard.gameObject.name == "G02_바람_중간통로_MARKER" &&
+                         windHeight < 30f)
+                    issues.Add("G middle-passage wind must cover its full vertical shaft.");
+                else if (gExit != null &&
+                         (windHazard.gameObject.name == "G02_바람_01_MARKER" ||
+                          windHazard.gameObject.name == "G02_바람_02_MARKER") &&
+                         GetColliderTop(windCollider) < gExit.transform.position.y + 1.5f)
+                    issues.Add($"{windHazard.gameObject.name} must continue above the G-to-H exit height.");
+            }
 
             var lavaHazards = Resources.FindObjectsOfTypeAll<TutorialLavaHazardHost>()
                 .Where(host => host != null && host.gameObject.scene.IsValid())

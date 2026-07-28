@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Narthex.Core;
 using UnityEngine;
@@ -28,41 +29,48 @@ namespace Narthex.Gameplay
     }
 
     /// <summary>
-    /// Reuses the compact imported training room one lesson at a time. Existing
-    /// quest-specific hazard hosts still own their sequences; this host owns phase
-    /// scopes, cleanup, and the single room exit gate.
+    /// Reuses the whole training room one lesson at a time. Phase content, action
+    /// scopes, start positions, and completion triggers are authored as scene markers.
+    /// The controller never owns level coordinates.
     /// </summary>
     public sealed class TutorialTrainingPhaseControllerHost : MonoBehaviour
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
+        [SerializeField] private QuestManagerHost questManagerHost;
+        [SerializeField] private PlayerInputHost playerInputHost;
+        [SerializeField] private PlayerMotorHost playerMotor;
+        [SerializeField] private Transform player;
+        [SerializeField] private Rigidbody2D playerBody;
+        [SerializeField] private CanvasGroup fadeCanvasGroup;
         [SerializeField] private string[] trainingQuestIds = Array.Empty<string>();
         [SerializeField] private Collider2D[] phaseAreas = Array.Empty<Collider2D>();
+        [SerializeField] private GameObject[] phaseContentRoots = Array.Empty<GameObject>();
+        [SerializeField] private Transform[] phaseStartMarkers = Array.Empty<Transform>();
+        [SerializeField, Min(0f)] private float fadeOutDuration = 0.18f;
+        [SerializeField, Min(0f)] private float fadeInDuration = 0.22f;
 
         [Header("Single exit gate")]
         [SerializeField] private Collider2D exitGateCollider;
         [SerializeField] private Renderer exitGateRenderer;
 
-        [Header("Previous phase cleanup")]
-        [SerializeField] private GameObject[] fallingObjects = Array.Empty<GameObject>();
-        [SerializeField] private GameObject[] fallingWarnings = Array.Empty<GameObject>();
-        [SerializeField] private GameObject jumpProjectile;
-        [SerializeField] private GameObject meleeAreaRoot;
-        [SerializeField] private GameObject meleeEnemy;
-        [SerializeField] private GameObject[] rangedTargets = Array.Empty<GameObject>();
+        private Coroutine transitionRoutine;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null &&
+                                     questManagerHost != null && playerInputHost != null &&
+                                     playerMotor != null && player != null && playerBody != null &&
+                                     fadeCanvasGroup != null &&
                                      trainingQuestIds != null && phaseAreas != null &&
+                                     phaseContentRoots != null && phaseStartMarkers != null &&
                                      trainingQuestIds.Length == 5 && phaseAreas.Length == trainingQuestIds.Length &&
+                                     phaseContentRoots.Length == trainingQuestIds.Length &&
+                                     phaseStartMarkers.Length == trainingQuestIds.Length &&
                                      HasValidPhaseAreas() && exitGateCollider != null && exitGateRenderer != null &&
-                                     fallingObjects != null && fallingObjects.Length == 3 &&
-                                     fallingWarnings != null && fallingWarnings.Length == fallingObjects.Length &&
-                                     HasCompleteObjects(fallingObjects) && HasCompleteObjects(fallingWarnings) &&
-                                     jumpProjectile != null && meleeAreaRoot != null && meleeEnemy != null &&
-                                     rangedTargets != null && rangedTargets.Length == 3 &&
-                                     HasCompleteObjects(rangedTargets);
+                                     HasCompleteObjects(phaseContentRoots) &&
+                                     HasCompleteTransforms(phaseStartMarkers);
         public int CurrentPhaseIndex { get; private set; } = -1;
         public bool IsExitLocked { get; private set; }
+        public bool IsTransitioning => transitionRoutine != null;
         public int ActivePhaseAreaCount
         {
             get
@@ -80,7 +88,7 @@ namespace Narthex.Gameplay
         {
             if (HasValidSetup) return;
             Debug.LogError(
-                "TutorialTrainingPhaseControllerHost requires five phase areas, one exit gate, and all phase cleanup references.",
+                "TutorialTrainingPhaseControllerHost requires five marker-authored phases, player transition references, and one exit gate.",
                 this);
             enabled = false;
         }
@@ -100,10 +108,23 @@ namespace Narthex.Gameplay
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+            transitionRoutine = null;
+            SetPlayerLocked(false);
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
         {
+            var nextPhaseIndex = TutorialTrainingPhasePolicy.ResolvePhaseIndex(
+                message.QuestId,
+                trainingQuestIds);
+            if (CurrentPhaseIndex >= 0 && nextPhaseIndex >= 0 && nextPhaseIndex != CurrentPhaseIndex)
+            {
+                if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+                transitionRoutine = StartCoroutine(TransitionToPhase(nextPhaseIndex));
+                return;
+            }
+
             Refresh(message.QuestId);
         }
 
@@ -111,13 +132,16 @@ namespace Narthex.Gameplay
         {
             CurrentPhaseIndex = TutorialTrainingPhasePolicy.ResolvePhaseIndex(questId, trainingQuestIds);
             for (var index = 0; index < phaseAreas.Length; index++)
+            {
                 phaseAreas[index].enabled =
                     TutorialTrainingPhasePolicy.ShouldActivatePhase(CurrentPhaseIndex, index);
+                phaseContentRoots[index].SetActive(
+                    TutorialTrainingPhasePolicy.ShouldActivatePhase(CurrentPhaseIndex, index));
+            }
 
             IsExitLocked = TutorialTrainingPhasePolicy.ShouldLockExit(CurrentPhaseIndex);
             exitGateCollider.enabled = IsExitLocked;
             exitGateRenderer.enabled = IsExitLocked;
-            CleanupInactivePhases();
         }
 
         public void RefreshCurrentQuest()
@@ -126,21 +150,80 @@ namespace Narthex.Gameplay
                 Refresh(questSequenceHost.CurrentQuestId);
         }
 
-        private void CleanupInactivePhases()
+        public bool TryRestartCurrentPhase()
         {
-            if (CurrentPhaseIndex != 0)
+            if (!HasValidSetup || CurrentPhaseIndex < 0 || transitionRoutine != null) return false;
+            transitionRoutine = StartCoroutine(RestartPhase(CurrentPhaseIndex));
+            return true;
+        }
+
+        private IEnumerator TransitionToPhase(int nextPhaseIndex)
+        {
+            SetPlayerLocked(true);
+            yield return FadeTo(1f, fadeOutDuration);
+            Refresh(trainingQuestIds[nextPhaseIndex]);
+            MovePlayerToMarker(phaseStartMarkers[nextPhaseIndex]);
+            yield return FadeTo(0f, fadeInDuration);
+            SetPlayerLocked(false);
+            transitionRoutine = null;
+        }
+
+        private IEnumerator RestartPhase(int phaseIndex)
+        {
+            SetPlayerLocked(true);
+            yield return FadeTo(1f, fadeOutDuration);
+            questManagerHost.Initialize();
+            questManagerHost.System.ResetProgress(trainingQuestIds[phaseIndex]);
+            phaseContentRoots[phaseIndex].SetActive(false);
+            MovePlayerToMarker(phaseStartMarkers[phaseIndex]);
+            phaseContentRoots[phaseIndex].SetActive(true);
+            phaseAreas[phaseIndex].enabled = true;
+            yield return FadeTo(0f, fadeInDuration);
+            SetPlayerLocked(false);
+            transitionRoutine = null;
+        }
+
+        private void MovePlayerToMarker(Transform marker)
+        {
+            playerMotor.ResetTransientInput();
+            playerBody.linearVelocity = Vector2.zero;
+            playerBody.position = marker.position;
+            player.position = marker.position;
+            Physics2D.SyncTransforms();
+        }
+
+        private void SetPlayerLocked(bool locked)
+        {
+            if (playerInputHost != null) playerInputHost.enabled = !locked;
+            if (fadeCanvasGroup != null) fadeCanvasGroup.blocksRaycasts = locked;
+            if (locked)
             {
-                SetObjectsActive(fallingObjects, false);
-                SetObjectsActive(fallingWarnings, false);
+                playerMotor?.ResetTransientInput();
+                if (playerBody != null) playerBody.linearVelocity = Vector2.zero;
+            }
+        }
+
+        private IEnumerator FadeTo(float targetAlpha, float duration)
+        {
+            if (fadeCanvasGroup == null) yield break;
+            if (duration <= 0f)
+            {
+                fadeCanvasGroup.alpha = targetAlpha;
+                yield break;
             }
 
-            if (CurrentPhaseIndex != 1 && jumpProjectile.activeSelf)
-                jumpProjectile.SetActive(false);
-            meleeAreaRoot.SetActive(CurrentPhaseIndex == 3);
-            if (CurrentPhaseIndex != 3 && meleeEnemy.activeSelf)
-                meleeEnemy.SetActive(false);
-            if (CurrentPhaseIndex != 4)
-                SetObjectsActive(rangedTargets, false);
+            var startAlpha = fadeCanvasGroup.alpha;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                fadeCanvasGroup.alpha = Mathf.Lerp(
+                    startAlpha,
+                    targetAlpha,
+                    Mathf.Clamp01(elapsed / duration));
+                yield return null;
+            }
+            fadeCanvasGroup.alpha = targetAlpha;
         }
 
         private bool HasValidPhaseAreas()
@@ -159,11 +242,12 @@ namespace Narthex.Gameplay
             return true;
         }
 
-        private static void SetObjectsActive(IReadOnlyList<GameObject> objects, bool active)
+        private static bool HasCompleteTransforms(IReadOnlyList<Transform> transforms)
         {
-            foreach (var target in objects)
-                if (target != null && target.activeSelf != active)
-                    target.SetActive(active);
+            foreach (var target in transforms)
+                if (target == null)
+                    return false;
+            return true;
         }
     }
 }

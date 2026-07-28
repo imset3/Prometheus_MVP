@@ -14,7 +14,7 @@ namespace Narthex.Tools
     public static class TutorialImportedExteriorSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
-        private const string CompletionMarkerName = "E01_연동완료";
+        private const string CompletionMarkerName = "E02_사다리상승연동완료";
         private const string RequiredQuestId = "QST-TUTO-007";
 
         static TutorialImportedExteriorSetup()
@@ -70,7 +70,7 @@ namespace Narthex.Tools
                 AssetDatabase.SaveAssets();
                 ValidateAppliedScene(scene);
                 Debug.Log(
-                    "[sragon000][E01] C03 전용 자막·진동, 사다리 자동 이동, " +
+                    "[sragon000][E02] C03 전용 자막·진동, 사다리 상승 이동, " +
                     "외부 스폰·카메라·충돌체·습격 전망 연출을 연결했습니다.");
             }
             catch (Exception exception)
@@ -99,11 +99,11 @@ namespace Narthex.Tools
 
             var ladder = Require(scene, "C03_LadderPresentation");
             ladder.transform.SetParent(stateRoot.transform, true);
-            ladder.transform.position = new Vector3(147f, -5.15f, 0f);
+            ladder.transform.position = new Vector3(147f, -2.65f, 0f);
             ladder.SetActive(true);
 
             GetOrCreateAnchor(stateRoot.transform, "C03_LadderEntry", new Vector3(147f, -3.9f, 0f));
-            GetOrCreateAnchor(stateRoot.transform, "C03_LadderExit", new Vector3(147f, -6.4f, 0f));
+            GetOrCreateAnchor(stateRoot.transform, "C03_LadderExit", new Vector3(147f, -1.4f, 0f));
 
             var subtitles = FindSceneComponent<TutorialLoreSubtitlePresenter>(scene);
             var quests = FindSceneComponent<TutorialQuestSequenceHost>(scene);
@@ -234,7 +234,7 @@ namespace Narthex.Tools
             var target = targets.GetArrayElementAtIndex(targetIndex);
             target.FindPropertyRelative("trigger").objectReferenceValue = ladderTrigger;
             target.FindPropertyRelative("availabilityRoot").objectReferenceValue = availabilityRoot;
-            target.FindPropertyRelative("promptText").stringValue = "F: 사다리 내려가기";
+            target.FindPropertyRelative("promptText").stringValue = "F: 사다리 올라가기";
             target.FindPropertyRelative("requiredQuestId").stringValue = RequiredQuestId;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -393,7 +393,7 @@ namespace Narthex.Tools
             var transition = Require(scene, "C03_Exit_ExteriorSide").GetComponent<TutorialZoneTransitionHost>();
             if (transition == null || !transition.HasValidSetup ||
                 !transition.UsesLadderSequence || !transition.RequiresInteraction ||
-                !transition.HasValidLadderSetup)
+                !transition.HasValidLadderSetup || !transition.LadderMovesUp)
                 throw new InvalidOperationException("C03 사다리→E 외부 전환 참조가 유효하지 않습니다.");
 
             var exteriorView = Require(scene, "E01_InvasionViewAnchor")
@@ -409,7 +409,7 @@ namespace Narthex.Tools
 
             Debug.Log(
                 $"[sragon000][E01][검증 통과] C03 자막 {lore.Length}개, 진동 {shakes.Length}개, " +
-                $"사다리 F 입력 후 자동 하강·전환, 외부 흰 도형 충돌체 {exteriorColliderCount}개, " +
+                $"사다리 F 입력 후 자동 상승·전환, 외부 흰 도형 충돌체 {exteriorColliderCount}개, " +
                 "플레이어 조작 유지 습격 전망과 체크포인트 정상.");
         }
 

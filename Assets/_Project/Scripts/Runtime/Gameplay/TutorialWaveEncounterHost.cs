@@ -36,6 +36,8 @@ namespace Narthex.Gameplay
         [Header("Exit Gate")]
         [SerializeField] private Collider2D exitGateCollider;
         [SerializeField] private Renderer exitGateRenderer;
+        [SerializeField] private Collider2D[] additionalExitGateColliders = new Collider2D[0];
+        [SerializeField] private Renderer[] additionalExitGateRenderers = new Renderer[0];
 
         private readonly HashSet<string> activeEnemyIds = new HashSet<string>();
         private bool encounterStarted;
@@ -53,7 +55,10 @@ namespace Narthex.Gameplay
                                      (!requireTraversalForNextWave ||
                                       (waveEnemyCounts.Length == 2 && internalGateCollider != null &&
                                        internalGateRenderer != null)) &&
-                                     exitGateCollider != null && exitGateRenderer != null;
+                                     exitGateCollider != null && exitGateRenderer != null &&
+                                     additionalExitGateColliders != null &&
+                                     additionalExitGateRenderers != null &&
+                                     additionalExitGateColliders.Length == additionalExitGateRenderers.Length;
         public bool EncounterStarted => encounterStarted;
         public bool IsCleared => cleared;
         public bool RequiresTraversalForNextWave => requireTraversalForNextWave;
@@ -250,6 +255,13 @@ namespace Narthex.Gameplay
         {
             exitGateCollider.enabled = locked;
             exitGateRenderer.enabled = locked;
+            for (var index = 0; index < additionalExitGateColliders.Length; index++)
+            {
+                if (additionalExitGateColliders[index] != null)
+                    additionalExitGateColliders[index].enabled = locked;
+                if (additionalExitGateRenderers[index] != null)
+                    additionalExitGateRenderers[index].enabled = locked;
+            }
         }
 
         private void SetInternalGateLocked(bool locked)

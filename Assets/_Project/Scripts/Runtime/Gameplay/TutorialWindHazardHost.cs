@@ -4,8 +4,9 @@ using UnityEngine;
 namespace Narthex.Gameplay
 {
     /// <summary>
-    /// Adds upward recovery only while the player is physically inside the wind
-    /// volume and is holding the existing Space/glide input.
+    /// Adds marker-directed recovery only while the player is physically inside the
+    /// wind volume and is holding the existing Space/glide input. Moving, rotating,
+    /// or scaling this object changes the live wind without code changes.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public sealed class TutorialWindHazardHost : MonoBehaviour
@@ -17,16 +18,25 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float maximumRiseSpeed = 8f;
 
         private readonly HashSet<int> overlappingPlayerColliders = new HashSet<int>();
+        private Collider2D windTrigger;
 
         public bool HasValidSetup => playerBody != null && player != null && playerMotor != null &&
                                      liftAcceleration > 0f && maximumRiseSpeed > 0f;
         public bool RequiresGlideInput => true;
         public float MaximumRiseSpeed => maximumRiseSpeed;
+        public Vector2 WorldDirection
+        {
+            get
+            {
+                var direction = (Vector2)transform.up;
+                return direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.up;
+            }
+        }
 
         private void Awake()
         {
-            var trigger = GetComponent<Collider2D>();
-            if (trigger != null) trigger.isTrigger = true;
+            windTrigger = GetComponent<Collider2D>();
+            if (windTrigger != null) windTrigger.isTrigger = true;
             if (HasValidSetup) return;
 
             Debug.LogError(
@@ -37,18 +47,19 @@ namespace Narthex.Gameplay
 
         private void FixedUpdate()
         {
+            var containsPlayerCenter = windTrigger != null && player != null &&
+                                       windTrigger.OverlapPoint(player.position);
             if (!TutorialEnvironmentHazardPolicy.ShouldApplyWind(
-                    overlappingPlayerColliders.Count > 0,
+                    overlappingPlayerColliders.Count > 0 || containsPlayerCenter,
                     playerMotor.IsGlideHeld))
                 return;
-            var velocity = playerBody.linearVelocity;
-            velocity.y = TutorialEnvironmentHazardPolicy.ResolveWindVelocity(
-                velocity.y,
+            playerBody.linearVelocity = TutorialEnvironmentHazardPolicy.ResolveDirectionalWindVelocity(
+                playerBody.linearVelocity,
+                WorldDirection,
                 liftAcceleration,
                 maximumRiseSpeed,
-                Mathf.Abs(Physics2D.gravity.y * playerBody.gravityScale),
+                Physics2D.gravity * playerBody.gravityScale,
                 Time.fixedDeltaTime);
-            playerBody.linearVelocity = velocity;
         }
 
         private void OnTriggerEnter2D(Collider2D other)

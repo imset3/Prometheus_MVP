@@ -33,6 +33,28 @@ namespace Narthex.Gameplay
             return Mathf.Min(Mathf.Max(0f, maximumRiseSpeed), accelerated + gravityCompensation);
         }
 
+        public static Vector2 ResolveDirectionalWindVelocity(
+            Vector2 currentVelocity,
+            Vector2 worldDirection,
+            float liftAcceleration,
+            float maximumSpeed,
+            Vector2 gravity,
+            float fixedDeltaTime)
+        {
+            var direction = worldDirection.sqrMagnitude > 0.0001f
+                ? worldDirection.normalized
+                : Vector2.up;
+            var currentAlongDirection = Vector2.Dot(currentVelocity, direction);
+            var gravityAgainstDirection = Mathf.Max(0f, -Vector2.Dot(gravity, direction));
+            var resolvedAlongDirection = ResolveWindVelocity(
+                currentAlongDirection,
+                liftAcceleration,
+                maximumSpeed,
+                gravityAgainstDirection,
+                fixedDeltaTime);
+            return currentVelocity + direction * (resolvedAlongDirection - currentAlongDirection);
+        }
+
         public static bool ShouldReturnToSafePoint(bool playerAlive)
         {
             return playerAlive;

@@ -68,6 +68,7 @@ namespace Narthex.Gameplay
                                                  fadeCanvasGroup != null && questSequenceHost != null && bossArenaHost != null &&
                                                  questCheckpoints != null && questCheckpoints.Length >= 10;
         public bool UsesInSceneRestart => !restartSceneOnDeath;
+        public bool IsRestarting => restarting;
         public string ActiveSpawnPointName => activeSpawnPoint != null ? activeSpawnPoint.name : string.Empty;
 
         public bool HasCheckpointForQuest(string questId)
@@ -124,8 +125,15 @@ namespace Narthex.Gameplay
 
         private void HandlePlayerDead(PlayerDead message)
         {
-            if (message.PlayerId != playerActor.ActorId || restarting) return;
+            if (message.PlayerId != playerActor.ActorId) return;
+            TryRestartAtCheckpoint();
+        }
+
+        public bool TryRestartAtCheckpoint()
+        {
+            if (!isActiveAndEnabled || restarting) return false;
             StartCoroutine(RestartAtCheckpoint());
+            return true;
         }
 
         private IEnumerator RestartAtCheckpoint()
