@@ -172,6 +172,7 @@ Assets/
 
 ## 문서
 
+- [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
 - [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
 - [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
 - [프로젝트 인수인계](Assets/_Project/Docs/PROJECT_HANDOFF.md) — 현재 구현 상태, 시나리오와 주의사항
