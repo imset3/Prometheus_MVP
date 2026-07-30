@@ -12,9 +12,10 @@ using UnityEngine.UI;
 
 namespace Narthex.Tools
 {
+    /// <summary>One-time migration retained for explicit recovery of pre-toolkit scenes.</summary>
     public static class TutorialRequestedFeatureSceneSetup
     {
-        [MenuItem("sragon000/Tutorial/Apply Requested Gameplay Features")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Requested Gameplay Features")]
         public static void Apply()
         {
             var sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>()

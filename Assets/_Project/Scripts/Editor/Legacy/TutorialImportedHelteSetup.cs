@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace Narthex.Tools
 {
-    [InitializeOnLoad]
+    /// <summary>Legacy Helte encounter migration. Never runs automatically.</summary>
     public static class TutorialImportedHelteSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
@@ -17,18 +17,13 @@ namespace Narthex.Tools
         private const string BossQuestId = "QST-TUTO-008";
         private const string ExitSignalId = "TUTORIAL-ENCOUNTER-B-EXIT";
 
-        static TutorialImportedHelteSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
-
-        [MenuItem("sragon000/튜토리얼/선착장 헬테 조우 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Helte Encounter")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        [MenuItem("sragon000/튜토리얼/선착장 헬테 구역 분석")]
+        [MenuItem(PrometheusToolMenuPaths.Analysis + "Analyze Helte Area")]
         public static void AnalyzeFromMenu()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -50,26 +45,12 @@ namespace Narthex.Tools
                         $"active={renderer.gameObject.activeSelf}")));
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (Find(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][H01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                Debug.LogWarning($"[sragon000][H01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
                 return;
             }
 

@@ -51,7 +51,7 @@ namespace Narthex.Tools
         private SequenceScanResult scanResult;
         private Texture2D previewTexture;
 
-        [MenuItem("sragon000/Art/Character PNG Sequence Setup")]
+        [MenuItem(PrometheusToolMenuPaths.Root + "Art/Character PNG Sequence Setup")]
         public static void Open()
         {
             var window = GetWindow<CharacterPngSequenceSetupWindow>("PNG Sequence Setup");

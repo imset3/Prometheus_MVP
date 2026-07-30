@@ -10,44 +10,25 @@ using UnityEngine.SceneManagement;
 
 namespace Narthex.Tools
 {
-    [InitializeOnLoad]
+    /// <summary>Legacy exterior migration. Never runs automatically.</summary>
     public static class TutorialImportedExteriorSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "E02_사다리상승연동완료";
         private const string RequiredQuestId = "QST-TUTO-007";
 
-        static TutorialImportedExteriorSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
-
-        [MenuItem("sragon000/튜토리얼/C03 사다리 및 E 외부 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Exterior Integration")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (FindSceneObject(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][E01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                Debug.LogWarning($"[sragon000][E01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
                 return;
             }
 

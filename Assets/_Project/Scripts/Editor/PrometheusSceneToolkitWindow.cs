@@ -43,7 +43,7 @@ namespace Narthex.Tools
         private string aiRequestJson = "";
         private string aiResponseJson = "";
 
-        [MenuItem("sragon000/Prometheus Scene Toolkit")]
+        [MenuItem(PrometheusToolMenuPaths.Toolkit)]
         public static void Open() => GetWindow<PrometheusSceneToolkitWindow>("Prometheus Toolkit");
 
         private void OnEnable()
@@ -323,26 +323,47 @@ namespace Narthex.Tools
         private static void DrawExistingTools()
         {
             EditorGUILayout.HelpBox(
-                "기존 Setup 코드는 유지하고 여기서 호출합니다. 검증이 끝날 때까지 기존 메뉴도 호환용으로 남습니다.",
+                "검증·테스트·분석은 상시 도구입니다. Legacy Migration은 과거 씬을 복구할 때만 명시적으로 실행하세요.",
                 MessageType.Info);
-            DrawLegacyButton("활성 튜토리얼 씬 검증", "sragon000/Validation/Validate Active Tutorial Scene");
-            DrawLegacyButton("훈련장 구조 출력", "sragon000/튜토리얼/수정 훈련장 구조 출력");
-            DrawLegacyButton("훈련장 마커 검증", "sragon000/튜토리얼/훈련장 배치 마커 검증");
-            DrawLegacyButton("F 전투 적 배치 재정렬", "sragon000/튜토리얼/F 전투 적 배치 추천값으로 재정렬");
-            DrawLegacyButton("G 전투 적 배치 재정렬", "sragon000/튜토리얼/G 전투 적 배치 추천값으로 재정렬");
-            DrawLegacyButton("전체 튜토리얼 플레이 테스트", "sragon000/튜토리얼/가져온 전체 튜토리얼 플레이 테스트 실행");
-            DrawLegacyButton("G→H 플레이 테스트", "sragon000/튜토리얼/G 바람에서 H 도착 플레이 테스트 실행");
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("아트 도구", EditorStyles.boldLabel);
-            DrawLegacyButton("PNG 시퀀스 적용", "sragon000/Art/Character PNG Sequence Setup");
-            DrawLegacyButton("스프라이트 시트 생성", "sragon000/Art/Sprite Sheet Animation Builder");
+
+            foreach (PrometheusToolCategory category in Enum.GetValues(typeof(PrometheusToolCategory)))
+            {
+                var tools = PrometheusToolRegistry.Tools.Where(tool => tool.Category == category).ToArray();
+                if (tools.Length == 0) continue;
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(CategoryLabel(category), EditorStyles.boldLabel);
+                if (category == PrometheusToolCategory.Migration)
+                    EditorGUILayout.HelpBox(
+                        "씬을 변경하는 일회성 복구 명령입니다. 먼저 스냅샷을 만들고 변경 내용을 확인하세요.",
+                        MessageType.Warning);
+                foreach (var tool in tools) DrawRegisteredToolButton(tool);
+            }
         }
 
-        private static void DrawLegacyButton(string label, string menuPath)
+        private static void DrawRegisteredToolButton(PrometheusToolDescriptor tool)
         {
-            if (!GUILayout.Button(label)) return;
-            if (!EditorApplication.ExecuteMenuItem(menuPath))
-                EditorUtility.DisplayDialog("실행 실패", $"메뉴를 찾을 수 없습니다.\n{menuPath}", "확인");
+            if (!GUILayout.Button(tool.Label)) return;
+            if (tool.MutatesScene &&
+                !EditorUtility.DisplayDialog(
+                    "Legacy Migration 실행",
+                    $"'{tool.Label}'은 현재 씬을 변경할 수 있습니다.\n" +
+                    "스냅샷을 저장했고 이 마이그레이션이 필요한 것이 맞습니까?",
+                    "실행",
+                    "취소"))
+                return;
+            if (!EditorApplication.ExecuteMenuItem(tool.MenuPath))
+                EditorUtility.DisplayDialog("실행 실패", $"메뉴를 찾을 수 없습니다.\n{tool.MenuPath}", "확인");
         }
+
+        private static string CategoryLabel(PrometheusToolCategory category) =>
+            category switch
+            {
+                PrometheusToolCategory.Validation => "검증",
+                PrometheusToolCategory.Test => "테스트",
+                PrometheusToolCategory.Analysis => "분석",
+                PrometheusToolCategory.Migration => "Legacy Migration",
+                PrometheusToolCategory.Art => "아트",
+                _ => category.ToString()
+            };
     }
 }

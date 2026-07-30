@@ -24,15 +24,17 @@
 | Quest | Objective | Main implementation |
 | --- | --- | --- |
 | `QST-TUTO-001` | Opening / movement | Revised A meeting dialogue, delayed Theus card, B hidden glide room, airship passkey, return route |
-| `QST-TUTO-002` | Jump and glide | Player movement and glide |
-| `QST-TUTO-003` | Basic attack | Melee combat training |
 | `QST-TUTO-004` | Dash | Dash training |
-| `QST-TUTO-005` | Pulse module | Narthex Pulse introduction card and `2` key module use |
-| `QST-TUTO-006` | Module tree | `I` key module tree |
-| `QST-TUTO-007` | Relay / exterior | Cryon introduction, boots pickup, double jump, relay activation |
+| `QST-TUTO-006` | Double jump | Marker-authored summit objective |
+| `QST-TUTO-002` | Jump / projectile avoidance | Right-wall projectile launcher and scoped action counting |
+| `QST-TUTO-003` | Basic attack | Stationary training dummy and single-press melee attack |
+| `QST-TUTO-005` | Ranged attack | Facing-direction projectile on key `2`, 1.5-second cooldown |
+| `QST-TUTO-007` | Exterior departure | Emergency route, ladder ascent and exterior enemies |
+| `QST-TUTO-007-A` | Encounter F | Enemy-clear gate and marker-authored wind route |
+| `QST-TUTO-007-B` | Encounter G | Two enemy groups, hazards and H transition |
 | `QST-TUTO-008` | Helte fight | Helte introduction, boss combat, tutorial completion |
 
-Opening, Cryon, Pulse, and Helte use the same introduction-card system. Dialogue advances with `Space`. The opening Theus card appears after the A-scene conversation, waits three seconds, then accepts keyboard, mouse, or gamepad input and closes with a vertical compression animation.
+Dialogue advances with `Space`. The module system remains available for future expansion, but the pulse-module tutorial quest and pulse hitbox are disabled. Key `2` now fires Prome's ranged attack.
 
 `TUTO_A_01`, `TUTO_B_01`, and `TUTO_A_RETURN` are internal checkpoints of `QST-TUTO-001`, not replacement quest IDs. The passkey is stored as `ITEM-ZENITH-AIRSHIP-PASSKEY`; keep these identifiers stable for save compatibility.
 
@@ -80,7 +82,7 @@ Opening, Cryon, Pulse, and Helte use the same introduction-card system. Dialogue
 | `Space` | Advance dialogue; jump; hold in air to glide |
 | `Mouse Left / Enter` | Basic attack |
 | `Left Shift` | Dash |
-| `2` | Narthex Pulse module |
+| `2` | Ranged attack (1.5-second cooldown) |
 | `I` | Open/close module tree |
 | `Tab` | Open/close inventory |
 | `F` | Interact with pickups and relays |
@@ -119,6 +121,8 @@ Input asset: `Assets/InputSystem_Actions.inputactions`.
 - `Assets/_Project/Scripts/Runtime/Presentation/InventoryPanelPresenter.cs`
 - `Assets/_Project/Scripts/Runtime/Presentation/InventoryPanelButtonHost.cs`
 
+The module system is retained, but it is not a required Chapter 0 tutorial step. The legacy pulse input remains disabled.
+
 ### Completion and Chapter Handoff
 
 - `Assets/_Project/Scripts/Runtime/Gameplay/TutorialBossCompletionHost.cs`
@@ -142,14 +146,14 @@ For production persistence, disable the component or uncheck `Reset Progress On 
 ### Automated Tests
 
 - Unity EditMode suite covers progression, save, combat, high-speed trigger crossing, and updraft policies.
-- `TutorialSceneRuntimeSmokeTests` loads the real tutorial scene in PlayMode. Its smoke test verifies the opening dialogue, core hosts, updraft contract, input, and swept zone transitions. The Chapter 0 route test advances through the hidden glide room, passkey, meeting-room return, HQ ladder, and training handoff. The full-flow test then drives dash hazards, jump projectile training, attack and pulse lessons, Cryon equipment, module-tree and double-jump requirements, relay activation, both exterior encounters, Helte combat and health UI, boss completion save data, and the result overlay through live scene systems.
+- `TutorialSceneRuntimeSmokeTests` loads the real tutorial scene in PlayMode. The full-flow test drives the hidden room, passkey, meeting-room return, ladder, sequential training lessons, exterior departure, F/G enemy-clear gates, wind routes and Helte arrival through live scene systems.
 - Save reset has a focused test in `Assets/_Project/Scripts/Tests/CoreAndSaveTests.cs`.
 - Latest confirmed run: EditMode `34/34 passed`, PlayMode runtime/integration `3/3 passed`, and active tutorial scene validation passed.
 
 ### Scene Validator
 
 - File: `Assets/_Project/Scripts/Editor/TutorialSceneValidator.cs`
-- Unity menu: `Narthex/Validation/Validate Active Tutorial Scene`
+- Unity menu: `sragon000/Validation/Validate Active Tutorial Scene`
 - Validates key systems, terrain, player, boss, narrative roots, dialogue, introduction card, inventory controls, and the development save reset manager.
 
 Run this validator and the EditMode suite after moving or recreating the tutorial scene in a new project.
@@ -167,7 +171,7 @@ Run this validator and the EditMode suite after moving or recreating the tutoria
 1. Replace primitive player/enemy/terrain visuals with final 2D sprites and animation controllers.
 2. Add portrait or illustration images to `TutorialIntroductionCard`.
 3. Apply final panel frame/background assets to dialogue, introduction, inventory, and module-tree UI.
-4. Create the planned sprite-sheet automation tool: input a grid such as `4 x 4` or `6 x 10`, slice frames, remove background, and create animation assets.
+4. Use the existing `sragon000/Art` tools for PNG sequences and sprite-sheet animation assets.
 
 ### System Expansion
 
@@ -182,10 +186,12 @@ Run this validator and the EditMode suite after moving or recreating the tutoria
 3. Open `TutorialScene`, allow Unity to compile, and resolve any missing serialized references before playing.
 4. Check `StageRoot/StageSystems` contains all hosts listed above, especially `DevelopmentProgressResetManager` and `SaveSystemHost`.
 5. Check `TutorialHUD` contains the dialogue, introduction, module-tree, inventory, and result UI objects.
-6. Run `Narthex/Validation/Validate Active Tutorial Scene`.
+6. Run `sragon000/Validation/Validate Active Tutorial Scene`.
 7. Run EditMode tests.
 8. Manually verify the control sequence through Helte completion and Chapter 1 transition.
 
 ## 11. Known Operational Note
 
 Unity MCP is connected for the current tutorial work. After opening the project in another Unity session, rerun the scene validator, EditMode suite, and `TutorialSceneRuntimeSmokeTests` before editing serialized scene references.
+
+Normal scene opening and script compilation never run legacy Setup migrations. One-time migrations are isolated under `sragon000/Legacy/Tutorial Migration` and require explicit execution.

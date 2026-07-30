@@ -54,5 +54,8 @@
 Unity 메뉴에서 다음 순서로 확인한다.
 
 1. `sragon000 > Validation > Validate Active Tutorial Scene`
-2. `sragon000 > 튜토리얼 > 가져온 훈련장 플레이 테스트 실행`
-3. `sragon000 > 튜토리얼 > 가져온 전체 튜토리얼 플레이 테스트 실행`
+2. `sragon000 > Tests > Tutorial > Imported Training`
+3. `sragon000 > Tests > Tutorial > Full Tutorial`
+
+`sragon000 > Legacy > Tutorial Migration`은 이미 연동된 현재 씬의 일상적인 편집 메뉴가 아니다.
+과거 씬 복구가 명시적으로 필요할 때만 스냅샷을 만든 뒤 실행한다.

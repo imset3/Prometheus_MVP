@@ -7,3 +7,4 @@ For Unity scene operations, follow `Assets/_Project/Docs/AI_SCENE_TOOLKIT.md`.
 - Identify gameplay locations by `TutorialFunctionMarkerHost.markerId`.
 - Run Scene Doctor and snapshot comparison after changes.
 - Use the `sragon000/Prometheus Scene Toolkit` window for visual placement that requires human judgment.
+- Do not invoke `sragon000/Legacy/Tutorial Migration` unless the user explicitly requests recovery of an older scene.

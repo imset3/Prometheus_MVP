@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace Narthex.Tools
 {
-    [InitializeOnLoad]
+    /// <summary>Legacy encounter-G migration. Never runs automatically.</summary>
     public static class TutorialImportedEncounterBSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
@@ -19,18 +19,13 @@ namespace Narthex.Tools
         private const string EntrySignalId = "TUTORIAL-ENCOUNTER-A-EXIT";
         private const string ExitSignalId = "TUTORIAL-ENCOUNTER-B-EXIT";
 
-        static TutorialImportedEncounterBSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
-
-        [MenuItem("sragon000/튜토리얼/F에서 G 전투 스테이지 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Encounter G Integration")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        [MenuItem("sragon000/튜토리얼/G 전투 적 배치 추천값으로 재정렬")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Reset Encounter G Enemy Layout")]
         public static void RepositionEnemiesFromMenu()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -55,26 +50,12 @@ namespace Narthex.Tools
             Debug.Log("[sragon000][G01] 적 4기를 두 전투문과 실제 바닥 여백 기준으로 재배치했습니다.");
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (FindSceneObject(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][G01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                Debug.LogWarning($"[sragon000][G01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
                 return;
             }
 

@@ -12,8 +12,7 @@ using UnityEngine.SceneManagement;
 
 namespace Narthex.Tools
 {
-    [InitializeOnLoad]
-    public static class TutorialImportedTrainingSetup
+    public static class TutorialTrainingTools
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "D07_노션진행HUD동기화완료";
@@ -45,18 +44,13 @@ namespace Narthex.Tools
         private static TestRunnerApi trainingTestRunnerApi;
         private static string runningTestLabel = "훈련장";
 
-        static TutorialImportedTrainingSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
-
-        [MenuItem("sragon000/튜토리얼/수정 훈련장 1차 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Training Integration")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        [MenuItem("sragon000/튜토리얼/훈련장 단계 런타임 스모크")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Training Runtime Smoke")]
         public static void RunTrainingPhaseRuntimeSmoke()
         {
             if (!EditorApplication.isPlaying)
@@ -104,25 +98,25 @@ namespace Narthex.Tools
             }
         }
 
-        [MenuItem("sragon000/튜토리얼/가져온 훈련장 플레이 테스트 실행")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Imported Training")]
         public static void RunImportedTrainingPlayModeTest()
         {
             RunImportedPlayModeTest(ImportedTrainingPlayModeTestName, "훈련장");
         }
 
-        [MenuItem("sragon000/튜토리얼/가져온 전체 튜토리얼 플레이 테스트 실행")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Full Tutorial")]
         public static void RunImportedFullTutorialPlayModeTest()
         {
             RunImportedPlayModeTest(ImportedFullTutorialPlayModeTestName, "전체 튜토리얼");
         }
 
-        [MenuItem("sragon000/튜토리얼/숨겨진 방 플레이 테스트 실행")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Hidden Room")]
         public static void RunHiddenRoomPlayModeTest()
         {
             RunImportedPlayModeTest(HiddenRoomPlayModeTestName, "숨겨진 방");
         }
 
-        [MenuItem("sragon000/튜토리얼/G 바람에서 H 도착 플레이 테스트 실행")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "G Wind To H")]
         public static void RunGWindRoutePlayModeTest()
         {
             RunImportedPlayModeTest(GWindRoutePlayModeTestName, "G→H");
@@ -177,7 +171,7 @@ namespace Narthex.Tools
             }
         }
 
-        [MenuItem("sragon000/튜토리얼/수정 훈련장 구조 출력")]
+        [MenuItem(PrometheusToolMenuPaths.Analysis + "Print Training Structure")]
         public static void LogTrainingLayout()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -209,7 +203,7 @@ namespace Narthex.Tools
             Debug.Log($"[sragon000][훈련장][구조 완료] 도형 {renderers.Length}개");
         }
 
-        [MenuItem("sragon000/튜토리얼/훈련장 배치 마커 생성")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Create Training Markers")]
         public static void CreateTrainingPlacementMarkers()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -290,7 +284,7 @@ namespace Narthex.Tools
                 "기존 마커 위치는 다시 실행해도 유지됩니다.");
         }
 
-        [MenuItem("sragon000/튜토리얼/훈련장 배치 마커 추천 위치 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Reset Training Marker Layout")]
         public static void ApplySuggestedTrainingMarkerLayout()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -363,7 +357,7 @@ namespace Narthex.Tools
                 "왼쪽 대시 낙하물 → 중앙 점프/더블점프 발판 → 오른쪽 근접/원거리 → 습격.");
         }
 
-        [MenuItem("sragon000/튜토리얼/훈련장 배치 마커 검증")]
+        [MenuItem(PrometheusToolMenuPaths.Validation + "Validate Training Marker Layout")]
         public static void ValidateTrainingMarkerLayout()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -475,26 +469,12 @@ namespace Narthex.Tools
                 $"정지 허수아비, 원거리 사거리 {travelDistance:F1} 정상.");
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (FindSceneObject(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][훈련장] '{TargetScenePath}' 씬을 연 뒤 다시 실행하세요.");
+                Debug.LogWarning($"[sragon000][훈련장] '{TargetScenePath}' 씬을 연 뒤 다시 실행하세요.");
                 return;
             }
 

@@ -10,26 +10,25 @@ using UnityEngine.SceneManagement;
 namespace Narthex.Tools
 {
     [InitializeOnLoad]
-    public static class TutorialImportedEnvironmentHazardSetup
+    public static class TutorialEnvironmentHazardTools
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string CompletionMarkerName = "G03_방향성마커연동완료";
         private const string RuntimeSmokeSessionKey = "sragon000.G02.RuntimeSmoke";
 
-        static TutorialImportedEnvironmentHazardSetup()
+        static TutorialEnvironmentHazardTools()
         {
-            EditorApplication.delayCall += TryAutoApply;
             EditorApplication.delayCall += TryCompleteRequestedRuntimeSmoke;
             EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
         }
 
-        [MenuItem("sragon000/튜토리얼/G 화염 바람 용암 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply G Environment Hazards")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        [MenuItem("sragon000/Validation/Run G Environment Runtime Smoke")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "G Environment Runtime Smoke")]
         public static void RunRuntimeSmokeFromMenu()
         {
             if (EditorApplication.isPlaying)
@@ -99,26 +98,12 @@ namespace Narthex.Tools
             }
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (FindSceneObject(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][G02] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                Debug.LogWarning($"[sragon000][G02] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
                 return;
             }
 

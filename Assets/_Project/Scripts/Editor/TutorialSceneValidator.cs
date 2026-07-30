@@ -15,7 +15,7 @@ namespace Narthex.Tools
 {
     public static class TutorialSceneValidator
     {
-        [MenuItem("sragon000/Validation/Validate Active Tutorial Scene")]
+        [MenuItem(PrometheusToolMenuPaths.Validation + "Validate Active Tutorial Scene")]
         public static void ValidateActiveTutorialScene()
         {
             var issues = new List<string>();

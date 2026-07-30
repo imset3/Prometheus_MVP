@@ -193,5 +193,19 @@ namespace Narthex.Tools.EditorTests
             Assert.That(json, Does.Not.Contain("magnitude"));
             Assert.That(json.Length, Is.LessThan(1000));
         }
+
+        [Test]
+        public void ToolRegistry_SeparatesMutatingMigrationsFromDailyTools()
+        {
+            var tools = PrometheusToolRegistry.Tools;
+
+            Assert.That(tools.Select(tool => tool.MenuPath).Distinct().Count(), Is.EqualTo(tools.Count));
+            Assert.That(tools.Where(tool => tool.MutatesScene), Is.Not.Empty);
+            Assert.That(tools.Where(tool => tool.MutatesScene).All(tool =>
+                tool.Category == PrometheusToolCategory.Migration &&
+                tool.MenuPath.StartsWith(PrometheusToolMenuPaths.Legacy, StringComparison.Ordinal)), Is.True);
+            Assert.That(tools.Where(tool => !tool.MutatesScene).All(tool =>
+                !tool.MenuPath.StartsWith(PrometheusToolMenuPaths.Legacy, StringComparison.Ordinal)), Is.True);
+        }
     }
 }

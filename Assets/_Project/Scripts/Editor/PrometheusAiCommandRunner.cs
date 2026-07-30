@@ -39,14 +39,14 @@ namespace Narthex.Tools
 
         public static IReadOnlyCollection<string> Commands => SupportedCommands;
 
-        [MenuItem("sragon000/AI Toolkit/Run Pending Command")]
+        [MenuItem(PrometheusToolMenuPaths.Ai + "Run Pending Command")]
         public static void RunPendingCommand()
         {
             var response = RunFile(PendingRequestPath, PendingResponsePath);
             Debug.Log($"[Prometheus AI Toolkit] {response.message}\n{PendingResponsePath}");
         }
 
-        [MenuItem("sragon000/AI Toolkit/Write Command Help")]
+        [MenuItem(PrometheusToolMenuPaths.Ai + "Write Command Help")]
         public static void WriteCommandHelp()
         {
             Directory.CreateDirectory(PendingDirectory);

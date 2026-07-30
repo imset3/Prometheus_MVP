@@ -11,11 +11,10 @@ using UnityEngine.SceneManagement;
 namespace Narthex.Tools
 {
     /// <summary>
-    /// Connects the imported corridor to the revised training room without modifying
+    /// Legacy migration that connects the imported corridor without modifying
     /// the level designer's geometry children. The generated integration hierarchy
     /// can be rebuilt from the sragon000 menu.
     /// </summary>
-    [InitializeOnLoad]
     public static class TutorialImportedCorridorSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
@@ -34,18 +33,13 @@ namespace Narthex.Tools
             ("H_선착장_헬테_연동", "H_Helte_Integration")
         };
 
-        static TutorialImportedCorridorSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
-
-        [MenuItem("sragon000/튜토리얼/복도 1차 연동 적용")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Corridor Integration")]
         public static void ApplyFromMenu()
         {
-            Apply(false);
+            Apply();
         }
 
-        [MenuItem("sragon000/튜토리얼/숨겨진 방 상승기류 복귀 보정")]
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Repair Hidden Room Updraft")]
         public static void ApplyHiddenRoomRecoveryUpdraftFromMenu()
         {
             var scene = EditorSceneManager.GetActiveScene();
@@ -64,32 +58,12 @@ namespace Narthex.Tools
                 "X 69.5~81, Y -4.1~15.5, 상승 가속도 6.5, 최대 상승 속도 4.5.");
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (EnsureHiddenRoomRecoveryUpdraft(scene))
-            {
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
-                AssetDatabase.SaveAssets();
-            }
-            if (FindSceneObject(scene, CompletionMarkerName) != null)
-            {
-                ValidateAppliedScene(scene);
-                return;
-            }
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic)
-                    Debug.LogWarning($"[sragon000][튜토리얼] '{TargetScenePath}' 씬을 연 뒤 다시 실행하세요.");
+                Debug.LogWarning($"[sragon000][튜토리얼] '{TargetScenePath}' 씬을 연 뒤 다시 실행하세요.");
                 return;
             }
 

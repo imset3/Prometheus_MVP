@@ -9,4 +9,6 @@ When changing Unity scenes, markers, serialized component values, or scene activ
 5. After mutation, run `scene.doctor.scan`, capture another snapshot, and compare them.
 6. Do not run legacy one-click setup commands on a scene that a level designer has manually arranged unless the user explicitly requests a reset or migration.
 
+Legacy commands live under `sragon000/Legacy/Tutorial Migration`. They never run automatically and are not part of the normal AI workflow.
+
 Visual placement remains a human-reviewed task. Use stable marker IDs for AI automation and hierarchy paths only as a fallback.
