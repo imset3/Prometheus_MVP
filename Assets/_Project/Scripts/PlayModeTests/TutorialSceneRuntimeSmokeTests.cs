@@ -56,6 +56,13 @@ namespace Narthex.PlayModeTests
             Assert.That(
                 FindSceneComponent<TutorialQuestSequenceHost>(scene).CurrentQuestId,
                 Is.EqualTo("QST-TUTO-008"));
+            Assert.That(
+                FindSceneComponent<TutorialStatusPresenter>(scene).CurrentProgressId,
+                Is.EqualTo("TUTO_H_01"),
+                "The development HUD must follow the debug-jumped Helte quest.");
+            Assert.That(
+                FindSceneComponent<TutorialStatusPresenter>(scene).CurrentLocationName,
+                Is.EqualTo("나디르 선착장"));
             Assert.That(FindSceneTransform(scene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneTransform(scene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.True);
             Assert.That(

@@ -60,6 +60,7 @@ namespace Narthex.Gameplay
             SetPresentationVisible(false);
             SetBossCombatEnabled(false);
             bossActor.ResetRuntime();
+            bossPatternHost.ResetForEncounter();
         }
 
         private void Awake()

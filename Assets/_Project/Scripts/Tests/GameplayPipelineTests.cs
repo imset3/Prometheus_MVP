@@ -621,6 +621,19 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void HeltePatternPlanner_ResetRestartsTheOpeningSequence()
+        {
+            var planner = new HeltePatternPlanner(() => 1);
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+
+            planner.Reset();
+
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+        }
+
+        [Test]
         public void TutorialHudModeResolver_UsesResultDialogueBossPriority()
         {
             Assert.That(TutorialHudModeResolver.Resolve(false, false, false, false), Is.EqualTo(TutorialHudMode.Normal));

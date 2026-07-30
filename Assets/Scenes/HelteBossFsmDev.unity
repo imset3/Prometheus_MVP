@@ -75862,6 +75862,7 @@ MonoBehaviour:
   normalAttackCooldownSeconds: 2
   blinkVanishSeconds: 0.22
   blinkTelegraphSeconds: 0.35
+  dashTelegraphSeconds: 0.3
   dashDurationSeconds: 0.3
   crossSlashWarningSeconds: 0.18
   phaseTransitionSeconds: 1

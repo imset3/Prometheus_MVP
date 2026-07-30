@@ -14,7 +14,9 @@ namespace Narthex.Gameplay
         BasicRightSlash,
         BlinkVanish,
         BlinkReappear,
+        DashTelegraph,
         DashApproach,
+        CrossSlashTelegraph,
         CrossSlash,
         SwordFocus,
         SwordVolley,
@@ -66,6 +68,7 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float normalAttackCooldownSeconds = 2f;
         [SerializeField, Min(0f)] private float blinkVanishSeconds = 0.22f;
         [SerializeField, Min(0f)] private float blinkTelegraphSeconds = 0.25f;
+        [SerializeField, Min(0f)] private float dashTelegraphSeconds = 0.3f;
         [SerializeField, Min(0.01f)] private float dashDurationSeconds = 0.3f;
         [SerializeField, Min(0f)] private float crossSlashWarningSeconds = 0.18f;
         [SerializeField, Min(0f)] private float phaseTransitionSeconds = 1f;
@@ -86,6 +89,8 @@ namespace Narthex.Gameplay
         private int activeSwordCount;
         private bool phaseTwoPresented;
         private Vector3 basicHitboxLocalPosition;
+        private Vector3 initialBossPosition;
+        private Quaternion initialBossRotation;
 
         public HeltePattern CurrentPattern { get; private set; }
         public HelteCombatState CurrentState { get; private set; } = HelteCombatState.Disabled;
@@ -103,12 +108,15 @@ namespace Narthex.Gameplay
             }
 
             basicHitboxLocalPosition = basicHitbox.transform.localPosition;
+            initialBossPosition = transform.position;
+            initialBossRotation = transform.rotation;
             ResetPresentation();
         }
 
         private void OnEnable()
         {
             if (!HasValidSetup()) return;
+            ResetCombatRunState();
             ResetPresentation();
             combatRoutine = StartCoroutine(RunCombat());
         }
@@ -121,6 +129,18 @@ namespace Narthex.Gameplay
             ResetPresentation();
             CurrentPattern = HeltePattern.None;
             SetState(HelteCombatState.Disabled);
+        }
+
+        public void ResetForEncounter()
+        {
+            if (combatRoutine != null) StopCoroutine(combatRoutine);
+            combatRoutine = null;
+            StopAllCoroutines();
+            transform.SetPositionAndRotation(initialBossPosition, initialBossRotation);
+            Physics2D.SyncTransforms();
+            ResetCombatRunState();
+            ResetPresentation();
+            if (!isActiveAndEnabled) SetState(HelteCombatState.Disabled);
         }
 
         private IEnumerator RunCombat()
@@ -164,15 +184,18 @@ namespace Narthex.Gameplay
             PositionBasicHitbox(facing);
             SetState(HelteCombatState.BasicWindup);
             if (basicWindupSeconds > 0f) yield return new WaitForSeconds(basicWindupSeconds);
+            if (!CanRunPattern()) yield break;
 
             SetState(HelteCombatState.BasicLeftSlash);
             yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-LEFT", basicDamage);
             if (basicSecondHitDelaySeconds > 0f) yield return new WaitForSeconds(basicSecondHitDelaySeconds);
+            if (!CanRunPattern()) yield break;
 
             SetState(HelteCombatState.BasicAdvance);
             var start = transform.position;
             var target = ClampToArena(start + Vector3.right * facing * basicAdvanceDistance);
             yield return MoveBoss(start, target, basicAdvanceSeconds);
+            if (!CanRunPattern()) yield break;
 
             facing = DirectionToPlayer();
             PositionBasicHitbox(facing);
@@ -191,6 +214,11 @@ namespace Narthex.Gameplay
             bossVisualSlot.SetActive(false);
             if (bossBodyCollider != null) bossBodyCollider.enabled = false;
             if (blinkVanishSeconds > 0f) yield return new WaitForSeconds(blinkVanishSeconds);
+            if (!CanRunPattern())
+            {
+                ResetPresentation();
+                yield break;
+            }
             blinkAfterimageSlot.SetActive(false);
 
             var side = Random.value < 0.5f ? -1f : 1f;
@@ -208,15 +236,27 @@ namespace Narthex.Gameplay
             var dashDirection = DirectionToPlayer();
             var dashTarget = ClampToArena(dashStart + Vector3.right * dashDirection * dashDistance);
             ShowDashPath(dashStart, dashTarget);
+            SetState(HelteCombatState.DashTelegraph);
+            if (dashTelegraphSeconds > 0f) yield return new WaitForSeconds(dashTelegraphSeconds);
+            if (!CanRunPattern())
+            {
+                dashPathSlot.SetActive(false);
+                yield break;
+            }
+
             SetState(HelteCombatState.DashApproach);
             yield return MoveBoss(dashStart, dashTarget, dashDurationSeconds); // Dash travel intentionally deals no damage.
             dashPathSlot.SetActive(false);
+            if (!CanRunPattern()) yield break;
 
-            SetState(HelteCombatState.CrossSlash);
+            SetState(HelteCombatState.CrossSlashTelegraph);
             crossSlashWarningSlot.transform.position = blinkCrossHitbox.transform.position;
             crossSlashWarningSlot.SetActive(true);
             if (crossSlashWarningSeconds > 0f) yield return new WaitForSeconds(crossSlashWarningSeconds);
             crossSlashWarningSlot.SetActive(false);
+            if (!CanRunPattern()) yield break;
+
+            SetState(HelteCombatState.CrossSlash);
             yield return PulseHitbox(blinkCrossHitbox, "PAT-HELTE-BLINK-CROSS", blinkDamage);
 
             SetState(HelteCombatState.Recover);
@@ -306,6 +346,7 @@ namespace Narthex.Gameplay
                 Physics2D.SyncTransforms();
                 yield return null;
             }
+            if (!CanRunPattern()) yield break;
             transform.position = target;
             Physics2D.SyncTransforms();
         }
@@ -383,6 +424,14 @@ namespace Narthex.Gameplay
                 if (swordHitboxes[index] == null || swordSpawnAnchors[index] == null || swordVisualSlots[index] == null) return false;
             }
             return true;
+        }
+
+        private void ResetCombatRunState()
+        {
+            planner.Reset();
+            phaseTwoPresented = false;
+            CurrentPattern = HeltePattern.None;
+            SetState(HelteCombatState.Waiting);
         }
 
         private void ResetPresentation()

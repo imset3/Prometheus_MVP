@@ -21,6 +21,13 @@ namespace Narthex.Gameplay
             this.basicCountSelector = basicCountSelector ?? (() => UnityEngine.Random.Range(1, 3));
         }
 
+        public void Reset()
+        {
+            basicPatternsRemaining = 0;
+            blinkAfterSummon = false;
+            previousPhaseTwo = null;
+        }
+
         public HeltePattern Next(bool phaseTwo)
         {
             if (!previousPhaseTwo.HasValue || previousPhaseTwo.Value != phaseTwo)

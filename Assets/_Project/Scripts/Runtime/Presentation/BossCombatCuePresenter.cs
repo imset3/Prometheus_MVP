@@ -66,6 +66,15 @@ namespace Narthex.Presentation
                 case HelteCombatState.BlinkReappear:
                     SetCue("예고 · 블링크 재진입", new Color(1f, 0.78f, 0.24f, 1f), true);
                     break;
+                case HelteCombatState.DashTelegraph:
+                    SetCue("예고 · 돌진 경로", new Color(1f, 0.78f, 0.24f, 1f), true);
+                    break;
+                case HelteCombatState.DashApproach:
+                    SetCue("이동 · 돌진 피해 없음", new Color(0.72f, 0.86f, 1f, 1f), true);
+                    break;
+                case HelteCombatState.CrossSlashTelegraph:
+                    SetCue("예고 · X 베기", new Color(1f, 0.78f, 0.24f, 1f), true);
+                    break;
                 case HelteCombatState.CrossSlash:
                     SetCue("위험 · X 베기 판정", new Color(1f, 0.28f, 0.32f, 1f), true);
                     break;
