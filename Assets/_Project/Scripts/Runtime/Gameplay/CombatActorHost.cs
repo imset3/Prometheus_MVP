@@ -16,6 +16,7 @@ namespace Narthex.Gameplay
         private float hitRecoveryEndsAt;
         private float dashInvulnerabilityEndsAt;
         private bool dashInvulnerabilityActive;
+        private bool scriptedInvulnerabilityActive;
 
         public string ActorId => actorId;
         public CombatActorKind Kind => kind;
@@ -37,7 +38,15 @@ namespace Narthex.Gameplay
             hitRecoveryEndsAt = 0f;
             dashInvulnerabilityEndsAt = 0f;
             dashInvulnerabilityActive = false;
+            scriptedInvulnerabilityActive = false;
             if (Runtime is PlayerRuntimeState player) player.HitCount = 0;
+        }
+
+        public void SetScriptedInvulnerability(bool active)
+        {
+            scriptedInvulnerabilityActive = active;
+            if (Runtime != null)
+                Runtime.IsInvincible = active || dashInvulnerabilityActive || IsHitRecoveryActive();
         }
 
         public void BeginDashInvulnerability(float durationSeconds)
@@ -53,7 +62,7 @@ namespace Narthex.Gameplay
             if (Runtime == null) return;
             dashInvulnerabilityActive = false;
             dashInvulnerabilityEndsAt = 0f;
-            Runtime.IsInvincible = IsHitRecoveryActive();
+            Runtime.IsInvincible = scriptedInvulnerabilityActive || IsHitRecoveryActive();
         }
 
         private void Awake()
@@ -88,6 +97,7 @@ namespace Narthex.Gameplay
         private void OnDisable()
         {
             combatSystemHost?.Events?.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
+            scriptedInvulnerabilityActive = false;
             EndDashInvulnerability();
         }
 
@@ -105,7 +115,7 @@ namespace Narthex.Gameplay
             if (Runtime.State == CombatState.Hit && now >= hitRecoveryEndsAt)
                 Runtime.State = CombatState.Idle;
 
-            Runtime.IsInvincible = dashInvulnerabilityActive || IsHitRecoveryActive();
+            Runtime.IsInvincible = scriptedInvulnerabilityActive || dashInvulnerabilityActive || IsHitRecoveryActive();
         }
 
         private void HandleHitConfirmed(HitConfirmed message)

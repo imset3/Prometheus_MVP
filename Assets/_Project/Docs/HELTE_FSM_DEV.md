@@ -15,6 +15,29 @@
 - `TutorialBossArenaHost` 참조 유효
 - `HelteBossPatternHost` 존재
 
+## 2026-07-31 — 우호적 패턴 프로토타입
+
+이 기능은 `HelteBossFsmDev.unity`의 `Enable Friendly Pattern Prototype`에서만 활성화한다.
+튜토리얼 씬에는 검증 전까지 승격하지 않는다.
+
+- 기존 이도류 기본 공격, 블링크 X 베기, 칼 소환 패턴은 유지한다.
+- 도입부에는 블링크 다음 `FakeBlink`가 등장한다.
+  - 헬테가 사라졌다가 프로메 근처에 재등장하지만 공격하지 않는다.
+  - `0.9초` 동안 빈틈을 보여 패닉 대시를 유도하는 장난성 패턴이다.
+- 2페이즈에는 칼 소환과 블링크 다음 `CounterStance`가 등장한다.
+  - 예고 `0.35초`, 카운터 판정 `0.75초`.
+  - 자세 중 근접 공격하면 피해 없이 프로메를 밀어낸다.
+  - 기다리면 `1.2초` 동안 헬테가 공격 가능한 상태로 열린다.
+- 프로메 체력이 25% 이하가 되면 헬테는 전투당 한 번 후퇴한다.
+  - 자비 행동이 남아 있는 동안 현재 연계는 프로메 체력을 25% 아래로 낮추지 않는다.
+  - 프로메 체력을 35%까지 복구하고 `1.4초` 기다린다.
+  - 쓰러진 상대를 몰아붙이지 않는 헬테의 태도를 시스템으로 표현한다.
+- 최종 시험은 `블링크 → 기본 → 카운터 → 칼 소환 → 기본 → 페이크` 6박 순환이다.
+
+개발 계측 HUD는 페이크와 카운터 횟수를 별도로 집계한다.
+아트 연결 시 `FakeBlinkVanish`, `FakeBlinkReappear`, `FakeBlinkPause`, `CounterTelegraph`,
+`CounterStance`, `CounterSucceeded`, `CounterOpen`, `MercyRetreat` 상태에 VFX를 연결할 수 있다.
+
 ## 2026-07-30 — FSM 1차 폴리싱
 
 ### 재도전 초기화
@@ -113,7 +136,10 @@
 - `DashApproach`: 이동 잔상·트레일
 - `CrossSlashTelegraph`, `CrossSlash`: X 베기 예고·타격
 - `PhaseTransition`: 2페이즈 전환
-- `FinalRushTransition`: 체력 20% 최종 러시 전환
+- `FinalRushTransition`: 체력 20% 최종 시험 전환
+- `FakeBlinkVanish`, `FakeBlinkReappear`, `FakeBlinkPause`: 공격하지 않는 페이크 블링크
+- `CounterTelegraph`, `CounterStance`, `CounterSucceeded`, `CounterOpen`: 카운터 예고·판정·성공·빈틈
+- `MercyRetreat`: 체력이 낮은 프로메에게 거리를 내주는 자비 행동
 - `SwordFocus`: 칼 소환 집중
 - `SwordVolley`: 칼 발사
 - `Recover`: 선택적인 후딜 표시

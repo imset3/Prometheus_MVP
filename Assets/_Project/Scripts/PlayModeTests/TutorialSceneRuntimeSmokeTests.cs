@@ -92,6 +92,10 @@ namespace Narthex.PlayModeTests
                 Is.EqualTo(0.2f).Within(0.001f),
                 "Helte's final rush must begin at 20% health.");
             Assert.That(
+                helte.GetComponent<HelteBossPatternHost>().FriendlyPatternPrototypeEnabled,
+                Is.True,
+                "The dedicated boss scene must enable the friendly-pattern prototype before tutorial promotion.");
+            Assert.That(
                 helte.GetComponent<HeltePatternVfxHost>().HasValidSetup,
                 Is.True,
                 "The development scene must expose state-driven VFX bindings.");

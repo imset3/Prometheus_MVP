@@ -15,6 +15,7 @@ namespace Narthex.Presentation
         [SerializeField] private HelteBossPatternHost patternHost;
         [SerializeField, Min(1f)] private float targetDurationSeconds = 300f;
         [SerializeField] private bool showDevelopmentOverlay;
+        [SerializeField] private bool logPatternTransitions;
 
         private float attemptStartedAt;
         private bool wasCombatActive;
@@ -29,6 +30,8 @@ namespace Narthex.Presentation
         public int BasicComboCount { get; private set; }
         public int BlinkDashCount { get; private set; }
         public int SwordVolleyCount { get; private set; }
+        public int FakeBlinkCount { get; private set; }
+        public int CounterStanceCount { get; private set; }
 
         private void Awake()
         {
@@ -43,13 +46,18 @@ namespace Narthex.Presentation
         {
             if (!HasValidSetup) return;
             patternHost.PatternStarted += HandlePatternStarted;
+            patternHost.StateChanged += HandleStateChanged;
             wasCombatActive = arenaHost.CombatActive;
             if (wasCombatActive) BeginAttempt();
         }
 
         private void OnDisable()
         {
-            if (patternHost != null) patternHost.PatternStarted -= HandlePatternStarted;
+            if (patternHost != null)
+            {
+                patternHost.PatternStarted -= HandlePatternStarted;
+                patternHost.StateChanged -= HandleStateChanged;
+            }
             IsTiming = false;
             wasCombatActive = false;
         }
@@ -79,6 +87,8 @@ namespace Narthex.Presentation
             BasicComboCount = 0;
             BlinkDashCount = 0;
             SwordVolleyCount = 0;
+            FakeBlinkCount = 0;
+            CounterStanceCount = 0;
             IsTiming = true;
         }
 
@@ -93,7 +103,8 @@ namespace Narthex.Presentation
             Debug.Log(
                 $"[sragon000][Helte Balance] 완료 {FormatDuration(LastCompletedDurationSeconds)} / " +
                 $"목표 {FormatDuration(targetDurationSeconds)} ({difference:+0.0;-0.0;0.0}초), " +
-                $"패턴 기본 {BasicComboCount}, 블링크 {BlinkDashCount}, 칼 소환 {SwordVolleyCount}",
+                $"패턴 기본 {BasicComboCount}, 블링크 {BlinkDashCount}, 칼 소환 {SwordVolleyCount}, " +
+                $"페이크 {FakeBlinkCount}, 카운터 {CounterStanceCount}",
                 this);
         }
 
@@ -111,7 +122,27 @@ namespace Narthex.Presentation
                 case HeltePattern.SummonSwords:
                     SwordVolleyCount++;
                     break;
+                case HeltePattern.FakeBlink:
+                    FakeBlinkCount++;
+                    break;
+                case HeltePattern.CounterStance:
+                    CounterStanceCount++;
+                    break;
             }
+
+            if (logPatternTransitions)
+                Debug.Log($"[sragon000][Helte Pattern] {pattern} · {patternHost.CurrentTempo}", this);
+        }
+
+        private void HandleStateChanged(HelteCombatState state)
+        {
+            if (!logPatternTransitions || !IsTiming) return;
+            if (state != HelteCombatState.MercyRetreat &&
+                state != HelteCombatState.FakeBlinkPause &&
+                state != HelteCombatState.CounterSucceeded &&
+                state != HelteCombatState.CounterOpen)
+                return;
+            Debug.Log($"[sragon000][Helte Character] {state}", this);
         }
 
         private static string FormatDuration(float seconds)
@@ -134,16 +165,17 @@ namespace Narthex.Presentation
                 $"시간 {FormatDuration(ElapsedSeconds)} / 목표 {FormatDuration(targetDurationSeconds)}\n" +
                 $"체력 {currentHealth} / {maximumHealth}\n" +
                 $"템포 {FormatTempo(patternHost.CurrentTempo)}\n" +
-                $"패턴 기본 {BasicComboCount} · 블링크 {BlinkDashCount} · 칼 {SwordVolleyCount}";
+                $"기본 {BasicComboCount} · 블링크 {BlinkDashCount} · 칼 {SwordVolleyCount}\n" +
+                $"페이크 {FakeBlinkCount} · 카운터 {CounterStanceCount}";
 
-            GUI.Box(new Rect(Screen.width - 292f, 16f, 276f, 112f), text);
+            GUI.Box(new Rect(Screen.width - 292f, 16f, 276f, 128f), text);
         }
 
         private static string FormatTempo(HelteCombatTempo tempo)
         {
             return tempo switch
             {
-                HelteCombatTempo.FinalRush => "최종 러시",
+                HelteCombatTempo.FinalRush => "최종 시험",
                 HelteCombatTempo.PhaseTwo => "2페이즈",
                 _ => "도입"
             };

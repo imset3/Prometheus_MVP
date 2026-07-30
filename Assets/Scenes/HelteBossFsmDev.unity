@@ -75839,6 +75839,7 @@ MonoBehaviour:
   sourceActor: {fileID: 1608749477}
   playerActor: {fileID: 718908618}
   bossBodyCollider: {fileID: 1608749476}
+  playerMeleeHitbox: {fileID: 865241862}
   basicHitbox: {fileID: 938324877}
   blinkCrossHitbox: {fileID: 470532748}
   swordHitboxes:
@@ -75864,6 +75865,16 @@ MonoBehaviour:
   - {fileID: 1486869174}
   - {fileID: 36984976}
   - {fileID: 1178751618}
+  enableFriendlyPatternPrototype: 1
+  mercyHealthRatio: 0.25
+  mercyRecoveryHealthRatio: 0.35
+  mercyPauseSeconds: 1.4
+  fakeBlinkPauseSeconds: 0.9
+  counterTelegraphSeconds: 0.35
+  counterStanceSeconds: 0.75
+  counterOpenSeconds: 1.2
+  counterSuccessRecoverySeconds: 0.45
+  counterPushDistance: 1.5
   phaseTwoHealthRatio: 0.55
   finalRushHealthRatio: 0.2
   basicAdvanceDistance: 1
@@ -78235,6 +78246,7 @@ MonoBehaviour:
   patternHost: {fileID: 1608749473}
   targetDurationSeconds: 300
   showDevelopmentOverlay: 1
+  logPatternTransitions: 1
 --- !u!1 &1642998804
 GameObject:
   m_ObjectHideFlags: 0

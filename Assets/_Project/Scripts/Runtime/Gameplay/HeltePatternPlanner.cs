@@ -12,7 +12,9 @@ namespace Narthex.Gameplay
         None,
         BasicCombo,
         BlinkDash,
-        SummonSwords
+        SummonSwords,
+        FakeBlink,
+        CounterStance
     }
 
     public sealed class HeltePatternPlanner
@@ -22,6 +24,8 @@ namespace Narthex.Gameplay
         private int basicPatternsRemaining;
         private bool blinkAfterSummon;
         private int finalRushPatternIndex;
+        private bool fakeBlinkPending;
+        private bool counterStancePending;
         private HelteCombatTempo? previousTempo;
 
         public HeltePatternPlanner(System.Func<int> basicCountSelector = null)
@@ -34,6 +38,8 @@ namespace Narthex.Gameplay
             basicPatternsRemaining = 0;
             blinkAfterSummon = false;
             finalRushPatternIndex = 0;
+            fakeBlinkPending = false;
+            counterStancePending = false;
             previousTempo = null;
         }
 
@@ -44,21 +50,41 @@ namespace Narthex.Gameplay
 
         public HeltePattern Next(HelteCombatTempo tempo)
         {
+            return Next(tempo, false);
+        }
+
+        public HeltePattern Next(HelteCombatTempo tempo, bool useFriendlyPatterns)
+        {
             if (!previousTempo.HasValue || previousTempo.Value != tempo)
             {
                 previousTempo = tempo;
                 basicPatternsRemaining = SelectBasicPatternCount();
                 blinkAfterSummon = false;
                 finalRushPatternIndex = 0;
+                fakeBlinkPending = false;
+                counterStancePending = false;
             }
 
             if (tempo == HelteCombatTempo.FinalRush)
-                return NextFinalRushPattern();
+                return NextFinalRushPattern(useFriendlyPatterns);
+
+            if (useFriendlyPatterns && fakeBlinkPending)
+            {
+                fakeBlinkPending = false;
+                return HeltePattern.FakeBlink;
+            }
+
+            if (useFriendlyPatterns && counterStancePending)
+            {
+                counterStancePending = false;
+                return HeltePattern.CounterStance;
+            }
 
             if (tempo == HelteCombatTempo.PhaseTwo && blinkAfterSummon)
             {
                 blinkAfterSummon = false;
                 basicPatternsRemaining = SelectBasicPatternCount();
+                counterStancePending = useFriendlyPatterns;
                 return HeltePattern.BlinkDash;
             }
 
@@ -71,6 +97,7 @@ namespace Narthex.Gameplay
             if (tempo == HelteCombatTempo.Opening)
             {
                 basicPatternsRemaining = SelectBasicPatternCount();
+                fakeBlinkPending = useFriendlyPatterns;
                 return HeltePattern.BlinkDash;
             }
 
@@ -78,8 +105,23 @@ namespace Narthex.Gameplay
             return HeltePattern.SummonSwords;
         }
 
-        private HeltePattern NextFinalRushPattern()
+        private HeltePattern NextFinalRushPattern(bool useFriendlyPatterns)
         {
+            if (useFriendlyPatterns)
+            {
+                var friendlyPattern = finalRushPatternIndex switch
+                {
+                    0 => HeltePattern.BlinkDash,
+                    1 => HeltePattern.BasicCombo,
+                    2 => HeltePattern.CounterStance,
+                    3 => HeltePattern.SummonSwords,
+                    4 => HeltePattern.BasicCombo,
+                    _ => HeltePattern.FakeBlink
+                };
+                finalRushPatternIndex = (finalRushPatternIndex + 1) % 6;
+                return friendlyPattern;
+            }
+
             // A readable four-beat climax: reposition, punish window, projectile pressure, then another punish window.
             var pattern = finalRushPatternIndex switch
             {
@@ -95,6 +137,24 @@ namespace Narthex.Gameplay
         private int SelectBasicPatternCount()
         {
             return UnityEngine.Mathf.Clamp(basicCountSelector(), 1, 2);
+        }
+    }
+
+    public static class HelteFriendlyCombatPolicy
+    {
+        public static int LimitDamageBeforeMercy(
+            int currentHealth,
+            int maximumHealth,
+            int requestedDamage,
+            float mercyHealthRatio,
+            bool mercyAvailable)
+        {
+            if (!mercyAvailable) return requestedDamage;
+            var mercyFloor = UnityEngine.Mathf.CeilToInt(maximumHealth * mercyHealthRatio);
+            return UnityEngine.Mathf.Clamp(
+                requestedDamage,
+                0,
+                UnityEngine.Mathf.Max(0, currentHealth - mercyFloor));
         }
     }
 }

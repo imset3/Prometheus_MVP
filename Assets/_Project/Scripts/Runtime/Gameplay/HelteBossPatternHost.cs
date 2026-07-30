@@ -9,6 +9,7 @@ namespace Narthex.Gameplay
         Waiting,
         PhaseTransition,
         FinalRushTransition,
+        MercyRetreat,
         BasicWindup,
         BasicLeftSlash,
         BasicAdvance,
@@ -21,6 +22,13 @@ namespace Narthex.Gameplay
         CrossSlash,
         SwordFocus,
         SwordVolley,
+        FakeBlinkVanish,
+        FakeBlinkReappear,
+        FakeBlinkPause,
+        CounterTelegraph,
+        CounterStance,
+        CounterSucceeded,
+        CounterOpen,
         Recover
     }
 
@@ -34,6 +42,7 @@ namespace Narthex.Gameplay
         [SerializeField] private CombatActorHost sourceActor;
         [SerializeField] private CombatActorHost playerActor;
         [SerializeField] private Collider2D bossBodyCollider;
+        [SerializeField] private Collider2D playerMeleeHitbox;
 
         [Header("Pre-placed attack objects")]
         [SerializeField] private Collider2D basicHitbox;
@@ -52,6 +61,18 @@ namespace Narthex.Gameplay
         [SerializeField] private GameObject crossSlashWarningSlot;
         [SerializeField] private GameObject phaseTransitionSlot;
         [SerializeField] private GameObject[] swordVisualSlots = new GameObject[0];
+
+        [Header("Development prototype")]
+        [SerializeField] private bool enableFriendlyPatternPrototype;
+        [SerializeField, Range(0.05f, 0.5f)] private float mercyHealthRatio = 0.25f;
+        [SerializeField, Range(0.1f, 0.75f)] private float mercyRecoveryHealthRatio = 0.35f;
+        [SerializeField, Min(0f)] private float mercyPauseSeconds = 1.4f;
+        [SerializeField, Min(0f)] private float fakeBlinkPauseSeconds = 0.9f;
+        [SerializeField, Min(0f)] private float counterTelegraphSeconds = 0.35f;
+        [SerializeField, Min(0f)] private float counterStanceSeconds = 0.75f;
+        [SerializeField, Min(0f)] private float counterOpenSeconds = 1.2f;
+        [SerializeField, Min(0f)] private float counterSuccessRecoverySeconds = 0.45f;
+        [SerializeField, Min(0f)] private float counterPushDistance = 1.5f;
 
         [Header("Phase and movement")]
         [SerializeField, Range(0.1f, 0.9f)] private float phaseTwoHealthRatio = 0.5f;
@@ -102,6 +123,7 @@ namespace Narthex.Gameplay
         private int activeSwordCount;
         private bool phaseTwoPresented;
         private bool finalRushPresented;
+        private bool mercyPresented;
         private Vector3 basicHitboxLocalPosition;
         private Vector3 initialBossPosition;
         private Quaternion initialBossRotation;
@@ -113,6 +135,7 @@ namespace Narthex.Gameplay
         public HelteCombatTempo CurrentTempo => ResolveCombatTempo();
         public float PhaseTwoHealthRatio => phaseTwoHealthRatio;
         public float FinalRushHealthRatio => finalRushHealthRatio;
+        public bool FriendlyPatternPrototypeEnabled => enableFriendlyPatternPrototype;
         public event System.Action<HeltePattern> PatternStarted;
         public event System.Action<HelteCombatState> StateChanged;
 
@@ -144,6 +167,7 @@ namespace Narthex.Gameplay
             if (combatRoutine != null) StopCoroutine(combatRoutine);
             combatRoutine = null;
             StopAllCoroutines();
+            sourceActor?.SetScriptedInvulnerability(false);
             ResetPresentation();
             CurrentPattern = HeltePattern.None;
             SetState(HelteCombatState.Disabled);
@@ -168,6 +192,13 @@ namespace Narthex.Gameplay
 
             while (CanRunPattern())
             {
+                if (ShouldOfferMercy())
+                {
+                    mercyPresented = true;
+                    yield return RunMercyRetreat();
+                    if (!CanRunPattern()) break;
+                }
+
                 if (IsPhaseTwoHealth() && !phaseTwoPresented)
                 {
                     phaseTwoPresented = true;
@@ -182,7 +213,7 @@ namespace Narthex.Gameplay
                     if (!CanRunPattern()) break;
                 }
 
-                CurrentPattern = planner.Next(ResolveCombatTempo());
+                CurrentPattern = planner.Next(ResolveCombatTempo(), enableFriendlyPatternPrototype);
                 PatternStarted?.Invoke(CurrentPattern);
                 switch (CurrentPattern)
                 {
@@ -194,6 +225,12 @@ namespace Narthex.Gameplay
                         break;
                     case HeltePattern.SummonSwords:
                         yield return RunSwordSummon();
+                        break;
+                    case HeltePattern.FakeBlink:
+                        yield return RunFakeBlink();
+                        break;
+                    case HeltePattern.CounterStance:
+                        yield return RunCounterStance();
                         break;
                 }
             }
@@ -312,6 +349,108 @@ namespace Narthex.Gameplay
             if (recovery > 0f) yield return new WaitForSeconds(recovery);
         }
 
+        private IEnumerator RunFakeBlink()
+        {
+            SetState(HelteCombatState.FakeBlinkVanish);
+            blinkAfterimageSlot.transform.position = bossVisualSlot.transform.position;
+            blinkAfterimageSlot.SetActive(true);
+            bossVisualSlot.SetActive(false);
+            bossBodyCollider.enabled = false;
+            sourceActor.SetScriptedInvulnerability(true);
+            if (blinkVanishSeconds > 0f) yield return new WaitForSeconds(blinkVanishSeconds);
+            if (!CanRunPattern())
+            {
+                sourceActor.SetScriptedInvulnerability(false);
+                ResetPresentation();
+                yield break;
+            }
+
+            blinkAfterimageSlot.SetActive(false);
+            var side = playerActor.transform.position.x < transform.position.x ? 1f : -1f;
+            var destination = playerActor.transform.position + Vector3.right * side * (blinkSideDistance * 0.6f);
+            destination.y = bossCenterAnchor.position.y;
+            transform.position = ClampToArena(destination);
+            Physics2D.SyncTransforms();
+
+            SetState(HelteCombatState.FakeBlinkReappear);
+            bossVisualSlot.SetActive(true);
+            bossBodyCollider.enabled = true;
+            sourceActor.SetScriptedInvulnerability(false);
+            if (blinkTelegraphSeconds > 0f) yield return new WaitForSeconds(blinkTelegraphSeconds);
+            if (!CanRunPattern()) yield break;
+
+            // Helte deliberately does not attack. The pause baits a panic dodge and exposes his playful intent.
+            SetState(HelteCombatState.FakeBlinkPause);
+            if (fakeBlinkPauseSeconds > 0f) yield return new WaitForSeconds(fakeBlinkPauseSeconds);
+        }
+
+        private IEnumerator RunCounterStance()
+        {
+            SetState(HelteCombatState.CounterTelegraph);
+            crossSlashWarningSlot.transform.position = bossCenterAnchor.position;
+            crossSlashWarningSlot.SetActive(true);
+            if (counterTelegraphSeconds > 0f) yield return new WaitForSeconds(counterTelegraphSeconds);
+            if (!CanRunPattern())
+            {
+                crossSlashWarningSlot.SetActive(false);
+                yield break;
+            }
+
+            sourceActor.SetScriptedInvulnerability(true);
+            SetState(HelteCombatState.CounterStance);
+            var countered = false;
+            var elapsed = 0f;
+            while (elapsed < counterStanceSeconds && CanRunPattern())
+            {
+                elapsed += Time.deltaTime;
+                if (IsPlayerMeleeTouchingBoss())
+                {
+                    countered = true;
+                    SetState(HelteCombatState.CounterSucceeded);
+                    PushPlayerAway();
+                    break;
+                }
+                yield return null;
+            }
+
+            sourceActor.SetScriptedInvulnerability(false);
+            crossSlashWarningSlot.SetActive(false);
+            if (!CanRunPattern()) yield break;
+
+            if (countered)
+            {
+                if (counterSuccessRecoverySeconds > 0f)
+                    yield return new WaitForSeconds(counterSuccessRecoverySeconds);
+                yield break;
+            }
+
+            SetState(HelteCombatState.CounterOpen);
+            if (counterOpenSeconds > 0f) yield return new WaitForSeconds(counterOpenSeconds);
+        }
+
+        private IEnumerator RunMercyRetreat()
+        {
+            sourceActor.SetScriptedInvulnerability(true);
+            SetState(HelteCombatState.MercyRetreat);
+            var retreatAnchor = playerActor.transform.position.x < transform.position.x
+                ? blinkRightAnchor
+                : blinkLeftAnchor;
+            var start = transform.position;
+            var target = retreatAnchor.position;
+            target.y = bossCenterAnchor.position.y;
+            yield return MoveBoss(start, ClampToArena(target), ScaleMovementDuration(dashDurationSeconds));
+
+            if (playerActor.Runtime != null && playerActor.Runtime.IsAlive)
+            {
+                var recoveryHealth = Mathf.CeilToInt(playerActor.Runtime.MaxHealth * mercyRecoveryHealthRatio);
+                playerActor.Runtime.CurrentHealth = Mathf.Max(playerActor.Runtime.CurrentHealth, recoveryHealth);
+                playerActor.Runtime.State = CombatState.Idle;
+            }
+
+            if (mercyPauseSeconds > 0f) yield return new WaitForSeconds(mercyPauseSeconds);
+            sourceActor.SetScriptedInvulnerability(false);
+        }
+
         private IEnumerator RunPhaseTransition()
         {
             SetState(HelteCombatState.PhaseTransition);
@@ -402,10 +541,27 @@ namespace Narthex.Gameplay
             {
                 var target = overlapResults[index].GetComponentInParent<CombatActorHost>();
                 if (target == null || target.Kind != CombatActorKind.Player) continue;
-                sourceActor.CombatSystem.TryApplyDamage(target.ActorId, new DamagePacket(sourceActor.ActorId, patternId, damage));
+                var appliedDamage = LimitDamageUntilMercy(target, damage);
+                if (appliedDamage > 0)
+                    sourceActor.CombatSystem.TryApplyDamage(
+                        target.ActorId,
+                        new DamagePacket(sourceActor.ActorId, patternId, appliedDamage));
                 return true;
             }
             return false;
+        }
+
+        private int LimitDamageUntilMercy(CombatActorHost target, int damage)
+        {
+            if (!enableFriendlyPatternPrototype || mercyPresented || target?.Runtime == null)
+                return damage;
+
+            return HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(
+                target.Runtime.CurrentHealth,
+                target.Runtime.MaxHealth,
+                damage,
+                mercyHealthRatio,
+                true);
         }
 
         private void PositionBasicHitbox(float facing)
@@ -437,6 +593,28 @@ namespace Narthex.Gameplay
         private float DirectionToPlayer()
         {
             return playerActor.transform.position.x < transform.position.x ? -1f : 1f;
+        }
+
+        private bool ShouldOfferMercy()
+        {
+            return enableFriendlyPatternPrototype && !mercyPresented &&
+                   playerActor != null && playerActor.Runtime != null && playerActor.Runtime.IsAlive &&
+                   playerActor.Runtime.CurrentHealth <= playerActor.Runtime.MaxHealth * mercyHealthRatio;
+        }
+
+        private bool IsPlayerMeleeTouchingBoss()
+        {
+            return playerMeleeHitbox != null && playerMeleeHitbox.enabled && bossBodyCollider != null &&
+                   bossBodyCollider.enabled && playerMeleeHitbox.Distance(bossBodyCollider).isOverlapped;
+        }
+
+        private void PushPlayerAway()
+        {
+            var direction = playerActor.transform.position.x < transform.position.x ? -1f : 1f;
+            var position = playerActor.transform.position;
+            position.x += direction * counterPushDistance;
+            playerActor.transform.position = position;
+            Physics2D.SyncTransforms();
         }
 
         private bool IsPhaseTwoHealth()
@@ -512,6 +690,7 @@ namespace Narthex.Gameplay
                 swordHitboxes == null || swordSpawnAnchors == null || swordVisualSlots == null ||
                 swordHitboxes.Length != 3 || swordSpawnAnchors.Length != 3 || swordVisualSlots.Length != 3)
                 return false;
+            if (enableFriendlyPatternPrototype && playerMeleeHitbox == null) return false;
 
             for (var index = 0; index < 3; index++)
             {
@@ -525,6 +704,8 @@ namespace Narthex.Gameplay
             planner.Reset();
             phaseTwoPresented = false;
             finalRushPresented = false;
+            mercyPresented = false;
+            sourceActor?.SetScriptedInvulnerability(false);
             CurrentPattern = HeltePattern.None;
             SetState(HelteCombatState.Waiting);
         }

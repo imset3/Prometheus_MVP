@@ -646,6 +646,44 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void HeltePatternPlanner_FriendlyPrototypeAddsFeintAndCounterWithoutReplacingCorePatterns()
+        {
+            var opening = new HeltePatternPlanner(() => 1);
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.FakeBlink));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BasicCombo));
+
+            var phaseTwo = new HeltePatternPlanner(() => 1);
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.CounterStance));
+
+            var finalTest = new HeltePatternPlanner(() => 1);
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.CounterStance));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.FakeBlink));
+        }
+
+        [Test]
+        public void HelteFriendlyCombatPolicy_ReservesMercyBeforeLethalFollowUp()
+        {
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(32, 100, 15, 0.25f, true),
+                Is.EqualTo(7));
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(25, 100, 15, 0.25f, true),
+                Is.Zero);
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(25, 100, 15, 0.25f, false),
+                Is.EqualTo(15));
+        }
+
+        [Test]
         public void TutorialHudModeResolver_UsesResultDialogueBossPriority()
         {
             Assert.That(TutorialHudModeResolver.Resolve(false, false, false, false), Is.EqualTo(TutorialHudMode.Normal));
