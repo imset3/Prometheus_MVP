@@ -81,12 +81,21 @@ namespace Narthex.PlayModeTests
                 "The dedicated scene must retain the Helte FSM host for isolated development.");
             Assert.That(
                 helte.GetComponent<CombatActorHost>().Runtime.MaxHealth,
-                Is.EqualTo(240),
-                "Helte must survive long enough to expose both phases during FSM tuning.");
+                Is.EqualTo(6000),
+                "Helte health must support the five-minute encounter pacing target.");
+            Assert.That(
+                helte.GetComponent<HelteBossPatternHost>().PhaseTwoHealthRatio,
+                Is.EqualTo(0.55f).Within(0.001f),
+                "Helte phase two must begin at 55% health.");
             Assert.That(
                 helte.GetComponent<HeltePatternVfxHost>().HasValidSetup,
                 Is.True,
                 "The development scene must expose state-driven VFX bindings.");
+            var telemetry = FindSceneTransform(scene, "BossArena_Controller")
+                .GetComponent<HelteCombatTelemetryHost>();
+            Assert.That(telemetry, Is.Not.Null);
+            Assert.That(telemetry.HasValidSetup, Is.True);
+            Assert.That(telemetry.TargetDurationSeconds, Is.EqualTo(300f));
         }
 
         [UnityTest]

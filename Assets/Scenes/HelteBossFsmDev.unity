@@ -75864,7 +75864,7 @@ MonoBehaviour:
   - {fileID: 1486869174}
   - {fileID: 36984976}
   - {fileID: 1178751618}
-  phaseTwoHealthRatio: 0.5
+  phaseTwoHealthRatio: 0.55
   basicAdvanceDistance: 1
   blinkSideDistance: 3
   dashDistance: 4
@@ -76000,7 +76000,7 @@ MonoBehaviour:
   combatSystemHost: {fileID: 1756494542}
   actorId: BOSS-TUTO-HELTE
   kind: 2
-  maxHealth: 240
+  maxHealth: 6000
   stageId: TUTO-006
   unlockTreeId: TREE-BOSS-HELTE
   hitRecoverySeconds: 0.15
@@ -78156,6 +78156,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1641195792}
   - component: {fileID: 1641195793}
+  - component: {fileID: 1641195794}
   m_Layer: 0
   m_Name: BossArena_Controller
   m_TagString: Untagged
@@ -78207,6 +78208,23 @@ MonoBehaviour:
   - {fileID: 2047130293}
   - {fileID: 944460708}
   introWarningSeconds: 1.1
+--- !u!114 &1641195794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641195791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 524b07da0a61484ba144325f1c4445ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.HelteCombatTelemetryHost
+  arenaHost: {fileID: 1641195793}
+  bossActor: {fileID: 1608749477}
+  patternHost: {fileID: 1608749473}
+  targetDurationSeconds: 300
+  showDevelopmentOverlay: 1
 --- !u!1 &1642998804
 GameObject:
   m_ObjectHideFlags: 0

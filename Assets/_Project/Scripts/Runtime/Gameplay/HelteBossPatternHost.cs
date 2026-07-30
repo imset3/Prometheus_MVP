@@ -95,6 +95,7 @@ namespace Narthex.Gameplay
         public HeltePattern CurrentPattern { get; private set; }
         public HelteCombatState CurrentState { get; private set; } = HelteCombatState.Disabled;
         public bool IsPhaseTwo => IsPhaseTwoHealth();
+        public float PhaseTwoHealthRatio => phaseTwoHealthRatio;
         public event System.Action<HeltePattern> PatternStarted;
         public event System.Action<HelteCombatState> StateChanged;
 
