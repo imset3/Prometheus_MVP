@@ -8,7 +8,8 @@
     "Narthex.Gameplay",
     "Narthex.SceneFlow",
     "Narthex.Presentation",
-    "UnityEditor.TestRunner"
+    "UnityEditor.TestRunner",
+    "Unity.Newtonsoft.Json"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

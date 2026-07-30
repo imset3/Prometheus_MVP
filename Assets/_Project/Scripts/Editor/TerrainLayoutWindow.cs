@@ -12,8 +12,11 @@ namespace Narthex.Tools
         private Vector2 nextPosition;
         private float gridSize = DefaultGridSize;
 
-        [MenuItem("Prometheus/Level Design/Terrain Layout")]
+        [MenuItem("sragon000/Level Design/Terrain Layout")]
         private static void Open() => GetWindow<TerrainLayoutWindow>("Terrain Layout");
+
+        [MenuItem("Prometheus/Level Design/Terrain Layout", false, 1000)]
+        private static void OpenLegacy() => Open();
 
         private void OnGUI()
         {
