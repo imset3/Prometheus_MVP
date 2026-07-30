@@ -1,5 +1,8 @@
 # Prometheus AI Scene Toolkit
 
+> 문서 위치: [README](../../../README.md) → AI Scene Toolkit 사용 설명서  
+> 마커 배치 규칙: [튜토리얼 마커 저작 가이드](TUTORIAL_MARKER_AUTHORING.md)
+
 ## 목적
 
 이 도구는 Codex, Claude Code, Unity MCP와 사람이 같은 씬 작업 API를 사용하게 한다.
@@ -139,15 +142,24 @@ Unity `JsonUtility` 호환을 위해 인자는 Dictionary가 아니라 배열이
 
 구역 흐름 에셋은 노드 ID, 조건, 마커 ID, 다음 노드를 보관한다. 흐름 데이터는 현재 런타임 로직을 자동 교체하지 않으며, 설계·검증의 기준 데이터다.
 
-## 사람용 작업
+## 사람용 빠른 시작
 
 `sragon000 > Prometheus Scene Toolkit`
 
-- 위치와 범위는 `마커` 탭에서 편집한다.
-- 보이지 않는 Collider는 `Scene Doctor`에서 선택한 뒤 Scene View로 확인한다.
-- 검증과 플레이 테스트는 `기존 도구` 탭에서 실행한다.
-- `Legacy Migration`은 과거 씬 복구용이다. 실행 전 확인창이 표시된다.
-- 수작업 배치 후 기존 추천 위치 적용 메뉴를 다시 실행하지 않는다.
+1. 작업할 씬을 열고 `스냅샷` 탭에서 기준 스냅샷을 생성한다.
+2. 위치와 범위는 `마커` 탭에서 편집한다.
+3. 보이지 않는 Collider는 `Scene Doctor`에서 선택한 뒤 Scene View로 확인한다.
+4. `구역 흐름` 탭에서 다음 구역과 조건 연결을 검사한다.
+5. 검증과 플레이 테스트는 `기존 도구` 탭에서 실행한다.
+6. 수정 후 스냅샷을 다시 생성하고 이전 결과와 비교한다.
+
+`Legacy Migration`은 과거 씬 복구용이다. 실행 전 확인창이 표시되며, 수작업으로 배치한 씬에는 기존 추천 위치 적용 메뉴를 다시 실행하지 않는다.
+
+## 문서 연결
+
+- 프로젝트 전체 실행·조작·문서 목록: [README](../../../README.md)
+- 마커별 배치와 훈련장 규칙: [튜토리얼 마커 저작 가이드](TUTORIAL_MARKER_AUTHORING.md)
+- 현재 씬과 시스템 인수인계: [PROJECT_HANDOFF](PROJECT_HANDOFF.md)
 
 ## 안전 정책
 
