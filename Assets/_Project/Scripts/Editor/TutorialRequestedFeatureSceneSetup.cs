@@ -698,8 +698,9 @@ namespace Narthex.Tools
             var centerMarkerCollider = centerMarker.GetComponent<BoxCollider2D>();
             if (centerMarkerCollider != null) UnityEngine.Object.DestroyImmediate(centerMarkerCollider);
 
-            var entryGate = CreatePracticePlatform(geometry, "BossArena_EntryGate_ART_SLOT", new Vector3(987f, 2.5f, 0f), new Vector3(1.2f, 5f, 0.5f), material);
-            entryGate.GetComponent<Renderer>().enabled = false;
+            var obsoleteEntryGate = find("BossArena_EntryGate_ART_SLOT");
+            if (obsoleteEntryGate != null)
+                UnityEngine.Object.DestroyImmediate(obsoleteEntryGate);
 
             var helte = Require(find("TutorialHelte"), "TutorialHelte");
             helte.transform.position = new Vector3(998f, 1.1f, 0f);

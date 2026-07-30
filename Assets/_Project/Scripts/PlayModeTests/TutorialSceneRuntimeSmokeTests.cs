@@ -137,6 +137,16 @@ namespace Narthex.PlayModeTests
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-008"));
             Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
+            var gIntegrationAfterTransition =
+                FindSceneTransform(tutorialScene, "G_Encounter02_Integration").gameObject;
+            Assert.That(gIntegrationAfterTransition.activeInHierarchy, Is.False,
+                "G-to-H transition must disable the separate G integration root so invisible gate proxies cannot remain.");
+            Assert.That(
+                gIntegrationAfterTransition.GetComponentsInChildren<Collider2D>(true)
+                    .Where(collider => collider.name.StartsWith("G01_보조출구잠금문"))
+                    .All(collider => !collider.enabled && !collider.gameObject.activeInHierarchy),
+                Is.True,
+                "G auxiliary exit gate proxies must not remain active after arriving in H.");
             Assert.That(FindSceneTransform(tutorialScene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneTransform(tutorialScene, "TutorialHelte").gameObject.activeInHierarchy, Is.True);
             Assert.That(skip.ActiveSectionIndex, Is.EqualTo(2));
@@ -159,6 +169,8 @@ namespace Narthex.PlayModeTests
             var playerBody = playerInput.GetComponent<Rigidbody2D>();
             var combatSystem = FindSceneComponent<CombatSystemHost>(tutorialScene);
             var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+            var dialogue = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
+            var introductionCard = FindSceneComponent<DialogueIntroductionCardModule>(tutorialScene);
 
             Assert.That(skip.JumpToFSection(), Is.True);
             yield return null;
@@ -216,9 +228,6 @@ namespace Narthex.PlayModeTests
             }
 
             var encounterB = FindSceneComponent<TutorialWaveEncounterHost>(tutorialScene);
-            var phaseTrigger = FindSceneTransform(tutorialScene, "G01_후반부진입_TRIGGER")
-                .GetComponent<TutorialEncounterPhaseTriggerHost>();
-            var playerCollider = playerBody.GetComponent<Collider2D>();
             var enemies = GetPrivateField<CombatActorHost[]>(encounterB, "enemies");
             var enemySpawns = GetPrivateField<Transform[]>(encounterB, "spawnPoints");
             var waveEnemyCounts = GetPrivateField<int[]>(encounterB, "waveEnemyCounts");
@@ -226,8 +235,50 @@ namespace Narthex.PlayModeTests
             var firstGateRenderer = GetPrivateField<Renderer>(encounterB, "internalGateRenderer");
             var secondGateCollider = GetPrivateField<Collider2D>(encounterB, "exitGateCollider");
             var secondGateRenderer = GetPrivateField<Renderer>(encounterB, "exitGateRenderer");
+            var auxiliaryGateColliders =
+                GetPrivateField<Collider2D[]>(encounterB, "additionalExitGateColliders");
+            var auxiliaryGateRenderers =
+                GetPrivateField<Renderer[]>(encounterB, "additionalExitGateRenderers");
+            var gRoot = FindSceneTransform(tutorialScene, "G스테이지");
+            var authoredGRenderers = gRoot.GetComponentsInChildren<Renderer>(true);
+            var authoredSquare21 = authoredGRenderers.Single(renderer => renderer.name == "Square (21)");
+            var authoredSquare40 = authoredGRenderers.Single(renderer => renderer.name == "Square (40)");
+            var authoredSquare46 = authoredGRenderers.Single(renderer => renderer.name == "Square (46)");
+            var gCollisionRoot = FindSceneTransform(tutorialScene, "G 스테이지 충돌체");
+            var square21Collision = gCollisionRoot.GetComponentsInChildren<BoxCollider2D>(true)
+                .Single(collider => collider.name.EndsWith("_Square (21)", StringComparison.Ordinal));
+            Assert.That(
+                FindSceneTransformOrDefault(tutorialScene, "G01_보조출구잠금문_PROXY"),
+                Is.Null,
+                "The unnumbered legacy auxiliary gate proxy must not remain in G.");
+            Assert.That(
+                FindSceneTransformOrDefault(tutorialScene, "G01_보조출구잠금문_01_PROXY"),
+                Is.Null,
+                "Numbered auxiliary gate proxies must not be rebuilt from authored map geometry.");
             Assert.That(firstGateRenderer.name, Is.EqualTo("Square (39)"));
             Assert.That(secondGateRenderer.name, Is.EqualTo("Square (43)"));
+            Assert.That(auxiliaryGateColliders, Is.Empty);
+            Assert.That(auxiliaryGateRenderers, Is.Empty);
+            Assert.That(authoredSquare40.gameObject.activeSelf, Is.False,
+                "Square (40) is an intentionally removed route blocker and must stay inactive.");
+            Assert.That(authoredSquare46.gameObject.activeSelf, Is.False,
+                "Square (46) is an intentionally removed route blocker and must stay inactive.");
+            Assert.That(authoredSquare21.gameObject.activeSelf, Is.True);
+            Assert.That(authoredSquare21.enabled, Is.True,
+                "Square (21) is the outer map boundary and must remain visible.");
+            Assert.That(square21Collision.enabled, Is.True,
+                "Square (21) needs a permanent collision proxy so Prome cannot leave the map.");
+            Assert.That(
+                gCollisionRoot.GetComponentsInChildren<BoxCollider2D>(true)
+                    .Any(collider =>
+                        collider.name.EndsWith("_Square (40)", StringComparison.Ordinal) ||
+                        collider.name.EndsWith("_Square (46)", StringComparison.Ordinal)),
+                Is.False,
+                "Disabled authored geometry must not be recreated as invisible collision proxies.");
+            Assert.That(firstGateRenderer.GetComponents<Collider2D>().All(collider => !collider.enabled), Is.True,
+                "Square (39) must not retain an authored collider beside its runtime gate proxy.");
+            Assert.That(secondGateRenderer.GetComponents<Collider2D>().All(collider => !collider.enabled), Is.True,
+                "Square (43) must not retain an authored collider beside its runtime gate proxy.");
             Assert.That(enemySpawns.Take(2).All(spawn =>
                     spawn.position.x < firstGateRenderer.bounds.min.x),
                 Is.True,
@@ -247,22 +298,25 @@ namespace Narthex.PlayModeTests
                     3f,
                     $"G wave {expectedWave + 1} did not activate.");
                 if (waveIndex == 0)
-                    yield return VerifyPursuingEnemyStopsAtSolidWall(enemies[enemyOffset], playerBody);
+                    yield return VerifyPursuingEnemyStopsAtAuthoredGate(
+                        enemies[enemyOffset],
+                        playerBody,
+                        firstGateCollider);
                 for (var offset = 0; offset < waveEnemyCounts[waveIndex]; offset++)
                     KillActor(combatSystem, enemies[enemyOffset + offset]);
                 enemyOffset += waveEnemyCounts[waveIndex];
                 if (waveIndex != 0) continue;
                 yield return WaitForConditionRealtime(
-                    () => encounterB.IsWaitingForTraversal,
+                    () => encounterB.CurrentWaveIndex == 1 &&
+                          encounterB.ActiveEnemyCount == waveEnemyCounts[1],
                     2f,
-                    "G did not open the traversal route after wave 1.");
+                    "G did not automatically activate wave 2 after wave 1.");
                 Assert.That(firstGateCollider.enabled, Is.False,
                     "Square (39) must open after wave 1 is defeated.");
                 Assert.That(firstGateRenderer.enabled, Is.False,
                     "Square (39) visual must disappear after wave 1 is defeated.");
                 Assert.That(secondGateCollider.enabled, Is.True,
                     "Square (43) must remain closed until wave 2 is defeated.");
-                InvokePrivateMethod(phaseTrigger, "OnTriggerEnter2D", playerCollider);
             }
 
             yield return WaitForConditionRealtime(
@@ -273,6 +327,61 @@ namespace Narthex.PlayModeTests
                 "Square (43) must open after wave 2 is defeated.");
             Assert.That(secondGateRenderer.enabled, Is.False,
                 "Square (43) visual must disappear after wave 2 is defeated.");
+            Assert.That(authoredSquare21.enabled, Is.True,
+                "Clearing G must not hide the Square (21) outer boundary.");
+            Assert.That(square21Collision.enabled, Is.True,
+                "Clearing G must not disable the Square (21) outer boundary collision.");
+            var gExitTransition = FindSceneTransform(tutorialScene, "G01_Exit_ToH")
+                .GetComponent<TutorialZoneTransitionHost>();
+            gExitTransition.enabled = false;
+            var gatePassStart = new Vector2(
+                secondGateRenderer.bounds.min.x - 1.5f,
+                secondGateRenderer.bounds.min.y + 0.8f);
+            MovePlayer(playerBody, gatePassStart);
+            playerMotor.SetMovementInput(Vector2.right);
+            var openRouteTargetX = authoredSquare46.bounds.max.x + 0.5f;
+            var passedRemovedRouteBlockers = false;
+            for (var frame = 0; frame < 600 && !passedRemovedRouteBlockers; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+                passedRemovedRouteBlockers = playerBody.position.x > openRouteTargetX;
+            }
+            playerMotor.SetMovementInput(Vector2.zero);
+            var nearbyBlockers = Physics2D.OverlapBoxAll(
+                    playerBody.position,
+                    new Vector2(3f, 4f),
+                    0f)
+                .Where(collider => collider != null &&
+                                   collider.transform != playerBody.transform &&
+                                   !collider.transform.IsChildOf(playerBody.transform))
+                .Select(collider =>
+                    $"{GetTransformPath(collider.transform)}" +
+                    $"[enabled={collider.enabled},active={collider.gameObject.activeInHierarchy}," +
+                    $"trigger={collider.isTrigger},center={collider.bounds.center}]")
+                .ToArray();
+            Assert.That(passedRemovedRouteBlockers, Is.True,
+                $"Prome was blocked by a collider rebuilt from disabled Square (40)/(46). " +
+                $"Reached X={playerBody.position.x:F2}, required X>{openRouteTargetX:F2}. " +
+                $"Nearby colliders: {string.Join("; ", nearbyBlockers)}");
+
+            var playerCollider = playerBody.GetComponent<Collider2D>();
+            var originalGravityScale = playerBody.gravityScale;
+            playerBody.gravityScale = 0f;
+            MovePlayer(
+                playerBody,
+                new Vector2(
+                    authoredSquare21.bounds.min.x - playerCollider.bounds.extents.x - 0.4f,
+                    authoredSquare21.bounds.center.y));
+            playerMotor.SetMovementInput(Vector2.right);
+            for (var frame = 0; frame < 120; frame++)
+                yield return new WaitForFixedUpdate();
+            playerMotor.SetMovementInput(Vector2.zero);
+            Assert.That(
+                playerCollider.bounds.max.x,
+                Is.LessThanOrEqualTo(authoredSquare21.bounds.min.x + 0.05f),
+                "Prome crossed Square (21); the permanent outer map boundary is not blocking movement.");
+            playerBody.gravityScale = originalGravityScale;
+            gExitTransition.enabled = true;
             yield return WaitForQuest(questSequence, "QST-TUTO-008");
             yield return UseZoneTransition(
                 tutorialScene,
@@ -281,6 +390,16 @@ namespace Narthex.PlayModeTests
                 "TUTORIAL-ENCOUNTER-B-EXIT");
 
             Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
+            var gIntegrationAfterNormalTransition =
+                FindSceneTransform(tutorialScene, "G_Encounter02_Integration").gameObject;
+            Assert.That(gIntegrationAfterNormalTransition.activeInHierarchy, Is.False,
+                "Normal G-to-H transition must disable the separate G integration root.");
+            Assert.That(
+                gIntegrationAfterNormalTransition.GetComponentsInChildren<Collider2D>(true)
+                    .Where(collider => collider.name.StartsWith("G01_보조출구잠금문"))
+                    .All(collider => !collider.enabled && !collider.gameObject.activeInHierarchy),
+                Is.True,
+                "Normal G-to-H arrival must not retain an active auxiliary gate proxy.");
             Assert.That(FindSceneTransform(tutorialScene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(
                 Vector2.Distance(
@@ -288,35 +407,42 @@ namespace Narthex.PlayModeTests
                     FindSceneTransform(tutorialScene, "H01_Spawn_FromG").position),
                 Is.LessThan(0.5f),
                 "Normal G-to-H transition must place Prome at H's authored spawn.");
+            var dockRenderers = FindSceneTransform(tutorialScene, "선착장")
+                .GetComponentsInChildren<Renderer>(true);
+            var dockMinX = dockRenderers.Min(renderer => renderer.bounds.min.x);
+            var dockMaxX = dockRenderers.Max(renderer => renderer.bounds.max.x);
+            Assert.That(playerBody.position.x, Is.InRange(dockMinX + 1f, dockMaxX - 1f),
+                "The H spawn reference may exist, but Prome must land inside the authored dock geometry.");
+            yield return DismissCurrentPresentation(dialogue, introductionCard, 6f);
+            var helteDialogue = FindSceneTransform(tutorialScene, "H01_헬테조우대화_TRIGGER")
+                .GetComponent<TutorialHelteEncounterDialogueHost>();
+            playerMotor.SetMovementInput(Vector2.right);
+            for (var frame = 0; frame < 420 && !helteDialogue.EncounterPresented; frame++)
+                yield return new WaitForFixedUpdate();
+            playerMotor.SetMovementInput(Vector2.zero);
+            Assert.That(helteDialogue.EncounterPresented, Is.True,
+                "Prome could not walk from the H spawn to Helte; an invisible collider may block the dock route.");
         }
 
-        private static IEnumerator VerifyPursuingEnemyStopsAtSolidWall(
+        private static IEnumerator VerifyPursuingEnemyStopsAtAuthoredGate(
             CombatActorHost enemy,
-            Rigidbody2D playerBody)
+            Rigidbody2D playerBody,
+            Collider2D wallCollider)
         {
             var enemyCollider = enemy.GetComponent<Collider2D>();
             Assert.That(enemyCollider, Is.Not.Null, "G pursuit enemy needs a body collider.");
-
-            var isolatedOrigin = new Vector2(10000f, 10000f);
-            enemy.transform.position = isolatedOrigin;
-            MovePlayer(playerBody, isolatedOrigin + Vector2.right * 6f);
-
-            var wall = new GameObject("G_PursuitCollision_TestWall");
-            wall.transform.position = isolatedOrigin + Vector2.right * 2f;
-            var wallCollider = wall.AddComponent<BoxCollider2D>();
-            wallCollider.size = new Vector2(0.4f, 4f);
+            var testY = wallCollider.bounds.min.y + Mathf.Min(1.2f, wallCollider.bounds.extents.y);
+            enemy.transform.position = new Vector2(
+                wallCollider.bounds.min.x - enemyCollider.bounds.extents.x - 0.5f,
+                testY);
+            MovePlayer(playerBody, new Vector2(wallCollider.bounds.max.x + 3f, testY));
             Physics2D.SyncTransforms();
 
-            var startingX = enemy.transform.position.x;
             for (var frame = 0; frame < 90; frame++)
                 yield return new WaitForFixedUpdate();
 
-            Assert.That(enemy.transform.position.x, Is.GreaterThan(startingX + 0.5f),
-                "G pursuit enemy did not approach Prome.");
             Assert.That(enemyCollider.bounds.max.x, Is.LessThanOrEqualTo(wallCollider.bounds.min.x + 0.04f),
-                "G pursuit enemy crossed a solid wall instead of stopping at it.");
-            UnityEngine.Object.Destroy(wall);
-            yield return null;
+                "G pursuit enemy crossed the authored Square (39) gate instead of stopping at it.");
         }
 
         [UnityTest]
@@ -839,6 +965,10 @@ namespace Narthex.PlayModeTests
             Assert.That(encounterBPhaseTrigger.HasValidSetup, Is.True);
             Assert.That(bossEncounter.HasValidSetup, Is.True);
             Assert.That(bossArena.HasValidSetup, Is.True);
+            Assert.That(
+                FindSceneTransformOrDefault(tutorialScene, "BossArena_EntryGate_ART_SLOT"),
+                Is.Null,
+                "The obsolete Helte entry gate must not reappear and block the dock approach.");
             Assert.That(helteDialogue.HasValidSetup, Is.True);
             Assert.That(bossHealth.HasValidSetup, Is.True);
             Assert.That(completionFlow.HasValidSetup, Is.True);
@@ -1054,6 +1184,11 @@ namespace Narthex.PlayModeTests
                 3f,
                 "Exterior encounter A did not activate all enemies together.");
             var encounterAEnemies = GetPrivateField<CombatActorHost[]>(encounterA, "enemies");
+            var fExitGate = GetPrivateField<Collider2D>(encounterA, "exitGateCollider");
+            yield return VerifyPursuingEnemyStopsAtAuthoredGate(
+                encounterAEnemies[0],
+                playerBody,
+                fExitGate);
             foreach (var enemy in encounterAEnemies)
                 KillActor(combatSystem, enemy);
             yield return WaitForConditionRealtime(() => encounterA.IsCleared, 1f, "Exterior encounter A did not clear.");
@@ -1079,10 +1214,10 @@ namespace Narthex.PlayModeTests
                 if (waveIndex == 0)
                 {
                     yield return WaitForConditionRealtime(
-                        () => encounterB.IsWaitingForTraversal,
+                        () => encounterB.CurrentWaveIndex == 1 &&
+                              encounterB.ActiveEnemyCount == waveEnemyCounts[1],
                         2f,
-                        "Exterior encounter B did not open its internal passage after wave 1.");
-                    InvokePrivateMethod(encounterBPhaseTrigger, "OnTriggerEnter2D", playerCollider);
+                        "Exterior encounter B did not automatically activate wave 2 after opening its internal passage.");
                 }
             }
             yield return WaitForConditionRealtime(() => encounterB.IsCleared, 1f, "Exterior encounter B did not clear.");
@@ -1308,11 +1443,18 @@ namespace Narthex.PlayModeTests
                 yield return null;
                 InvokePrivateMethod(transition, "HandleInteractRequested");
             }
-            yield return WaitForConditionRealtime(
-                () => inputHost.enabled && nextZoneRoot.activeInHierarchy && !currentZoneRoot.activeSelf &&
-                      Mathf.Abs(playerBody.position.x - destination.position.x) < 0.5f,
-                5f,
-                $"Transition '{portalTargetId}' did not reach its destination.");
+            var timeoutAt = Time.realtimeSinceStartup + 5f;
+            bool ReachedDestination() =>
+                inputHost.enabled && nextZoneRoot.activeInHierarchy && !currentZoneRoot.activeSelf &&
+                Mathf.Abs(playerBody.position.x - destination.position.x) < 0.5f;
+            while (!ReachedDestination() && Time.realtimeSinceStartup < timeoutAt) yield return null;
+            Assert.That(
+                ReachedDestination(),
+                Is.True,
+                $"Transition '{portalTargetId}' did not reach its destination. " +
+                $"input={inputHost.enabled}, nextActive={nextZoneRoot.activeInHierarchy}, " +
+                $"currentActive={currentZoneRoot.activeSelf}, playerX={playerBody.position.x:F2}, " +
+                $"destinationX={destination.position.x:F2}, transitionActive={transition.gameObject.activeInHierarchy}.");
         }
 
         private static TutorialZoneTransitionHost FindZoneTransition(Scene scene, string portalTargetId)

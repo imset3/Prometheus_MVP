@@ -13,7 +13,7 @@ namespace Narthex.Tools
     public static class TutorialImportedHelteSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
-        private const string CompletionMarkerName = "H01_연동완료";
+        private const string CompletionMarkerName = "H01_연동완료_입구개방_v2";
         private const string BossQuestId = "QST-TUTO-008";
         private const string ExitSignalId = "TUTORIAL-ENCOUNTER-B-EXIT";
 
@@ -86,7 +86,6 @@ namespace Narthex.Tools
                 var bossY = floorTop + 1.1f;
                 var dialogueX = arenaCenterX - 13f;
                 var startX = arenaCenterX - 9.5f;
-                var gateX = arenaCenterX - 10.5f;
 
                 var legacyZone = Require(scene, "Z06_OreStorage_Boss");
                 // Resolve from unique Helte-owned descendants instead of assuming the old parent.
@@ -102,17 +101,16 @@ namespace Narthex.Tools
 
                 var technicalGeometry = GetOrCreateChild(integration.transform, "H_보스전기술도형");
                 var arenaFloor = Require(scene, "BossArena_Floor_ART_SLOT");
-                var entryGate = Require(scene, "BossArena_EntryGate_ART_SLOT");
                 var bossMarker = Require(scene, "Storage_BossMarker");
                 ReparentKeepingWorld(arenaFloor.transform, technicalGeometry.transform);
-                ReparentKeepingWorld(entryGate.transform, technicalGeometry.transform);
                 ReparentKeepingWorld(bossMarker.transform, technicalGeometry.transform);
+                var obsoleteEntryGate = Find(scene, "BossArena_EntryGate_ART_SLOT");
+                if (obsoleteEntryGate != null)
+                    UnityEngine.Object.DestroyImmediate(obsoleteEntryGate);
                 ConfigureTechnicalGeometry(
                     arenaFloor,
-                    entryGate,
                     bossMarker,
                     arenaCenterX,
-                    gateX,
                     floorTop);
 
                 helte.transform.position = new Vector3(arenaCenterX, bossY, 0f);
@@ -134,12 +132,17 @@ namespace Narthex.Tools
                     floorTop,
                     anchors.retryCheckpoint,
                     anchors.arenaEntry);
-                var hSpawn = Require(scene, "H01_Spawn_FromG");
-                ReparentKeepingWorld(hSpawn.transform, integration.transform);
-                ConfigureTransition(scene, integration, gIntegration, hRoot, hSpawn.transform, dialogueTrigger.transform);
+                var hSpawn = GetOrCreateCanonicalSpawn(
+                    scene,
+                    integration.transform,
+                    lowerFloor.bounds.min.x + 2.5f,
+                    floorTop + 0.8f);
+                ConfigureTransition(scene, integration, gIntegration, hRoot, hSpawn, dialogueTrigger.transform);
                 ConfigureNarrative(scene);
                 ConfigureEncounterPresentation(scene);
-                ConfigureGuidanceAndRestart(scene, hSpawn.transform, dialogueTrigger.transform);
+                ConfigureGuidanceAndRestart(scene, hSpawn, dialogueTrigger.transform);
+                ConfigureDebugSkipSpawn(scene, hSpawn);
+                RemoveDuplicateSpawns(scene, hSpawn);
 
                 legacyZone.SetActive(false);
                 hRoot.SetActive(false);
@@ -154,7 +157,7 @@ namespace Narthex.Tools
                 Debug.Log(
                     $"[sragon000][H01] 선착장 하단 바닥 {lowerFloor.name}에 접근 구간, 테우스 진입 대화, " +
                     $"헬테 조우 대화, 재도전 체크포인트, 보스 FSM을 연결했습니다. " +
-                    $"spawn={hSpawn.transform.position:F2}, dialogueX={dialogueX:F2}, boss={helte.transform.position:F2}");
+                    $"spawn={hSpawn.position:F2}, dialogueX={dialogueX:F2}, boss={helte.transform.position:F2}");
             }
             catch (Exception exception)
             {
@@ -164,10 +167,8 @@ namespace Narthex.Tools
 
         private static void ConfigureTechnicalGeometry(
             GameObject arenaFloor,
-            GameObject entryGate,
             GameObject bossMarker,
             float arenaCenterX,
-            float gateX,
             float floorTop)
         {
             arenaFloor.transform.position = new Vector3(arenaCenterX, floorTop - 0.5f, 0f);
@@ -176,10 +177,6 @@ namespace Narthex.Tools
             RequireComponent<BoxCollider2D>(arenaFloor).enabled = true;
             var floorRenderer = arenaFloor.GetComponent<Renderer>();
             if (floorRenderer != null) floorRenderer.enabled = false;
-
-            entryGate.transform.position = new Vector3(gateX, floorTop + 2.5f, 0f);
-            entryGate.transform.rotation = Quaternion.identity;
-            entryGate.transform.localScale = new Vector3(1.2f, 5f, 0.5f);
 
             bossMarker.transform.position = new Vector3(arenaCenterX, floorTop + 0.08f, 0f);
             bossMarker.transform.rotation = Quaternion.identity;
@@ -397,6 +394,61 @@ namespace Narthex.Tools
             restartSerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        private static Transform GetOrCreateCanonicalSpawn(
+            Scene scene,
+            Transform parent,
+            float worldX,
+            float worldY)
+        {
+            var directChildren = parent.Cast<Transform>()
+                .Where(candidate => candidate != null && candidate.name == "H01_Spawn_FromG")
+                .ToArray();
+            var canonical = directChildren.FirstOrDefault() ??
+                            scene.GetRootGameObjects()
+                                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                                .FirstOrDefault(candidate =>
+                                    candidate != null && candidate.name == "H01_Spawn_FromG");
+            if (canonical == null)
+            {
+                var created = new GameObject("H01_Spawn_FromG");
+                canonical = created.transform;
+            }
+
+            canonical.SetParent(parent, true);
+            canonical.SetPositionAndRotation(new Vector3(worldX, worldY, 0f), Quaternion.identity);
+            canonical.localScale = Vector3.one;
+            return canonical;
+        }
+
+        private static void ConfigureDebugSkipSpawn(Scene scene, Transform spawn)
+        {
+            var skip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<TutorialDebugSectionSkipHost>(true))
+                .FirstOrDefault();
+            if (skip == null) return;
+            var serialized = new SerializedObject(skip);
+            var sections = serialized.FindProperty("sections");
+            for (var index = 0; index < sections.arraySize; index++)
+            {
+                var section = sections.GetArrayElementAtIndex(index);
+                if (section.FindPropertyRelative("questId").stringValue != BossQuestId) continue;
+                section.FindPropertyRelative("spawnPoint").objectReferenceValue = spawn;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void RemoveDuplicateSpawns(Scene scene, Transform canonical)
+        {
+            var duplicates = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                .Where(candidate => candidate != null &&
+                                    candidate != canonical &&
+                                    candidate.name == "H01_Spawn_FromG")
+                .ToArray();
+            foreach (var duplicate in duplicates)
+                UnityEngine.Object.DestroyImmediate(duplicate.gameObject);
+        }
+
         private static void ValidateAppliedScene(Scene scene)
         {
             var hRoot = Require(scene, "선착장");
@@ -407,6 +459,10 @@ namespace Narthex.Tools
                 .GetComponent<TutorialHelteEncounterDialogueHost>();
             var arena = Require(scene, "BossArena_Controller").GetComponent<TutorialBossArenaHost>();
             var transition = Require(scene, "G01_Exit_ToH").GetComponent<TutorialZoneTransitionHost>();
+            var hSpawns = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                .Where(candidate => candidate != null && candidate.name == "H01_Spawn_FromG")
+                .ToArray();
 
             if (lowerFloor.GetComponent<Collider2D>() == null)
                 throw new InvalidOperationException("선착장 하단 바닥에 충돌이 없습니다.");
@@ -414,6 +470,8 @@ namespace Narthex.Tools
                 throw new InvalidOperationException("헬테 조우 대화와 재도전 체크포인트 참조가 유효하지 않습니다.");
             if (arena == null || !arena.HasValidSetup)
                 throw new InvalidOperationException("헬테 보스 아레나 참조가 유효하지 않습니다.");
+            if (Find(scene, "BossArena_EntryGate_ART_SLOT") != null)
+                throw new InvalidOperationException("헬테 접근로를 막는 구형 입구 게이트가 남아 있습니다.");
             if (!Mathf.Approximately(arena.IntroWarningSeconds, 1.1f))
                 throw new InvalidOperationException("헬테 보스 경고 시간은 1.1초여야 합니다.");
             if (transition == null || !transition.HasValidSetup)
@@ -422,6 +480,15 @@ namespace Narthex.Tools
                 throw new InvalidOperationException("헬테가 선착장 하단 바닥 위에 배치되지 않았습니다.");
             if (integration.transform.parent == null || integration.transform.parent.name != "GameplayIntegrationRoot")
                 throw new InvalidOperationException("H 연동 루트 계층이 변경되었습니다.");
+            if (hSpawns.Length != 1 || hSpawns[0].parent != integration.transform)
+                throw new InvalidOperationException("H01_Spawn_FromG는 H 연동 루트 아래에 하나만 있어야 합니다.");
+            if (hSpawns[0].position.x < lowerFloor.bounds.min.x + 1f ||
+                hSpawns[0].position.x > lowerFloor.bounds.max.x - 1f ||
+                Mathf.Abs(hSpawns[0].position.y - (lowerFloor.bounds.max.y + 0.8f)) > 0.15f)
+                throw new InvalidOperationException("H01_Spawn_FromG가 선착장 하단 바닥 위에 있지 않습니다.");
+            var transitionSerialized = new SerializedObject(transition);
+            if (transitionSerialized.FindProperty("destinationSpawn").objectReferenceValue != hSpawns[0])
+                throw new InvalidOperationException("G→H 전환이 유일한 H 스폰 마커를 참조하지 않습니다.");
 
             Debug.Log(
                 "[sragon000][H01][검증 통과] 선착장 하단 접근, 테우스 진입 대화, 헬테 조우, " +

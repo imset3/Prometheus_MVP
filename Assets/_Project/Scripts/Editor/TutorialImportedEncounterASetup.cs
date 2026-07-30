@@ -31,6 +31,31 @@ namespace Narthex.Tools
             Apply(false);
         }
 
+        [MenuItem("sragon000/튜토리얼/F 전투 적 배치 추천값으로 재정렬")]
+        public static void RepositionEnemiesFromMenu()
+        {
+            var scene = EditorSceneManager.GetActiveScene();
+            if (!scene.IsValid() || scene.path != TargetScenePath)
+            {
+                Debug.LogWarning($"[sragon000][F01] '{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                return;
+            }
+
+            var geometry = AnalyzeGeometry(Require(scene, "F스테이지"));
+            var positions = CalculateEnemyPositions(geometry);
+            for (var index = 0; index < positions.Length; index++)
+            {
+                var marker = Require(scene, $"F01_EnemySpawn_{index + 1:00}").transform;
+                marker.SetPositionAndRotation(positions[index], Quaternion.identity);
+                Require(scene, $"ExteriorA_Enemy_{index + 1:00}_ART_SLOT").transform
+                    .SetPositionAndRotation(marker.position, marker.rotation);
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[sragon000][F01] 적 3기를 실제 바닥과 출구 여백 기준으로 재배치했습니다.");
+        }
+
         private static void TryAutoApply()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
@@ -161,7 +186,7 @@ namespace Narthex.Tools
             if (gate == null)
                 throw new InvalidOperationException("F스테이지 오른쪽의 얇은 출구 문 도형을 찾지 못했습니다.");
 
-            return new GeometryAnalysis(minX, maxX, minY, maxY, gate);
+            return new GeometryAnalysis(minX, maxX, minY, maxY, renderers, gate);
         }
 
         private static Bounds CalculateRendererBounds(GameObject root)
@@ -208,6 +233,9 @@ namespace Narthex.Tools
                 var collider = proxy.AddComponent<BoxCollider2D>();
                 collider.size = new Vector2(bounds.size.x, bounds.size.y);
             }
+
+            foreach (var sourceCollider in gateRenderer.GetComponents<Collider2D>())
+                sourceCollider.enabled = false;
 
             var gate = GetOrCreateChild(fIntegration, "F01_출구잠금문_PROXY");
             var gateBounds = gateRenderer.bounds;
@@ -289,12 +317,7 @@ namespace Narthex.Tools
                 Require(scene, "ExteriorA_Enemy_02_ART_SLOT"),
                 Require(scene, "ExteriorA_Enemy_03_ART_SLOT")
             };
-            var positions = new[]
-            {
-                new Vector3(Mathf.Lerp(geometry.minX, geometry.maxX, 0.38f), -3.2f, 0f),
-                new Vector3(Mathf.Lerp(geometry.minX, geometry.maxX, 0.58f), -3.2f, 0f),
-                new Vector3(Mathf.Lerp(geometry.minX, geometry.maxX, 0.76f), -3.2f, 0f)
-            };
+            var positions = CalculateEnemyPositions(geometry);
 
             var actors = new CombatActorHost[enemies.Length];
             var spawns = new Transform[enemies.Length];
@@ -327,6 +350,36 @@ namespace Narthex.Tools
                 enemy.SetActive(false);
             }
             return (actors, spawns);
+        }
+
+        private static Vector3[] CalculateEnemyPositions(GeometryAnalysis geometry)
+        {
+            var entryX = geometry.minX + 3f;
+            var combatStartX = entryX + 8f;
+            var combatEndX = geometry.exitGateRenderer.bounds.min.x - 3f;
+            if (combatEndX - combatStartX < 15f)
+                throw new InvalidOperationException("F 전투 적 3기를 안전한 간격으로 배치할 공간이 부족합니다.");
+
+            return new[]
+            {
+                GetGroundedPosition(geometry.renderers, Mathf.Lerp(combatStartX, combatEndX, 0.28f)),
+                GetGroundedPosition(geometry.renderers, Mathf.Lerp(combatStartX, combatEndX, 0.55f)),
+                GetGroundedPosition(geometry.renderers, Mathf.Lerp(combatStartX, combatEndX, 0.80f))
+            };
+        }
+
+        private static Vector3 GetGroundedPosition(Renderer[] renderers, float x)
+        {
+            var floors = renderers
+                .Where(IsWhiteBlockout)
+                .Where(renderer => renderer.bounds.size.x >= 2f &&
+                                   renderer.bounds.size.y <= 2.2f &&
+                                   renderer.bounds.min.x <= x &&
+                                   renderer.bounds.max.x >= x)
+                .OrderBy(renderer => Mathf.Abs(renderer.bounds.max.y + 4f))
+                .ToArray();
+            var floorY = floors.Length > 0 ? floors[0].bounds.max.y : -4f;
+            return new Vector3(x, floorY + 0.8f, 0f);
         }
 
         private static void ConfigureFallRecovery(
@@ -539,10 +592,31 @@ namespace Narthex.Tools
                     throw new InvalidOperationException($"{enemyName}의 플레이어 추적 참조가 유효하지 않습니다.");
             }
 
+            var geometry = AnalyzeGeometry(Require(scene, "F스테이지"));
+            var enemySpawns = Enumerable.Range(1, 3)
+                .Select(index => Require(scene, $"F01_EnemySpawn_{index:00}").transform)
+                .ToArray();
+            for (var index = 0; index < enemySpawns.Length; index++)
+            {
+                var spawn = enemySpawns[index];
+                var expectedY = GetGroundedPosition(geometry.renderers, spawn.position.x).y;
+                if (Mathf.Abs(spawn.position.y - expectedY) > 0.15f)
+                    throw new InvalidOperationException($"{spawn.name}이 실제 발판 위에 배치되지 않았습니다.");
+                if (index > 0 && spawn.position.x - enemySpawns[index - 1].position.x < 6f)
+                    throw new InvalidOperationException("F 적 마커 간격은 최소 6m 이상이어야 합니다.");
+            }
+            if (enemySpawns[0].position.x < geometry.minX + 8f ||
+                enemySpawns[enemySpawns.Length - 1].position.x >
+                geometry.exitGateRenderer.bounds.min.x - 2.5f)
+                throw new InvalidOperationException("F 적 배치가 진입 안전 구간 또는 출구 문 여백을 침범합니다.");
+
             var gate = Require(scene, "F01_출구잠금문_PROXY");
             if (gate.GetComponent<BoxCollider2D>() == null ||
                 gate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
                 throw new InvalidOperationException("F 전멸 게이트의 충돌·문 도형 참조가 유효하지 않습니다.");
+            var gateSource = gate.GetComponent<TutorialGateVisualBindingHost>().BoundRenderer;
+            if (gateSource.GetComponents<Collider2D>().Any(collider => collider.enabled))
+                throw new InvalidOperationException($"{gateSource.name} 원본 도형 Collider가 중복 활성화되어 있습니다.");
 
             var openingWind = Require(scene, "F01_시작활공바람_MARKER");
             var fallRecovery = Require(scene, "F01_낙사복귀_MARKER")
@@ -674,14 +748,22 @@ namespace Narthex.Tools
             public readonly float maxX;
             public readonly float minY;
             public readonly float maxY;
+            public readonly Renderer[] renderers;
             public readonly Renderer exitGateRenderer;
 
-            public GeometryAnalysis(float minX, float maxX, float minY, float maxY, Renderer exitGateRenderer)
+            public GeometryAnalysis(
+                float minX,
+                float maxX,
+                float minY,
+                float maxY,
+                Renderer[] renderers,
+                Renderer exitGateRenderer)
             {
                 this.minX = minX;
                 this.maxX = maxX;
                 this.minY = minY;
                 this.maxY = maxY;
+                this.renderers = renderers;
                 this.exitGateRenderer = exitGateRenderer;
             }
         }

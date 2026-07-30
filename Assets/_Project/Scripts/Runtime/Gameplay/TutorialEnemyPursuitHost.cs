@@ -15,6 +15,8 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0.001f)] private float collisionSkin = 0.03f;
 
         private readonly RaycastHit2D[] castHits = new RaycastHit2D[12];
+        private readonly RaycastHit2D[] sightHits = new RaycastHit2D[24];
+        private Rigidbody2D body;
 
         private Collider2D ResolvedBodyCollider =>
             bodyCollider != null ? bodyCollider : GetComponent<Collider2D>();
@@ -25,6 +27,7 @@ namespace Narthex.Gameplay
         private void Awake()
         {
             bodyCollider = ResolvedBodyCollider;
+            body = GetComponent<Rigidbody2D>();
             if (HasValidSetup) return;
             Debug.LogError(
                 "TutorialEnemyPursuitHost requires actor, target, body-collider, speed, stop-distance, and collision-skin references.",
@@ -37,6 +40,7 @@ namespace Narthex.Gameplay
             if (actor.Runtime == null || !actor.Runtime.IsAlive || actor.Runtime.State == CombatState.Hit) return;
             var deltaX = target.position.x - transform.position.x;
             if (Mathf.Abs(deltaX) <= stopDistance) return;
+            if (!HasClearLineOfSight()) return;
 
             var direction = deltaX > 0f ? Vector2.right : Vector2.left;
             var requestedDistance = Mathf.Min(
@@ -45,7 +49,11 @@ namespace Narthex.Gameplay
             var allowedDistance = FindAllowedDistance(direction, requestedDistance);
             if (allowedDistance <= 0f) return;
 
-            transform.position += (Vector3)(direction * allowedDistance);
+            var nextPosition = (Vector2)transform.position + direction * allowedDistance;
+            if (body != null && body.bodyType != RigidbodyType2D.Static)
+                body.MovePosition(nextPosition);
+            else
+                transform.position = nextPosition;
             Physics2D.SyncTransforms();
         }
 
@@ -57,11 +65,7 @@ namespace Narthex.Gameplay
                 layerMask = Physics2D.AllLayers,
                 useTriggers = false
             };
-            var bounds = bodyCollider.bounds;
-            var hitCount = Physics2D.BoxCast(
-                bounds.center,
-                bounds.size,
-                transform.eulerAngles.z,
+            var hitCount = bodyCollider.Cast(
                 direction,
                 filter,
                 castHits,
@@ -76,6 +80,43 @@ namespace Narthex.Gameplay
             }
 
             return allowedDistance;
+        }
+
+        private bool HasClearLineOfSight()
+        {
+            var origin = (Vector2)bodyCollider.bounds.center;
+            var targetCollider = target.GetComponentInChildren<Collider2D>();
+            var destination = targetCollider != null
+                ? (Vector2)targetCollider.bounds.center
+                : (Vector2)target.position;
+            var delta = destination - origin;
+            var distance = delta.magnitude;
+            if (distance <= 0.01f) return true;
+
+            var filter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                layerMask = Physics2D.AllLayers,
+                useTriggers = false
+            };
+            var hitCount = Physics2D.Raycast(
+                origin,
+                delta / distance,
+                filter,
+                sightHits,
+                distance);
+            for (var index = 0; index < hitCount; index++)
+            {
+                var hit = sightHits[index];
+                if (hit.collider == null || hit.collider == bodyCollider ||
+                    hit.collider.transform.IsChildOf(transform) ||
+                    hit.collider.transform == target ||
+                    hit.collider.transform.IsChildOf(target))
+                    continue;
+                return false;
+            }
+
+            return true;
         }
     }
 }

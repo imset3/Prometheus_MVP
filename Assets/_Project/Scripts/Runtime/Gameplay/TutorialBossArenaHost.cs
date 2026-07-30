@@ -20,8 +20,6 @@ namespace Narthex.Gameplay
         [SerializeField] private string bossQuestId = "QST-TUTO-008";
         [SerializeField] private Collider2D playerCollider;
         [SerializeField] private Collider2D arenaStartTrigger;
-        [SerializeField] private Collider2D entryGateCollider;
-        [SerializeField] private Renderer entryGateRenderer;
 
         [Header("Boss")]
         [SerializeField] private CombatActorHost bossActor;
@@ -42,8 +40,7 @@ namespace Narthex.Gameplay
         public bool HasValidSetup => serviceRoot != null && combatSystemHost != null && questSequenceHost != null &&
                                      playerInputHost != null && !string.IsNullOrWhiteSpace(bossQuestId) &&
                                      playerCollider != null &&
-                                     arenaStartTrigger != null && arenaStartTrigger.isTrigger &&
-                                     entryGateCollider != null && entryGateRenderer != null && bossActor != null &&
+                                     arenaStartTrigger != null && arenaStartTrigger.isTrigger && bossActor != null &&
                                      bossBodyCollider != null && bossAttackHost != null && bossPatternHost != null &&
                                      bossWarningSlot != null && patternLaneSlots != null && patternLaneSlots.Length == 3 &&
                                      HasCompleteLaneSlots();
@@ -62,7 +59,6 @@ namespace Narthex.Gameplay
             fightCompleted = false;
             SetPresentationVisible(false);
             SetBossCombatEnabled(false);
-            SetGateLocked(false);
             bossActor.ResetRuntime();
         }
 
@@ -77,7 +73,6 @@ namespace Narthex.Gameplay
 
             serviceRoot.Initialize();
             combatSystemHost.Initialize();
-            SetGateLocked(false);
             SetPresentationVisible(false);
             SetBossCombatEnabled(false);
         }
@@ -102,7 +97,6 @@ namespace Narthex.Gameplay
             if (!arenaStartTrigger.Distance(playerCollider).isOverlapped) return;
 
             fightStarted = true;
-            SetGateLocked(true);
             introRoutine = StartCoroutine(BeginFightAfterWarning());
         }
 
@@ -124,7 +118,6 @@ namespace Narthex.Gameplay
             introRoutine = null;
             SetPresentationVisible(false);
             SetBossCombatEnabled(false);
-            SetGateLocked(false);
         }
 
         private bool HasCompleteLaneSlots()
@@ -135,12 +128,6 @@ namespace Narthex.Gameplay
             }
 
             return true;
-        }
-
-        private void SetGateLocked(bool locked)
-        {
-            entryGateCollider.enabled = locked;
-            entryGateRenderer.enabled = locked;
         }
 
         private void SetBossCombatEnabled(bool combatEnabled)

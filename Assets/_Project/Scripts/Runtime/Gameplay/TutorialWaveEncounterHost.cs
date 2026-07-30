@@ -30,6 +30,7 @@ namespace Narthex.Gameplay
 
         [Header("Traversal Gate")]
         [SerializeField] private bool requireTraversalForNextWave;
+        [SerializeField] private bool autoAdvanceNextWaveAfterGateOpens = true;
         [SerializeField] private Collider2D internalGateCollider;
         [SerializeField] private Renderer internalGateRenderer;
 
@@ -62,6 +63,7 @@ namespace Narthex.Gameplay
         public bool EncounterStarted => encounterStarted;
         public bool IsCleared => cleared;
         public bool RequiresTraversalForNextWave => requireTraversalForNextWave;
+        public bool AutoAdvancesNextWaveAfterGateOpens => autoAdvanceNextWaveAfterGateOpens;
         public bool IsWaitingForTraversal => waitingForTraversal;
         public int WaveCount => waveEnemyCounts?.Length ?? 0;
         public int EnemyCount => enemies?.Length ?? 0;
@@ -136,9 +138,12 @@ namespace Narthex.Gameplay
 
             if (requireTraversalForNextWave)
             {
-                waitingForTraversal = true;
                 SetInternalGateLocked(false);
-                return;
+                if (!autoAdvanceNextWaveAfterGateOpens)
+                {
+                    waitingForTraversal = true;
+                    return;
+                }
             }
 
             if (waveRoutine != null) StopCoroutine(waveRoutine);

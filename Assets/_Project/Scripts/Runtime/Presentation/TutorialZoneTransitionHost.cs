@@ -209,6 +209,11 @@ namespace Narthex.Presentation
 
             yield return FadeTo(1f, fadeOutDuration);
 
+            // Source-zone technical roots can live outside currentZoneRoot. Disable their
+            // colliders while the screen is fully black so they cannot overlap the
+            // destination spawn. Do not deactivate the roots yet: this transition host can
+            // itself be one of their children, which would stop this coroutine mid-fade.
+            SetCollidersEnabled(deactivateOnCompletion, false);
             nextZoneRoot.SetActive(true);
             SetActive(deactivateOnArrival, false);
             SetActive(activateOnArrival, true);
@@ -262,6 +267,17 @@ namespace Narthex.Presentation
             if (targets == null) return;
             foreach (var target in targets)
                 if (target != null) target.SetActive(active);
+        }
+
+        private static void SetCollidersEnabled(GameObject[] targets, bool enabled)
+        {
+            if (targets == null) return;
+            foreach (var target in targets)
+            {
+                if (target == null) continue;
+                foreach (var collider in target.GetComponentsInChildren<Collider2D>(true))
+                    collider.enabled = enabled;
+            }
         }
 
         private IEnumerator PlayLadderSequence()

@@ -526,11 +526,12 @@ namespace Narthex.Tools
                 ? bossArenaController.GetComponent<TutorialBossArenaHost>()
                 : null;
             if (bossArenaHost != null && !bossArenaHost.HasValidSetup)
-                issues.Add("Tutorial boss arena has invalid entry, boss, warning, or pattern-lane references.");
+                issues.Add("Tutorial boss arena has invalid trigger, boss, warning, or pattern-lane references.");
             if (bossArenaHost != null && !Mathf.Approximately(bossArenaHost.IntroWarningSeconds, 1.1f))
                 issues.Add("Helte's pre-combat camera and warning presentation must last 1.1 seconds.");
             RequireObject("BossArena_StartTrigger", issues);
-            RequireObject("BossArena_EntryGate_ART_SLOT", issues);
+            if (FindObject("BossArena_EntryGate_ART_SLOT") != null)
+                issues.Add("The obsolete Helte entry gate must not block the dock approach.");
             RequireObject("BossWarning_ART_SLOT", issues);
             var bossArenaFloor = RequireObject("BossArena_Floor_ART_SLOT", issues);
             RequireComponent<BoxCollider2D>(bossArenaFloor, issues);
@@ -853,6 +854,11 @@ namespace Narthex.Tools
             RequireComponent<TutorialGateVisualBindingHost>(fGate, issues);
             if (fGate != null && fGate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
                 issues.Add("F01 exit gate proxy must reference the level designer's thin door renderer.");
+            var fGateBinding = fGate != null ? fGate.GetComponent<TutorialGateVisualBindingHost>() : null;
+            if (fGateBinding?.BoundRenderer != null &&
+                fGateBinding.BoundRenderer.GetComponents<Collider2D>().Any(collider => collider.enabled))
+                issues.Add(
+                    $"{fGateBinding.BoundRenderer.name} must not keep an enabled authored collider beside its F gate proxy.");
             var exteriorToF = RequireObject("E01_Exit_ToF", issues);
             RequireComponent<BoxCollider2D>(exteriorToF, issues);
             RequireComponent<TutorialZoneTransitionHost>(exteriorToF, issues);
@@ -869,9 +875,10 @@ namespace Narthex.Tools
                 : null;
             if (encounterBHost != null &&
                 (!encounterBHost.HasValidSetup || !encounterBHost.RequiresTraversalForNextWave ||
+                 !encounterBHost.AutoAdvancesNextWaveAfterGateOpens ||
                  encounterBHost.WaveCount != 2 || encounterBHost.EnemyCount != 4))
                 issues.Add(
-                    "Exterior encounter B must use two valid enemy groups separated by a traversal gate.");
+                    "Exterior encounter B must automatically start its second enemy group after opening the internal gate.");
             for (var enemyIndex = 1; enemyIndex <= 4; enemyIndex++)
             {
                 var exteriorEnemy = RequireObject($"ExteriorB_Enemy_0{enemyIndex}_ART_SLOT", issues);
@@ -901,6 +908,11 @@ namespace Narthex.Tools
                 RequireComponent<TutorialGateVisualBindingHost>(gate, issues);
                 if (gate != null && gate.GetComponent<TutorialGateVisualBindingHost>()?.BoundRenderer == null)
                     issues.Add($"{gateName} must reference the level designer's thin door renderer.");
+                var binding = gate != null ? gate.GetComponent<TutorialGateVisualBindingHost>() : null;
+                if (binding?.BoundRenderer != null &&
+                    binding.BoundRenderer.GetComponents<Collider2D>().Any(collider => collider.enabled))
+                    issues.Add(
+                        $"{binding.BoundRenderer.name} must not keep an enabled authored collider beside its gate proxy.");
             }
             foreach (var transitionName in new[] { "F01_Exit_ToG", "G01_Exit_ToH" })
             {
@@ -1003,12 +1015,20 @@ namespace Narthex.Tools
 
         private static GameObject RequireObject(string name, List<string> issues)
         {
+            var candidate = FindObject(name);
+            if (candidate != null) return candidate;
+
+            issues.Add($"Missing GameObject '{name}'.");
+            return null;
+        }
+
+        private static GameObject FindObject(string name)
+        {
             foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
             {
                 if (candidate.name == name && candidate.scene.IsValid()) return candidate;
             }
 
-            issues.Add($"Missing GameObject '{name}'.");
             return null;
         }
 
