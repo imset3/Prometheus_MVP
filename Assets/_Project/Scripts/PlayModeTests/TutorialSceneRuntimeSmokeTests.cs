@@ -74,11 +74,19 @@ namespace Narthex.PlayModeTests
                     .GetComponent<TutorialBossArenaHost>()
                     .HasValidSetup,
                 Is.True);
+            var helte = FindSceneTransform(scene, "TutorialHelte");
             Assert.That(
-                FindSceneTransform(scene, "TutorialHelte")
-                    .GetComponent<HelteBossPatternHost>(),
+                helte.GetComponent<HelteBossPatternHost>(),
                 Is.Not.Null,
                 "The dedicated scene must retain the Helte FSM host for isolated development.");
+            Assert.That(
+                helte.GetComponent<CombatActorHost>().Runtime.MaxHealth,
+                Is.EqualTo(240),
+                "Helte must survive long enough to expose both phases during FSM tuning.");
+            Assert.That(
+                helte.GetComponent<HeltePatternVfxHost>().HasValidSetup,
+                Is.True,
+                "The development scene must expose state-driven VFX bindings.");
         }
 
         [UnityTest]

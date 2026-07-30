@@ -75757,6 +75757,7 @@ GameObject:
   - component: {fileID: 1608749473}
   - component: {fileID: 1608749479}
   - component: {fileID: 1608749478}
+  - component: {fileID: 1608749480}
   m_Layer: 0
   m_Name: TutorialHelte
   m_TagString: Untagged
@@ -75764,6 +75765,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!114 &1608749480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608749472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40ca244239b14c61ac822575712b2b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.HeltePatternVfxHost
+  patternHost: {fileID: 1608749473}
+  bindings: []
 --- !u!114 &1608749473
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75939,7 +75954,7 @@ MonoBehaviour:
   combatSystemHost: {fileID: 1756494542}
   actorId: BOSS-TUTO-HELTE
   kind: 2
-  maxHealth: 100
+  maxHealth: 240
   stageId: TUTO-006
   unlockTreeId: TREE-BOSS-HELTE
   hitRecoverySeconds: 0.15

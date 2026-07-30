@@ -57,3 +57,39 @@
 - 헬테 개발 씬 PlayMode 테스트에 HUD 진행 ID와 위치 검증 추가
 - Unity 스크립트 컴파일 오류 `0`
 - Test Runner에서 EditMode 테스트 `47개` 발견 확인
+
+## 체력과 패턴 VFX 연결
+
+- 헬테 최대 체력: `240`
+- 2페이즈 기준: 최대 체력의 `50%`
+- 원거리 공격만 사용하면 약 12발, 기본 공격과 혼합하면 여러 패턴 주기를 확인할 수 있는 값이다.
+
+`TutorialHelte`의 `HeltePatternVfxHost`에서 `Bindings` 배열을 편집한다.
+
+| 항목 | 용도 |
+| --- | --- |
+| State | VFX를 시작할 FSM 상태 |
+| Effect Root | 계층에 미리 배치한 VFX 또는 프리팹 인스턴스 |
+| Anchor | 보스, 검, 히트박스 등 VFX가 붙을 Transform |
+| Local Offset | Anchor 기준 위치 보정 |
+| Follow Anchor | 상태 중 Anchor를 계속 따라갈지 여부 |
+| Apply Anchor Rotation | Anchor 회전을 VFX에 적용할지 여부 |
+| Restart Particle Systems | 상태 진입마다 ParticleSystem을 처음부터 재생 |
+| Deactivate On State Exit | 다른 상태로 넘어갈 때 VFX를 끌지 여부 |
+
+하나의 상태에 여러 Binding을 추가할 수 있다. 예를 들어 `CrossSlash`에 검광, 충격파와 화면 플래시 슬롯을 각각 연결할 수 있다.
+
+권장 상태 연결:
+
+- `BasicWindup`: 기본 공격 예고
+- `BasicLeftSlash`, `BasicRightSlash`: 좌·우 검광
+- `BlinkVanish`, `BlinkReappear`: 소멸·재등장
+- `DashTelegraph`: 돌진 경로 예고
+- `DashApproach`: 이동 잔상·트레일
+- `CrossSlashTelegraph`, `CrossSlash`: X 베기 예고·타격
+- `PhaseTransition`: 2페이즈 전환
+- `SwordFocus`: 칼 소환 집중
+- `SwordVolley`: 칼 발사
+- `Recover`: 선택적인 후딜 표시
+
+VFX 오브젝트는 전투 로직의 Collider나 Rigidbody를 갖지 않는다. 최종 아트는 `Effect Root`만 교체하고 FSM과 히트박스 참조는 유지한다.
