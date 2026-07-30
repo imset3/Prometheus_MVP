@@ -75865,6 +75865,7 @@ MonoBehaviour:
   - {fileID: 36984976}
   - {fileID: 1178751618}
   phaseTwoHealthRatio: 0.55
+  finalRushHealthRatio: 0.2
   basicAdvanceDistance: 1
   blinkSideDistance: 3
   dashDistance: 4
@@ -75881,14 +75882,23 @@ MonoBehaviour:
   dashDurationSeconds: 0.3
   crossSlashWarningSeconds: 0.18
   phaseTransitionSeconds: 1
+  finalRushTransitionSeconds: 0.65
   swordFocusSeconds: 0.55
   swordIntervalSeconds: 0.2
   swordRecoverySeconds: 1
   specialRecoverySeconds: 0.7
   hitboxActiveSeconds: 0.1
+  phaseTwoRecoveryMultiplier: 0.75
+  finalRushRecoveryMultiplier: 0.55
+  phaseTwoMovementDurationMultiplier: 0.9
+  finalRushMovementDurationMultiplier: 0.78
+  phaseTwoProjectileSpeedMultiplier: 1.1
+  finalRushProjectileSpeedMultiplier: 1.2
   basicDamage: 8
   blinkDamage: 15
   swordDamage: 10
+  phaseTwoDamageMultiplier: 1.15
+  finalRushDamageMultiplier: 1.3
 --- !u!114 &1608749474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -76000,7 +76010,7 @@ MonoBehaviour:
   combatSystemHost: {fileID: 1756494542}
   actorId: BOSS-TUTO-HELTE
   kind: 2
-  maxHealth: 6000
+  maxHealth: 5000
   stageId: TUTO-006
   unlockTreeId: TREE-BOSS-HELTE
   hitRecoverySeconds: 0.15

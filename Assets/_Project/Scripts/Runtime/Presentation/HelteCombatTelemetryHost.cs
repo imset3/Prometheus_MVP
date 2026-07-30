@@ -133,9 +133,20 @@ namespace Narthex.Presentation
                 $"헬테 밸런스 계측 · {status}\n" +
                 $"시간 {FormatDuration(ElapsedSeconds)} / 목표 {FormatDuration(targetDurationSeconds)}\n" +
                 $"체력 {currentHealth} / {maximumHealth}\n" +
+                $"템포 {FormatTempo(patternHost.CurrentTempo)}\n" +
                 $"패턴 기본 {BasicComboCount} · 블링크 {BlinkDashCount} · 칼 {SwordVolleyCount}";
 
-            GUI.Box(new Rect(Screen.width - 292f, 16f, 276f, 96f), text);
+            GUI.Box(new Rect(Screen.width - 292f, 16f, 276f, 112f), text);
+        }
+
+        private static string FormatTempo(HelteCombatTempo tempo)
+        {
+            return tempo switch
+            {
+                HelteCombatTempo.FinalRush => "최종 러시",
+                HelteCombatTempo.PhaseTwo => "2페이즈",
+                _ => "도입"
+            };
         }
 #endif
     }

@@ -81,12 +81,16 @@ namespace Narthex.PlayModeTests
                 "The dedicated scene must retain the Helte FSM host for isolated development.");
             Assert.That(
                 helte.GetComponent<CombatActorHost>().Runtime.MaxHealth,
-                Is.EqualTo(6000),
+                Is.EqualTo(5000),
                 "Helte health must support the five-minute encounter pacing target.");
             Assert.That(
                 helte.GetComponent<HelteBossPatternHost>().PhaseTwoHealthRatio,
                 Is.EqualTo(0.55f).Within(0.001f),
                 "Helte phase two must begin at 55% health.");
+            Assert.That(
+                helte.GetComponent<HelteBossPatternHost>().FinalRushHealthRatio,
+                Is.EqualTo(0.2f).Within(0.001f),
+                "Helte's final rush must begin at 20% health.");
             Assert.That(
                 helte.GetComponent<HeltePatternVfxHost>().HasValidSetup,
                 Is.True,

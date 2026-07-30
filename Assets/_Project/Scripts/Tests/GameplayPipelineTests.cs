@@ -634,6 +634,18 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void HeltePatternPlanner_FinalRushUsesReadableFourBeatSequence()
+        {
+            var planner = new HeltePatternPlanner(() => 2);
+
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BlinkDash));
+        }
+
+        [Test]
         public void TutorialHudModeResolver_UsesResultDialogueBossPriority()
         {
             Assert.That(TutorialHudModeResolver.Resolve(false, false, false, false), Is.EqualTo(TutorialHudMode.Normal));

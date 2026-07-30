@@ -8,6 +8,7 @@ namespace Narthex.Gameplay
         Disabled,
         Waiting,
         PhaseTransition,
+        FinalRushTransition,
         BasicWindup,
         BasicLeftSlash,
         BasicAdvance,
@@ -54,6 +55,7 @@ namespace Narthex.Gameplay
 
         [Header("Phase and movement")]
         [SerializeField, Range(0.1f, 0.9f)] private float phaseTwoHealthRatio = 0.5f;
+        [SerializeField, Range(0.05f, 0.5f)] private float finalRushHealthRatio = 0.2f;
         [SerializeField, Min(0.1f)] private float basicAdvanceDistance = 1f;
         [SerializeField, Min(0.1f)] private float blinkSideDistance = 3f;
         [SerializeField, Min(0.1f)] private float dashDistance = 4f;
@@ -72,22 +74,34 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0.01f)] private float dashDurationSeconds = 0.3f;
         [SerializeField, Min(0f)] private float crossSlashWarningSeconds = 0.18f;
         [SerializeField, Min(0f)] private float phaseTransitionSeconds = 1f;
+        [SerializeField, Min(0f)] private float finalRushTransitionSeconds = 0.65f;
         [SerializeField, Min(0f)] private float swordFocusSeconds = 0.55f;
         [SerializeField, Min(0f)] private float swordIntervalSeconds = 0.28f;
         [SerializeField, Min(0f)] private float swordRecoverySeconds = 1f;
         [SerializeField, Min(0f)] private float specialRecoverySeconds = 0.7f;
         [SerializeField, Min(0.01f)] private float hitboxActiveSeconds = 0.1f;
 
+        [Header("Phase pacing")]
+        [SerializeField, Range(0.25f, 1f)] private float phaseTwoRecoveryMultiplier = 0.75f;
+        [SerializeField, Range(0.25f, 1f)] private float finalRushRecoveryMultiplier = 0.55f;
+        [SerializeField, Range(0.5f, 1f)] private float phaseTwoMovementDurationMultiplier = 0.9f;
+        [SerializeField, Range(0.5f, 1f)] private float finalRushMovementDurationMultiplier = 0.78f;
+        [SerializeField, Min(1f)] private float phaseTwoProjectileSpeedMultiplier = 1.1f;
+        [SerializeField, Min(1f)] private float finalRushProjectileSpeedMultiplier = 1.2f;
+
         [Header("Pattern damage")]
         [SerializeField, Min(1)] private int basicDamage = 8;
         [SerializeField, Min(1)] private int blinkDamage = 15;
         [SerializeField, Min(1)] private int swordDamage = 10;
+        [SerializeField, Min(1f)] private float phaseTwoDamageMultiplier = 1.15f;
+        [SerializeField, Min(1f)] private float finalRushDamageMultiplier = 1.3f;
 
         private readonly Collider2D[] overlapResults = new Collider2D[8];
         private readonly HeltePatternPlanner planner = new HeltePatternPlanner();
         private Coroutine combatRoutine;
         private int activeSwordCount;
         private bool phaseTwoPresented;
+        private bool finalRushPresented;
         private Vector3 basicHitboxLocalPosition;
         private Vector3 initialBossPosition;
         private Quaternion initialBossRotation;
@@ -95,7 +109,10 @@ namespace Narthex.Gameplay
         public HeltePattern CurrentPattern { get; private set; }
         public HelteCombatState CurrentState { get; private set; } = HelteCombatState.Disabled;
         public bool IsPhaseTwo => IsPhaseTwoHealth();
+        public bool IsFinalRush => IsFinalRushHealth();
+        public HelteCombatTempo CurrentTempo => ResolveCombatTempo();
         public float PhaseTwoHealthRatio => phaseTwoHealthRatio;
+        public float FinalRushHealthRatio => finalRushHealthRatio;
         public event System.Action<HeltePattern> PatternStarted;
         public event System.Action<HelteCombatState> StateChanged;
 
@@ -158,7 +175,14 @@ namespace Narthex.Gameplay
                     if (!CanRunPattern()) break;
                 }
 
-                CurrentPattern = planner.Next(IsPhaseTwoHealth());
+                if (IsFinalRushHealth() && !finalRushPresented)
+                {
+                    finalRushPresented = true;
+                    yield return RunFinalRushTransition();
+                    if (!CanRunPattern()) break;
+                }
+
+                CurrentPattern = planner.Next(ResolveCombatTempo());
                 PatternStarted?.Invoke(CurrentPattern);
                 switch (CurrentPattern)
                 {
@@ -188,23 +212,24 @@ namespace Narthex.Gameplay
             if (!CanRunPattern()) yield break;
 
             SetState(HelteCombatState.BasicLeftSlash);
-            yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-LEFT", basicDamage);
+            yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-LEFT", ScaleDamage(basicDamage));
             if (basicSecondHitDelaySeconds > 0f) yield return new WaitForSeconds(basicSecondHitDelaySeconds);
             if (!CanRunPattern()) yield break;
 
             SetState(HelteCombatState.BasicAdvance);
             var start = transform.position;
             var target = ClampToArena(start + Vector3.right * facing * basicAdvanceDistance);
-            yield return MoveBoss(start, target, basicAdvanceSeconds);
+            yield return MoveBoss(start, target, ScaleMovementDuration(basicAdvanceSeconds));
             if (!CanRunPattern()) yield break;
 
             facing = DirectionToPlayer();
             PositionBasicHitbox(facing);
             SetState(HelteCombatState.BasicRightSlash);
-            yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-RIGHT", basicDamage);
+            yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-RIGHT", ScaleDamage(basicDamage));
 
             SetState(HelteCombatState.Recover);
-            if (normalAttackCooldownSeconds > 0f) yield return new WaitForSeconds(normalAttackCooldownSeconds);
+            var recovery = ScaleRecovery(normalAttackCooldownSeconds);
+            if (recovery > 0f) yield return new WaitForSeconds(recovery);
         }
 
         private IEnumerator RunBlinkDash()
@@ -246,7 +271,7 @@ namespace Narthex.Gameplay
             }
 
             SetState(HelteCombatState.DashApproach);
-            yield return MoveBoss(dashStart, dashTarget, dashDurationSeconds); // Dash travel intentionally deals no damage.
+            yield return MoveBoss(dashStart, dashTarget, ScaleMovementDuration(dashDurationSeconds)); // Dash travel intentionally deals no damage.
             dashPathSlot.SetActive(false);
             if (!CanRunPattern()) yield break;
 
@@ -258,10 +283,11 @@ namespace Narthex.Gameplay
             if (!CanRunPattern()) yield break;
 
             SetState(HelteCombatState.CrossSlash);
-            yield return PulseHitbox(blinkCrossHitbox, "PAT-HELTE-BLINK-CROSS", blinkDamage);
+            yield return PulseHitbox(blinkCrossHitbox, "PAT-HELTE-BLINK-CROSS", ScaleDamage(blinkDamage));
 
             SetState(HelteCombatState.Recover);
-            if (specialRecoverySeconds > 0f) yield return new WaitForSeconds(specialRecoverySeconds);
+            var recovery = ScaleRecovery(specialRecoverySeconds);
+            if (recovery > 0f) yield return new WaitForSeconds(recovery);
         }
 
         private IEnumerator RunSwordSummon()
@@ -282,7 +308,8 @@ namespace Narthex.Gameplay
 
             while (activeSwordCount > 0 && CanRunPattern()) yield return null;
             SetState(HelteCombatState.Recover);
-            if (swordRecoverySeconds > 0f) yield return new WaitForSeconds(swordRecoverySeconds);
+            var recovery = ScaleRecovery(swordRecoverySeconds);
+            if (recovery > 0f) yield return new WaitForSeconds(recovery);
         }
 
         private IEnumerator RunPhaseTransition()
@@ -291,6 +318,15 @@ namespace Narthex.Gameplay
             phaseTransitionSlot.transform.position = bossCenterAnchor.position;
             phaseTransitionSlot.SetActive(true);
             if (phaseTransitionSeconds > 0f) yield return new WaitForSeconds(phaseTransitionSeconds);
+            phaseTransitionSlot.SetActive(false);
+        }
+
+        private IEnumerator RunFinalRushTransition()
+        {
+            SetState(HelteCombatState.FinalRushTransition);
+            phaseTransitionSlot.transform.position = bossCenterAnchor.position;
+            phaseTransitionSlot.SetActive(true);
+            if (finalRushTransitionSeconds > 0f) yield return new WaitForSeconds(finalRushTransitionSeconds);
             phaseTransitionSlot.SetActive(false);
         }
 
@@ -303,7 +339,7 @@ namespace Narthex.Gameplay
             var direction = (capturedTarget - start).normalized;
             if (direction.sqrMagnitude < 0.01f) direction = Vector3.down;
             var end = start + direction * swordMaximumTravelDistance;
-            var duration = swordMaximumTravelDistance / swordProjectileSpeed;
+            var duration = swordMaximumTravelDistance / (swordProjectileSpeed * ResolveProjectileSpeedMultiplier());
             var elapsed = 0f;
             var hasDealtDamage = false;
 
@@ -319,7 +355,11 @@ namespace Narthex.Gameplay
                 hitbox.transform.position = position;
                 visual.transform.position = position;
                 Physics2D.SyncTransforms();
-                if (!hasDealtDamage) hasDealtDamage = TryDamagePlayer(hitbox, $"PAT-HELTE-SWORD-{index + 1:00}", swordDamage);
+                if (!hasDealtDamage)
+                    hasDealtDamage = TryDamagePlayer(
+                        hitbox,
+                        $"PAT-HELTE-SWORD-{index + 1:00}",
+                        ScaleDamage(swordDamage));
                 yield return null;
             }
 
@@ -405,6 +445,59 @@ namespace Narthex.Gameplay
                    sourceActor.Runtime.CurrentHealth <= sourceActor.Runtime.MaxHealth * phaseTwoHealthRatio;
         }
 
+        private bool IsFinalRushHealth()
+        {
+            return sourceActor != null && sourceActor.Runtime != null &&
+                   sourceActor.Runtime.CurrentHealth <= sourceActor.Runtime.MaxHealth * finalRushHealthRatio;
+        }
+
+        private HelteCombatTempo ResolveCombatTempo()
+        {
+            if (IsFinalRushHealth()) return HelteCombatTempo.FinalRush;
+            return IsPhaseTwoHealth() ? HelteCombatTempo.PhaseTwo : HelteCombatTempo.Opening;
+        }
+
+        private float ScaleRecovery(float duration)
+        {
+            return ResolveCombatTempo() switch
+            {
+                HelteCombatTempo.FinalRush => duration * finalRushRecoveryMultiplier,
+                HelteCombatTempo.PhaseTwo => duration * phaseTwoRecoveryMultiplier,
+                _ => duration
+            };
+        }
+
+        private float ScaleMovementDuration(float duration)
+        {
+            return ResolveCombatTempo() switch
+            {
+                HelteCombatTempo.FinalRush => duration * finalRushMovementDurationMultiplier,
+                HelteCombatTempo.PhaseTwo => duration * phaseTwoMovementDurationMultiplier,
+                _ => duration
+            };
+        }
+
+        private float ResolveProjectileSpeedMultiplier()
+        {
+            return ResolveCombatTempo() switch
+            {
+                HelteCombatTempo.FinalRush => finalRushProjectileSpeedMultiplier,
+                HelteCombatTempo.PhaseTwo => phaseTwoProjectileSpeedMultiplier,
+                _ => 1f
+            };
+        }
+
+        private int ScaleDamage(int damage)
+        {
+            var multiplier = ResolveCombatTempo() switch
+            {
+                HelteCombatTempo.FinalRush => finalRushDamageMultiplier,
+                HelteCombatTempo.PhaseTwo => phaseTwoDamageMultiplier,
+                _ => 1f
+            };
+            return Mathf.Max(1, Mathf.RoundToInt(damage * multiplier));
+        }
+
         private bool CanRunPattern()
         {
             return isActiveAndEnabled && sourceActor.Runtime != null && sourceActor.CombatSystem != null &&
@@ -431,6 +524,7 @@ namespace Narthex.Gameplay
         {
             planner.Reset();
             phaseTwoPresented = false;
+            finalRushPresented = false;
             CurrentPattern = HeltePattern.None;
             SetState(HelteCombatState.Waiting);
         }

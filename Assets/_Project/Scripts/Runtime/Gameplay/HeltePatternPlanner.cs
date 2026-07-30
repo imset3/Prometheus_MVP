@@ -1,5 +1,12 @@
 namespace Narthex.Gameplay
 {
+    public enum HelteCombatTempo
+    {
+        Opening,
+        PhaseTwo,
+        FinalRush
+    }
+
     public enum HeltePattern
     {
         None,
@@ -14,7 +21,8 @@ namespace Narthex.Gameplay
 
         private int basicPatternsRemaining;
         private bool blinkAfterSummon;
-        private bool? previousPhaseTwo;
+        private int finalRushPatternIndex;
+        private HelteCombatTempo? previousTempo;
 
         public HeltePatternPlanner(System.Func<int> basicCountSelector = null)
         {
@@ -25,19 +33,29 @@ namespace Narthex.Gameplay
         {
             basicPatternsRemaining = 0;
             blinkAfterSummon = false;
-            previousPhaseTwo = null;
+            finalRushPatternIndex = 0;
+            previousTempo = null;
         }
 
         public HeltePattern Next(bool phaseTwo)
         {
-            if (!previousPhaseTwo.HasValue || previousPhaseTwo.Value != phaseTwo)
+            return Next(phaseTwo ? HelteCombatTempo.PhaseTwo : HelteCombatTempo.Opening);
+        }
+
+        public HeltePattern Next(HelteCombatTempo tempo)
+        {
+            if (!previousTempo.HasValue || previousTempo.Value != tempo)
             {
-                previousPhaseTwo = phaseTwo;
+                previousTempo = tempo;
                 basicPatternsRemaining = SelectBasicPatternCount();
                 blinkAfterSummon = false;
+                finalRushPatternIndex = 0;
             }
 
-            if (phaseTwo && blinkAfterSummon)
+            if (tempo == HelteCombatTempo.FinalRush)
+                return NextFinalRushPattern();
+
+            if (tempo == HelteCombatTempo.PhaseTwo && blinkAfterSummon)
             {
                 blinkAfterSummon = false;
                 basicPatternsRemaining = SelectBasicPatternCount();
@@ -50,7 +68,7 @@ namespace Narthex.Gameplay
                 return HeltePattern.BasicCombo;
             }
 
-            if (!phaseTwo)
+            if (tempo == HelteCombatTempo.Opening)
             {
                 basicPatternsRemaining = SelectBasicPatternCount();
                 return HeltePattern.BlinkDash;
@@ -58,6 +76,20 @@ namespace Narthex.Gameplay
 
             blinkAfterSummon = true;
             return HeltePattern.SummonSwords;
+        }
+
+        private HeltePattern NextFinalRushPattern()
+        {
+            // A readable four-beat climax: reposition, punish window, projectile pressure, then another punish window.
+            var pattern = finalRushPatternIndex switch
+            {
+                0 => HeltePattern.BlinkDash,
+                1 => HeltePattern.BasicCombo,
+                2 => HeltePattern.SummonSwords,
+                _ => HeltePattern.BasicCombo
+            };
+            finalRushPatternIndex = (finalRushPatternIndex + 1) % 4;
+            return pattern;
         }
 
         private int SelectBasicPatternCount()
