@@ -23,6 +23,56 @@ namespace Narthex.PlayModeTests
     {
         private const string ImportedTutorialScenePath =
             "Assets/Scenes/TutorialScene.unity";
+        private const string HelteBossFsmDevScenePath =
+            "Assets/Scenes/HelteBossFsmDev.unity";
+
+        [UnityTest]
+        public IEnumerator HelteBossFsmDevScene_BootstrapsDirectlyIntoHelte()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HelteBossFsmDevScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The Helte FSM development scene test runs in the Unity Editor.");
+            yield break;
+#endif
+
+            var scene = SceneManager.GetActiveScene();
+            Assert.That(scene.name, Is.EqualTo("HelteBossFsmDev"));
+            Assert.That(
+                FindSceneComponent<HelteBossFsmDevBootstrapHost>(scene),
+                Is.Not.Null,
+                "The development scene must retain its Helte-only bootstrap marker.");
+
+            var sectionSkip = FindSceneComponent<TutorialDebugSectionSkipHost>(scene);
+            yield return WaitForConditionRealtime(
+                () => sectionSkip.ActiveSectionIndex == sectionSkip.SectionCount - 1,
+                3f,
+                "The development scene did not jump directly to the Helte section.");
+
+            Assert.That(
+                FindSceneComponent<TutorialQuestSequenceHost>(scene).CurrentQuestId,
+                Is.EqualTo("QST-TUTO-008"));
+            Assert.That(FindSceneTransform(scene, "선착장").gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransform(scene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.True);
+            Assert.That(
+                FindSceneTransformOrDefault(scene, "BossArena_EntryGate_ART_SLOT"),
+                Is.Null,
+                "The development arena must use the permanently open Helte approach.");
+            Assert.That(
+                FindSceneTransform(scene, "BossArena_Controller")
+                    .GetComponent<TutorialBossArenaHost>()
+                    .HasValidSetup,
+                Is.True);
+            Assert.That(
+                FindSceneTransform(scene, "TutorialHelte")
+                    .GetComponent<HelteBossPatternHost>(),
+                Is.Not.Null,
+                "The dedicated scene must retain the Helte FSM host for isolated development.");
+        }
 
         [UnityTest]
         public IEnumerator TutorialScene_LoadsAndStartsTheOpeningFlow()
