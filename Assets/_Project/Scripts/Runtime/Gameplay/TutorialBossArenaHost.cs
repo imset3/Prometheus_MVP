@@ -36,6 +36,7 @@ namespace Narthex.Gameplay
         private bool fightCompleted;
         private bool combatActive;
         private Coroutine introRoutine;
+        private Vector2 previousPlayerPosition;
 
         public bool HasValidSetup => serviceRoot != null && combatSystemHost != null && questSequenceHost != null &&
                                      playerInputHost != null && !string.IsNullOrWhiteSpace(bossQuestId) &&
@@ -61,6 +62,7 @@ namespace Narthex.Gameplay
             SetBossCombatEnabled(false);
             bossActor.ResetRuntime();
             bossPatternHost.ResetForEncounter();
+            previousPlayerPosition = playerCollider.transform.position;
         }
 
         private void Awake()
@@ -74,6 +76,7 @@ namespace Narthex.Gameplay
 
             serviceRoot.Initialize();
             combatSystemHost.Initialize();
+            previousPlayerPosition = playerCollider.transform.position;
             SetPresentationVisible(false);
             SetBossCombatEnabled(false);
         }
@@ -93,12 +96,27 @@ namespace Narthex.Gameplay
 
         private void Update()
         {
+            var reachedArena = HasPlayerReachedArena();
+            previousPlayerPosition = playerCollider.transform.position;
             if (fightStarted || fightCompleted || questSequenceHost.CurrentQuestId != bossQuestId) return;
             if (playerInputHost.IsDialogueInputClaimed) return;
-            if (!arenaStartTrigger.Distance(playerCollider).isOverlapped) return;
+            if (!reachedArena) return;
 
             fightStarted = true;
             introRoutine = StartCoroutine(BeginFightAfterWarning());
+        }
+
+        private bool HasPlayerReachedArena()
+        {
+            if (arenaStartTrigger.Distance(playerCollider).isOverlapped) return true;
+
+            var playerPoint = (Vector2)playerCollider.transform.position;
+            return arenaStartTrigger.bounds.Contains(playerPoint) ||
+                   arenaStartTrigger.bounds.SqrDistance(playerPoint) <= 0.04f ||
+                   TutorialTriggerSweepPolicy.Intersects(
+                       arenaStartTrigger.bounds,
+                       previousPlayerPosition,
+                       playerPoint);
         }
 
         private IEnumerator BeginFightAfterWarning()

@@ -67,6 +67,7 @@ namespace Narthex.Gameplay
         [SerializeField, Range(0.05f, 0.5f)] private float mercyHealthRatio = 0.25f;
         [SerializeField, Range(0.1f, 0.75f)] private float mercyRecoveryHealthRatio = 0.35f;
         [SerializeField, Min(0f)] private float mercyPauseSeconds = 1.4f;
+        [SerializeField, Min(0f)] private float mercyCooldownSeconds = 30f;
         [SerializeField, Min(0f)] private float fakeBlinkPauseSeconds = 0.9f;
         [SerializeField, Min(0f)] private float counterTelegraphSeconds = 0.35f;
         [SerializeField, Min(0f)] private float counterStanceSeconds = 0.75f;
@@ -123,7 +124,7 @@ namespace Narthex.Gameplay
         private int activeSwordCount;
         private bool phaseTwoPresented;
         private bool finalRushPresented;
-        private bool mercyPresented;
+        private float nextMercyAvailableTime;
         private Vector3 basicHitboxLocalPosition;
         private Vector3 initialBossPosition;
         private Quaternion initialBossRotation;
@@ -135,6 +136,7 @@ namespace Narthex.Gameplay
         public HelteCombatTempo CurrentTempo => ResolveCombatTempo();
         public float PhaseTwoHealthRatio => phaseTwoHealthRatio;
         public float FinalRushHealthRatio => finalRushHealthRatio;
+        public float MercyCooldownSeconds => mercyCooldownSeconds;
         public bool FriendlyPatternPrototypeEnabled => enableFriendlyPatternPrototype;
         public event System.Action<HeltePattern> PatternStarted;
         public event System.Action<HelteCombatState> StateChanged;
@@ -194,7 +196,7 @@ namespace Narthex.Gameplay
             {
                 if (ShouldOfferMercy())
                 {
-                    mercyPresented = true;
+                    nextMercyAvailableTime = Time.time + mercyCooldownSeconds;
                     yield return RunMercyRetreat();
                     if (!CanRunPattern()) break;
                 }
@@ -453,20 +455,24 @@ namespace Narthex.Gameplay
 
         private IEnumerator RunPhaseTransition()
         {
+            sourceActor.SetScriptedInvulnerability(true);
             SetState(HelteCombatState.PhaseTransition);
             phaseTransitionSlot.transform.position = bossCenterAnchor.position;
             phaseTransitionSlot.SetActive(true);
             if (phaseTransitionSeconds > 0f) yield return new WaitForSeconds(phaseTransitionSeconds);
             phaseTransitionSlot.SetActive(false);
+            sourceActor.SetScriptedInvulnerability(false);
         }
 
         private IEnumerator RunFinalRushTransition()
         {
+            sourceActor.SetScriptedInvulnerability(true);
             SetState(HelteCombatState.FinalRushTransition);
             phaseTransitionSlot.transform.position = bossCenterAnchor.position;
             phaseTransitionSlot.SetActive(true);
             if (finalRushTransitionSeconds > 0f) yield return new WaitForSeconds(finalRushTransitionSeconds);
             phaseTransitionSlot.SetActive(false);
+            sourceActor.SetScriptedInvulnerability(false);
         }
 
         private IEnumerator LaunchSword(int index, Vector3 capturedTarget)
@@ -553,7 +559,7 @@ namespace Narthex.Gameplay
 
         private int LimitDamageUntilMercy(CombatActorHost target, int damage)
         {
-            if (!enableFriendlyPatternPrototype || mercyPresented || target?.Runtime == null)
+            if (!enableFriendlyPatternPrototype || !IsMercyAvailable() || target?.Runtime == null)
                 return damage;
 
             return HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(
@@ -597,9 +603,14 @@ namespace Narthex.Gameplay
 
         private bool ShouldOfferMercy()
         {
-            return enableFriendlyPatternPrototype && !mercyPresented &&
+            return enableFriendlyPatternPrototype && IsMercyAvailable() &&
                    playerActor != null && playerActor.Runtime != null && playerActor.Runtime.IsAlive &&
                    playerActor.Runtime.CurrentHealth <= playerActor.Runtime.MaxHealth * mercyHealthRatio;
+        }
+
+        private bool IsMercyAvailable()
+        {
+            return HelteFriendlyCombatPolicy.IsMercyAvailable(Time.time, nextMercyAvailableTime);
         }
 
         private bool IsPlayerMeleeTouchingBoss()
@@ -704,7 +715,7 @@ namespace Narthex.Gameplay
             planner.Reset();
             phaseTwoPresented = false;
             finalRushPresented = false;
-            mercyPresented = false;
+            nextMercyAvailableTime = float.NegativeInfinity;
             sourceActor?.SetScriptedInvulnerability(false);
             CurrentPattern = HeltePattern.None;
             SetState(HelteCombatState.Waiting);

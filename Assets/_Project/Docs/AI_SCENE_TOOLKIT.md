@@ -26,6 +26,7 @@
 | 컴포넌트 수정 | `component.inspect`, `component.set` | Inspector |
 | 오브젝트 활성화 | `object.set-active` | Hierarchy |
 | 오브젝트 위치 | `object.transform` | Scene View Transform 도구 |
+| 튜토리얼 배경판 | `background.backplate.apply` | Inspector / Scene View |
 | 코드 영향 확인 | `code.usage` | 씬 검색 |
 
 ## Unity MCP 사용
@@ -117,6 +118,19 @@ Unity `JsonUtility` 호환을 위해 인자는 Dictionary가 아니라 배열이
   - 대상 + `componentType`, `propertyPath`, `value`
   - 지원 값: 정수, 실수, bool, string, enum, Vector2, Vector3, `GlobalObjectId` 참조
   - Vector 값은 `1.5,2.0` 또는 `1.5,2.0,0`처럼 입력한다.
+
+### 튜토리얼 배경판
+
+- `background.backplate.apply`
+  - `locationKey`: `A`~`H`
+  - `spritePath`: `Assets/` 아래 PNG Sprite 경로
+  - 선택값: `opacity`(기본 `1`), `sortingOrder`(기본 `-1000`),
+    `cameraSpaceDepth`(기본 `20`)
+
+이 명령은 수작업 레벨 도형을 수정하지 않는다. 씬 루트의
+`AI_TutorialBackgroundRoot` 아래에 카메라 추적용 배경 SpriteRenderer를
+생성하거나 갱신한다. 런타임에는 `TutorialLocationChanged` 이벤트에 따라
+A~H 배경 슬롯을 전환한다.
 
 대상 선택 우선순위는 `objectId → markerId → hierarchyPath`다. 마커 ID가 가장 팀 친화적이고, GlobalObjectId가 AI에게 가장 정확하다.
 

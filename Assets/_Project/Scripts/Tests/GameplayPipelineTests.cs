@@ -672,6 +672,8 @@ namespace Narthex.Tests
         [Test]
         public void HelteFriendlyCombatPolicy_ReservesMercyBeforeLethalFollowUp()
         {
+            Assert.That(HelteFriendlyCombatPolicy.IsMercyAvailable(30f, 30f), Is.True);
+            Assert.That(HelteFriendlyCombatPolicy.IsMercyAvailable(29.99f, 30f), Is.False);
             Assert.That(
                 HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(32, 100, 15, 0.25f, true),
                 Is.EqualTo(7));
@@ -681,6 +683,39 @@ namespace Narthex.Tests
             Assert.That(
                 HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(25, 100, 15, 0.25f, false),
                 Is.EqualTo(15));
+        }
+
+        [Test]
+        public void BossCombatCueResolver_ExplainsFriendlyAndFinalRushStates()
+        {
+            var fakeOpen = BossCombatCuePresenter.ResolveCue(HelteCombatState.FakeBlinkPause);
+            var counterRisk = BossCombatCuePresenter.ResolveCue(HelteCombatState.CounterStance);
+            var mercy = BossCombatCuePresenter.ResolveCue(HelteCombatState.MercyRetreat);
+            var finalRush = BossCombatCuePresenter.ResolveCue(HelteCombatState.FinalRushTransition);
+
+            Assert.That(fakeOpen.Visible, Is.True);
+            Assert.That(fakeOpen.Text, Does.Contain("공격하지 않습니다"));
+            Assert.That(counterRisk.Text, Does.Contain("밀려납니다"));
+            Assert.That(mercy.Text, Does.Contain("휴식"));
+            Assert.That(finalRush.Text, Does.Contain("FINAL TEST"));
+            Assert.That(BossCombatCuePresenter.ResolveCue(HelteCombatState.Waiting).Visible, Is.False);
+        }
+
+        [Test]
+        public void CharacterPngAnimationBridge_MapsFriendlyHelteStatesToExistingClips()
+        {
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FinalRushTransition),
+                Is.EqualTo("PhaseTransition"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FakeBlinkVanish),
+                Is.EqualTo("BlinkVanish"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.CounterTelegraph),
+                Is.EqualTo("BasicWindup"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.MercyRetreat),
+                Is.EqualTo("Recover"));
         }
 
         [Test]

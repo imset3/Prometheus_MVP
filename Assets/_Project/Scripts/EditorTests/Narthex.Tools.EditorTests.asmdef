@@ -3,7 +3,9 @@
   "rootNamespace": "Narthex.Tools.EditorTests",
   "references": [
     "Narthex.Tools",
-    "Narthex.Gameplay"
+    "Narthex.Core",
+    "Narthex.Gameplay",
+    "Narthex.Presentation"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

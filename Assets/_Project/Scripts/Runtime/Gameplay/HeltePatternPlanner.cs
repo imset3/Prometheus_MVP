@@ -142,6 +142,11 @@ namespace Narthex.Gameplay
 
     public static class HelteFriendlyCombatPolicy
     {
+        public static bool IsMercyAvailable(float currentTime, float nextAvailableTime)
+        {
+            return currentTime >= nextAvailableTime;
+        }
+
         public static int LimitDamageBeforeMercy(
             int currentHealth,
             int maximumHealth,

@@ -1,8 +1,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using Narthex.Core;
 using Narthex.Gameplay;
+using Narthex.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -138,6 +141,51 @@ namespace Narthex.Tools.EditorTests
             PrometheusComponentAutomation.Set(
                 scene, "", "Editable", "", "BoxCollider2D", "m_Size", "3.5,7.25", false);
             Assert.That(collider.size, Is.EqualTo(new Vector2(3.5f, 7.25f)));
+        }
+
+        [Test]
+        public void BackgroundBackplate_DryRunPreservesSceneAndCommitCreatesCameraFollower()
+        {
+            const string assetPath = "Assets/_Project/Art/AIConcepts/BackplateEditorTest.png";
+            Directory.CreateDirectory(Path.GetDirectoryName(assetPath));
+            var cameraObject = new GameObject("Main Camera");
+            SceneManager.MoveGameObjectToScene(cameraObject, scene);
+            cameraObject.tag = "MainCamera";
+            cameraObject.AddComponent<Camera>().orthographic = true;
+            var serviceObject = new GameObject("ServiceRoot");
+            SceneManager.MoveGameObjectToScene(serviceObject, scene);
+            serviceObject.AddComponent<ServiceRoot>();
+            var texture = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            texture.SetPixels(Enumerable.Repeat(new Color(0.8f, 0.7f, 0.6f, 1f), 16).ToArray());
+            texture.Apply();
+            File.WriteAllBytes(assetPath, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
+            try
+            {
+                var preview = PrometheusBackgroundAutomation.Apply(
+                    scene, "A", assetPath, 0.8f, -1000, 20f, true);
+
+                Assert.That(preview.action, Is.EqualTo("create-background-backplate"));
+                Assert.That(scene.GetRootGameObjects().Any(item =>
+                    item.name == "AI_TutorialBackgroundRoot"), Is.False);
+
+                PrometheusBackgroundAutomation.Apply(
+                    scene, "A", assetPath, 0.8f, -1000, 20f, false);
+
+                var root = scene.GetRootGameObjects().Single(item =>
+                    item.name == "AI_TutorialBackgroundRoot");
+                var presenter = root.GetComponent<TutorialBackgroundPresenter>();
+                var visual = root.transform.Find("Background_A");
+                Assert.That(presenter, Is.Not.Null);
+                Assert.That(presenter.Entries.Count, Is.EqualTo(1));
+                Assert.That(visual, Is.Not.Null);
+                Assert.That(visual.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
+            }
+            finally
+            {
+                AssetDatabase.DeleteAsset(assetPath);
+            }
         }
 
         [Test]

@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: 5403245877d7c460fb0f5f0216e07667
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2838806078537674252
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_0
+  - first:
+      213: -6823369467128100674
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_1
+  - first:
+      213: 8536168334597303622
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_2
+  - first:
+      213: 1837282494484095312
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_3
+  - first:
+      213: -6993627229975498477
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_4
+  - first:
+      213: 7240113336538419246
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_5
+  - first:
+      213: -3438823185777768428
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_6
+  - first:
+      213: -2593719187175302139
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_7
+  - first:
+      213: 5287904278299746065
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_8
+  - first:
+      213: -4942592942892768242
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_9
+  - first:
+      213: 1637211172705171948
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_10
+  - first:
+      213: 5433822516472703300
+    second: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_0
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 749
+        width: 303
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0e25797617756720800000000000000
+      internalID: 2838806078537674252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_1
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 749
+        width: 316
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb845941f958e41a0800000000000000
+      internalID: -6823369467128100674
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_2
+      rect:
+        serializedVersion: 2
+        x: 738
+        y: 750
+        width: 310
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64d2c9eafdf867670800000000000000
+      internalID: 8536168334597303622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_3
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 749
+        width: 299
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 051a4c3c1b65f7910800000000000000
+      internalID: 1837282494484095312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_4
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 427
+        width: 299
+        height: 279
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 311bfc19615a1fe90800000000000000
+      internalID: -6993627229975498477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_5
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 428
+        width: 316
+        height: 277
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e20d0f548bc0a7460800000000000000
+      internalID: 7240113336538419246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_6
+      rect:
+        serializedVersion: 2
+        x: 738
+        y: 427
+        width: 309
+        height: 279
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 418c65e3888d640d0800000000000000
+      internalID: -3438823185777768428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_7
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 427
+        width: 303
+        height: 278
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50c1d413422410cd0800000000000000
+      internalID: -2593719187175302139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_8
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 76
+        width: 295
+        height: 313
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11f1352bce8626940800000000000000
+      internalID: 5287904278299746065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_9
+      rect:
+        serializedVersion: 2
+        x: 393
+        y: 78
+        width: 308
+        height: 303
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e042689c7e1686bb0800000000000000
+      internalID: -4942592942892768242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_10
+      rect:
+        serializedVersion: 2
+        x: 739
+        y: 76
+        width: 308
+        height: 313
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce9746323ea88b610800000000000000
+      internalID: 1637211172705171948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_11
+      rect:
+        serializedVersion: 2
+        x: 1091
+        y: 68
+        width: 299
+        height: 321
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 449efd20ac0d86b40800000000000000
+      internalID: 5433822516472703300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_0: 2838806078537674252
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_1: -6823369467128100674
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_10: 1637211172705171948
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_11: 5433822516472703300
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_2: 8536168334597303622
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_3: 1837282494484095312
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_4: -6993627229975498477
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_5: 7240113336538419246
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_6: -3438823185777768428
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_7: -2593719187175302139
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_8: 5287904278299746065
+      TUTO_F_RustCargo_TileSheet_4x3_Alpha_v1_9: -4942592942892768242
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

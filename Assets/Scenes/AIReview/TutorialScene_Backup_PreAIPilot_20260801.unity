@@ -20473,51 +20473,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 467269459}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &468618524
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 468618526}
-  - component: {fileID: 468618525}
-  m_Layer: 0
-  m_Name: HELTE_FSM_DEV_ONLY
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &468618525
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 468618524}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a93e7f321d7c4e39ae4467fc6fc3b84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.HelteBossFsmDevBootstrapHost
-  settleFrames: 2
---- !u!4 &468618526
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 468618524}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &468925648
 GameObject:
   m_ObjectHideFlags: 0
@@ -75839,7 +75794,6 @@ MonoBehaviour:
   sourceActor: {fileID: 1608749477}
   playerActor: {fileID: 718908618}
   bossBodyCollider: {fileID: 1608749476}
-  playerMeleeHitbox: {fileID: 865241862}
   basicHitbox: {fileID: 938324877}
   blinkCrossHitbox: {fileID: 470532748}
   swordHitboxes:
@@ -75865,16 +75819,6 @@ MonoBehaviour:
   - {fileID: 1486869174}
   - {fileID: 36984976}
   - {fileID: 1178751618}
-  enableFriendlyPatternPrototype: 1
-  mercyHealthRatio: 0.25
-  mercyRecoveryHealthRatio: 0.35
-  mercyPauseSeconds: 1.4
-  fakeBlinkPauseSeconds: 0.9
-  counterTelegraphSeconds: 0.35
-  counterStanceSeconds: 0.75
-  counterOpenSeconds: 1.2
-  counterSuccessRecoverySeconds: 0.45
-  counterPushDistance: 1.5
   phaseTwoHealthRatio: 0.55
   finalRushHealthRatio: 0.2
   basicAdvanceDistance: 1
@@ -75889,7 +75833,6 @@ MonoBehaviour:
   normalAttackCooldownSeconds: 2
   blinkVanishSeconds: 0.22
   blinkTelegraphSeconds: 0.35
-  dashTelegraphSeconds: 0.3
   dashDurationSeconds: 0.3
   crossSlashWarningSeconds: 0.18
   phaseTransitionSeconds: 1
@@ -78245,8 +78188,7 @@ MonoBehaviour:
   bossActor: {fileID: 1608749477}
   patternHost: {fileID: 1608749473}
   targetDurationSeconds: 300
-  showDevelopmentOverlay: 1
-  logPatternTransitions: 1
+  showDevelopmentOverlay: 0
 --- !u!1 &1642998804
 GameObject:
   m_ObjectHideFlags: 0
@@ -102686,4 +102628,3 @@ SceneRoots:
   - {fileID: 989119623}
   - {fileID: 806939314}
   - {fileID: 1732705729}
-  - {fileID: 468618526}

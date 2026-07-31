@@ -1,0 +1,351 @@
+fileFormatVersion: 2
+guid: 3f25e44d786d94d82a40c50bc3b55bab
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1240697315425375455
+    second: TutorialGuard_Walk_8f_Alpha_v4_0
+  - first:
+      213: -1290645775993829701
+    second: TutorialGuard_Walk_8f_Alpha_v4_1
+  - first:
+      213: 9068874925668113684
+    second: TutorialGuard_Walk_8f_Alpha_v4_2
+  - first:
+      213: -4679698656215506018
+    second: TutorialGuard_Walk_8f_Alpha_v4_3
+  - first:
+      213: -6313562745253500154
+    second: TutorialGuard_Walk_8f_Alpha_v4_4
+  - first:
+      213: 6458849535844645602
+    second: TutorialGuard_Walk_8f_Alpha_v4_5
+  - first:
+      213: 1564474080743639727
+    second: TutorialGuard_Walk_8f_Alpha_v4_6
+  - first:
+      213: 8681385748384758584
+    second: TutorialGuard_Walk_8f_Alpha_v4_7
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_0
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 208
+        width: 190
+        height: 400
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd4d5b782a7d73110800000000000000
+      internalID: 1240697315425375455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_1
+      rect:
+        serializedVersion: 2
+        x: 316
+        y: 211
+        width: 183
+        height: 397
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb6870f3184b61ee0800000000000000
+      internalID: -1290645775993829701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_2
+      rect:
+        serializedVersion: 2
+        x: 590
+        y: 206
+        width: 177
+        height: 392
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41d15e822bd1bdd70800000000000000
+      internalID: 9068874925668113684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_3
+      rect:
+        serializedVersion: 2
+        x: 820
+        y: 206
+        width: 209
+        height: 391
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e93e664cdde5e0fb0800000000000000
+      internalID: -4679698656215506018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_4
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 207
+        width: 186
+        height: 393
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60b66064228b168a0800000000000000
+      internalID: -6313562745253500154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_5
+      rect:
+        serializedVersion: 2
+        x: 1349
+        y: 204
+        width: 223
+        height: 393
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ea77b1be6172a950800000000000000
+      internalID: 6458849535844645602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_6
+      rect:
+        serializedVersion: 2
+        x: 1661
+        y: 204
+        width: 179
+        height: 390
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faac70333e026b510800000000000000
+      internalID: 1564474080743639727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialGuard_Walk_8f_Alpha_v4_7
+      rect:
+        serializedVersion: 2
+        x: 1921
+        y: 201
+        width: 176
+        height: 395
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83bbc9a975a7a7870800000000000000
+      internalID: 8681385748384758584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TutorialGuard_Walk_8f_Alpha_v4_0: 1240697315425375455
+      TutorialGuard_Walk_8f_Alpha_v4_1: -1290645775993829701
+      TutorialGuard_Walk_8f_Alpha_v4_2: 9068874925668113684
+      TutorialGuard_Walk_8f_Alpha_v4_3: -4679698656215506018
+      TutorialGuard_Walk_8f_Alpha_v4_4: -6313562745253500154
+      TutorialGuard_Walk_8f_Alpha_v4_5: 6458849535844645602
+      TutorialGuard_Walk_8f_Alpha_v4_6: 1564474080743639727
+      TutorialGuard_Walk_8f_Alpha_v4_7: 8681385748384758584
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

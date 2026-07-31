@@ -450,6 +450,7 @@ namespace Narthex.Tools
             var playerMotor = GetActorComponent<PlayerMotorHost>(targetActor);
             var playerInput = GetActorComponent<PlayerInputHost>(targetActor);
             var melee = GetActorComponent<MeleeAttackHost>(targetActor);
+            var enemyAttack = GetActorComponent<EnemyAttackHost>(targetActor);
             var actor = GetActorComponent<CombatActorHost>(targetActor);
             var helte = GetActorComponent<HelteBossPatternHost>(targetActor);
             var body = GetActorComponent<Rigidbody2D>(targetActor);
@@ -464,6 +465,7 @@ namespace Narthex.Tools
                 playerMotor,
                 playerInput,
                 melee,
+                enemyAttack,
                 actor,
                 helte,
                 oldMotion,

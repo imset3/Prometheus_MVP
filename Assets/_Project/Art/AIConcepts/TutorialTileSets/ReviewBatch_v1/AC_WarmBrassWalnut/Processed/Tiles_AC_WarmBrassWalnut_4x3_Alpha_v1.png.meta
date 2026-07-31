@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: 4e8283f49c87448b3952706c5787e79e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4378328199166210547
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_0
+  - first:
+      213: 5370312762612367958
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_1
+  - first:
+      213: -7856695863462609697
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_2
+  - first:
+      213: -3362467111683172823
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_3
+  - first:
+      213: 368720625308926612
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_4
+  - first:
+      213: 8632373159837529201
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_5
+  - first:
+      213: 6683023329089840413
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_6
+  - first:
+      213: 7259906137384906289
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_7
+  - first:
+      213: -5034212659238770908
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_8
+  - first:
+      213: 2318824438672603982
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_9
+  - first:
+      213: -68831986935445241
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_10
+  - first:
+      213: 1590373985479814669
+    second: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_0
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 717
+        width: 241
+        height: 146
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f1b06dbc42f2cc30800000000000000
+      internalID: 4378328199166210547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_1
+      rect:
+        serializedVersion: 2
+        x: 437
+        y: 718
+        width: 256
+        height: 234
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 652c144210f278a40800000000000000
+      internalID: 5370312762612367958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_2
+      rect:
+        serializedVersion: 2
+        x: 751
+        y: 718
+        width: 244
+        height: 236
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdcb70e1db867f290800000000000000
+      internalID: -7856695863462609697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_3
+      rect:
+        serializedVersion: 2
+        x: 1055
+        y: 718
+        width: 253
+        height: 234
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 926d03f1afd1651d0800000000000000
+      internalID: -3362467111683172823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_4
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 427
+        width: 244
+        height: 240
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49206e48475fd1500800000000000000
+      internalID: 368720625308926612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_5
+      rect:
+        serializedVersion: 2
+        x: 437
+        y: 427
+        width: 256
+        height: 240
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1747bb017a95cc770800000000000000
+      internalID: 8632373159837529201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_6
+      rect:
+        serializedVersion: 2
+        x: 752
+        y: 426
+        width: 243
+        height: 241
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d156c044f4edebc50800000000000000
+      internalID: 6683023329089840413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_7
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 425
+        width: 253
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13e6185da2e50c460800000000000000
+      internalID: 7259906137384906289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_8
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 138
+        width: 244
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4276c424242e22ab0800000000000000
+      internalID: -5034212659238770908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_9
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 137
+        width: 255
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4b33939a8e1e2020800000000000000
+      internalID: 2318824438672603982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_10
+      rect:
+        serializedVersion: 2
+        x: 753
+        y: 138
+        width: 244
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 709478d2ca57b0ff0800000000000000
+      internalID: -68831986935445241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_11
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 138
+        width: 254
+        height: 241
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0eeb80b6b4221610800000000000000
+      internalID: 1590373985479814669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_0: 4378328199166210547
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_1: 5370312762612367958
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_10: -68831986935445241
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_11: 1590373985479814669
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_2: -7856695863462609697
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_3: -3362467111683172823
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_4: 368720625308926612
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_5: 8632373159837529201
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_6: 6683023329089840413
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_7: 7259906137384906289
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_8: -5034212659238770908
+      Tiles_AC_WarmBrassWalnut_4x3_Alpha_v1_9: 2318824438672603982
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

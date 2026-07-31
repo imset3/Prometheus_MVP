@@ -31,6 +31,7 @@ namespace Narthex.Tools
             "marker.move",
             "object.set-active",
             "object.transform",
+            "background.backplate.apply",
             "component.inspect",
             "component.set",
             "code.usage",
@@ -169,6 +170,9 @@ namespace Narthex.Tools
                     break;
                 case "object.transform":
                     SetObjectTransform(scene, request, response);
+                    break;
+                case "background.backplate.apply":
+                    ApplyBackgroundBackplate(scene, request, response);
                     break;
                 case "component.inspect":
                     InspectComponent(scene, request, response);
@@ -383,6 +387,24 @@ namespace Narthex.Tools
                 request.dryRun));
             response.changed = !request.dryRun;
             response.message = $"{(request.dryRun ? "Previewed" : "Applied")} serialized property change.";
+        }
+
+        private static void ApplyBackgroundBackplate(
+            Scene scene,
+            PrometheusAiCommandRequest request,
+            PrometheusAiCommandResponse response)
+        {
+            response.changes.Add(PrometheusBackgroundAutomation.Apply(
+                scene,
+                request.Get("locationKey"),
+                request.Get("spritePath"),
+                request.GetFloat("opacity", 1f),
+                (int)request.GetFloat("sortingOrder", -1000f),
+                request.GetFloat("cameraSpaceDepth", 20f),
+                request.dryRun));
+            response.changed = !request.dryRun;
+            response.message =
+                $"{(request.dryRun ? "Previewed" : "Applied")} tutorial background backplate.";
         }
 
         private static void ValidateFlow(
