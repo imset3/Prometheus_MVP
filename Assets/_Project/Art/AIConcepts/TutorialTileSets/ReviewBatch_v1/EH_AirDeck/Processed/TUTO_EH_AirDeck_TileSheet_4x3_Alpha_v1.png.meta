@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: e1ae34d7d547645a7ab0bc65c8f59b1c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1509456129492587180
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_0
+  - first:
+      213: -5623975012457213776
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_1
+  - first:
+      213: -8518395650746388969
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_2
+  - first:
+      213: 517570355963140414
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_3
+  - first:
+      213: -8196032605087866630
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_4
+  - first:
+      213: -3911638722015420951
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_5
+  - first:
+      213: 8472114343286497427
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_6
+  - first:
+      213: 6446662324822584774
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_7
+  - first:
+      213: 2934370902059221805
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_8
+  - first:
+      213: 6960820964678870277
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_9
+  - first:
+      213: -2769107375481513784
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_10
+  - first:
+      213: 368331949018146331
+    second: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_0
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 755
+        width: 271
+        height: 281
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca211723a5aa2f410800000000000000
+      internalID: 1509456129492587180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_1
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 754
+        width: 290
+        height: 281
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b090d4f580a3f1b0800000000000000
+      internalID: -5623975012457213776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_2
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 754
+        width: 275
+        height: 282
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71e670db94498c980800000000000000
+      internalID: -8518395650746388969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_3
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 753
+        width: 288
+        height: 282
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e39947d1f77ce2700800000000000000
+      internalID: 517570355963140414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_4
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 441
+        width: 267
+        height: 271
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af0e73625c7d14e80800000000000000
+      internalID: -8196032605087866630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_5
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 442
+        width: 284
+        height: 270
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ed9b9c9e4117b9c0800000000000000
+      internalID: -3911638722015420951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_6
+      rect:
+        serializedVersion: 2
+        x: 727
+        y: 440
+        width: 281
+        height: 271
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3906518ab1ff29570800000000000000
+      internalID: 8472114343286497427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_7
+      rect:
+        serializedVersion: 2
+        x: 1063
+        y: 447
+        width: 275
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6cda1f18a35277950800000000000000
+      internalID: 6446662324822584774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_8
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 115
+        width: 260
+        height: 277
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d238b78d9caf8b820800000000000000
+      internalID: 2934370902059221805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_9
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 115
+        width: 277
+        height: 277
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505a6c099cdc99060800000000000000
+      internalID: 6960820964678870277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_10
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 116
+        width: 273
+        height: 276
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c8928b63872299d0800000000000000
+      internalID: -2769107375481513784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_11
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 105
+        width: 242
+        height: 290
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1667a4c4f39c1500800000000000000
+      internalID: 368331949018146331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_0: 1509456129492587180
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_1: -5623975012457213776
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_10: -2769107375481513784
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_11: 368331949018146331
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_2: -8518395650746388969
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_3: 517570355963140414
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_4: -8196032605087866630
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_5: -3911638722015420951
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_6: 8472114343286497427
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_7: 6446662324822584774
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_8: 2934370902059221805
+      TUTO_EH_AirDeck_TileSheet_4x3_Alpha_v1_9: 6960820964678870277
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

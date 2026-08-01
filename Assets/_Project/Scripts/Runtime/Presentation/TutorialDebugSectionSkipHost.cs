@@ -189,6 +189,7 @@ namespace Narthex.Presentation
             fadeCanvasGroup.blocksRaycasts = false;
             fadeCanvasGroup.interactable = false;
             serviceRoot.Events.Publish(new TutorialLocationChanged(section.LocationName));
+            RefreshSceneStatusPresenters();
             activeSectionIndex = sectionIndex;
             Debug.Log($"[sragon000][구간 스킵] {section.DisplayName}부터 테스트를 시작합니다.", this);
             return true;
@@ -219,6 +220,15 @@ namespace Narthex.Presentation
             foreach (var root in roots)
                 if (root != null && root.activeSelf != active)
                     root.SetActive(active);
+        }
+
+        private void RefreshSceneStatusPresenters()
+        {
+            foreach (var presenter in Resources.FindObjectsOfTypeAll<TutorialStatusPresenter>())
+            {
+                if (presenter == null || presenter.gameObject.scene != gameObject.scene) continue;
+                presenter.RefreshFromCurrentQuest();
+            }
         }
     }
 }

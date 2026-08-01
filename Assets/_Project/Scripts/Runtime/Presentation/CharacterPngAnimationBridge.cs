@@ -23,6 +23,7 @@ namespace Narthex.Presentation
         [SerializeField] private PlayerMotorHost playerMotor;
         [SerializeField] private PlayerInputHost playerInput;
         [SerializeField] private MeleeAttackHost meleeAttack;
+        [SerializeField] private EnemyAttackHost enemyAttack;
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private HelteBossPatternHost heltePattern;
         [SerializeField] private CombatVisualMotionHost proceduralVisualMotion;
@@ -125,6 +126,7 @@ namespace Narthex.Presentation
             PlayerMotorHost configuredMotor,
             PlayerInputHost configuredInput,
             MeleeAttackHost configuredMelee,
+            EnemyAttackHost configuredEnemyAttack,
             CombatActorHost configuredActor,
             HelteBossPatternHost configuredHeltePattern,
             CombatVisualMotionHost configuredProceduralVisualMotion,
@@ -141,6 +143,7 @@ namespace Narthex.Presentation
             playerMotor = configuredMotor;
             playerInput = configuredInput;
             meleeAttack = configuredMelee;
+            enemyAttack = configuredEnemyAttack;
             actor = configuredActor;
             heltePattern = configuredHeltePattern;
             proceduralVisualMotion = configuredProceduralVisualMotion;
@@ -168,6 +171,7 @@ namespace Narthex.Presentation
             DisableProceduralVisualMotion();
             if (playerInput != null) playerInput.AimDirectionChanged += HandleAimDirectionChanged;
             if (meleeAttack != null) meleeAttack.AttackStarted += HandleAttackStarted;
+            if (enemyAttack != null) enemyAttack.PhaseChanged += HandleEnemyAttackPhaseChanged;
             if (heltePattern != null) heltePattern.StateChanged += HandleHelteStateChanged;
             TrySubscribeCombatEvents();
             ApplyInitialFacing();
@@ -177,6 +181,7 @@ namespace Narthex.Presentation
         {
             if (playerInput != null) playerInput.AimDirectionChanged -= HandleAimDirectionChanged;
             if (meleeAttack != null) meleeAttack.AttackStarted -= HandleAttackStarted;
+            if (enemyAttack != null) enemyAttack.PhaseChanged -= HandleEnemyAttackPhaseChanged;
             if (heltePattern != null) heltePattern.StateChanged -= HandleHelteStateChanged;
             if (subscribedToCombatEvents && actor != null && actor.Events != null)
                 actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
@@ -202,6 +207,8 @@ namespace Narthex.Presentation
             deathPresented = false;
             if (preset == CharacterPngAnimationPreset.Prome)
                 UpdatePromeLocomotion();
+            else if (preset == CharacterPngAnimationPreset.Generic && Time.time >= actionLockedUntil)
+                PlayState("Work");
         }
 
         private void UpdatePromeLocomotion()
@@ -230,27 +237,51 @@ namespace Narthex.Presentation
             PlayLockedState("Attack01", attackOneDuration);
         }
 
+        private void HandleEnemyAttackPhaseChanged(EnemyAttackPhase phase)
+        {
+            if (preset != CharacterPngAnimationPreset.Generic) return;
+            if (phase == EnemyAttackPhase.Telegraph)
+                PlayLockedState("Attack", attackOneDuration);
+            else if (phase == EnemyAttackPhase.Ready && Time.time >= actionLockedUntil)
+                PlayState("Work");
+        }
+
         private void HandleHelteStateChanged(HelteCombatState state)
         {
-            var stateName = state switch
+            PlayState(ResolveHelteAnimationState(state));
+        }
+
+        public static string ResolveHelteAnimationState(HelteCombatState state)
+        {
+            return state switch
             {
                 HelteCombatState.Disabled => "Idle",
                 HelteCombatState.Waiting => "Idle",
                 HelteCombatState.PhaseTransition => "PhaseTransition",
+                HelteCombatState.FinalRushTransition => "PhaseTransition",
+                HelteCombatState.MercyRetreat => "Recover",
                 HelteCombatState.BasicWindup => "BasicWindup",
                 HelteCombatState.BasicLeftSlash => "BasicLeftSlash",
                 HelteCombatState.BasicAdvance => "DashApproach",
                 HelteCombatState.BasicRightSlash => "BasicRightSlash",
                 HelteCombatState.BlinkVanish => "BlinkVanish",
                 HelteCombatState.BlinkReappear => "BlinkReappear",
+                HelteCombatState.DashTelegraph => "BlinkReappear",
                 HelteCombatState.DashApproach => "DashApproach",
+                HelteCombatState.CrossSlashTelegraph => "CrossSlash",
                 HelteCombatState.CrossSlash => "CrossSlash",
                 HelteCombatState.SwordFocus => "SwordFocus",
                 HelteCombatState.SwordVolley => "SwordVolley",
+                HelteCombatState.FakeBlinkVanish => "BlinkVanish",
+                HelteCombatState.FakeBlinkReappear => "BlinkReappear",
+                HelteCombatState.FakeBlinkPause => "Recover",
+                HelteCombatState.CounterTelegraph => "BasicWindup",
+                HelteCombatState.CounterStance => "Idle",
+                HelteCombatState.CounterSucceeded => "Recover",
+                HelteCombatState.CounterOpen => "Recover",
                 HelteCombatState.Recover => "Recover",
                 _ => "Idle"
             };
-            PlayState(stateName);
         }
 
         private void HandleHitConfirmed(HitConfirmed message)
@@ -283,7 +314,8 @@ namespace Narthex.Presentation
                 return;
             }
 
-            if (preset != CharacterPngAnimationPreset.Helte || facingTarget == null) return;
+            if ((preset != CharacterPngAnimationPreset.Helte && preset != CharacterPngAnimationPreset.Generic) ||
+                facingTarget == null) return;
             var delta = facingTarget.position.x - transform.position.x;
             if (!Mathf.Approximately(delta, 0f)) spriteRenderer.flipX = delta < 0f;
         }
@@ -330,6 +362,7 @@ namespace Narthex.Presentation
             if (playerMotor == null) playerMotor = GetComponentInParent<PlayerMotorHost>(true);
             if (playerInput == null) playerInput = GetComponentInParent<PlayerInputHost>(true);
             if (meleeAttack == null) meleeAttack = GetComponentInParent<MeleeAttackHost>(true);
+            if (enemyAttack == null) enemyAttack = GetComponentInParent<EnemyAttackHost>(true);
             if (actor == null) actor = GetComponentInParent<CombatActorHost>(true);
             if (heltePattern == null) heltePattern = GetComponentInParent<HelteBossPatternHost>(true);
             if (proceduralVisualMotion == null)

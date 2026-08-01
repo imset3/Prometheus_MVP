@@ -15,7 +15,7 @@ namespace Narthex.Tools
 {
     public static class TutorialSceneValidator
     {
-        [MenuItem("sragon000/Validation/Validate Active Tutorial Scene")]
+        [MenuItem(PrometheusToolMenuPaths.Validation + "Validate Active Tutorial Scene")]
         public static void ValidateActiveTutorialScene()
         {
             var issues = new List<string>();
@@ -522,13 +522,21 @@ namespace Narthex.Tools
 
             var bossArenaController = RequireObject("BossArena_Controller", issues);
             RequireComponent<TutorialBossArenaHost>(bossArenaController, issues);
+            RequireComponent<HelteCombatTelemetryHost>(bossArenaController, issues);
             var bossArenaHost = bossArenaController != null
                 ? bossArenaController.GetComponent<TutorialBossArenaHost>()
+                : null;
+            var helteTelemetry = bossArenaController != null
+                ? bossArenaController.GetComponent<HelteCombatTelemetryHost>()
                 : null;
             if (bossArenaHost != null && !bossArenaHost.HasValidSetup)
                 issues.Add("Tutorial boss arena has invalid trigger, boss, warning, or pattern-lane references.");
             if (bossArenaHost != null && !Mathf.Approximately(bossArenaHost.IntroWarningSeconds, 1.1f))
                 issues.Add("Helte's pre-combat camera and warning presentation must last 1.1 seconds.");
+            if (helteTelemetry != null &&
+                (!helteTelemetry.HasValidSetup ||
+                 !Mathf.Approximately(helteTelemetry.TargetDurationSeconds, 300f)))
+                issues.Add("Helte combat telemetry must be valid and target a 300-second encounter.");
             RequireObject("BossArena_StartTrigger", issues);
             if (FindObject("BossArena_EntryGate_ART_SLOT") != null)
                 issues.Add("The obsolete Helte entry gate must not block the dock approach.");

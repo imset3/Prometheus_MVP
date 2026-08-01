@@ -51,7 +51,7 @@ namespace Narthex.Tools
         private SequenceScanResult scanResult;
         private Texture2D previewTexture;
 
-        [MenuItem("sragon000/Art/Character PNG Sequence Setup")]
+        [MenuItem(PrometheusToolMenuPaths.Root + "Art/Character PNG Sequence Setup")]
         public static void Open()
         {
             var window = GetWindow<CharacterPngSequenceSetupWindow>("PNG Sequence Setup");
@@ -450,6 +450,7 @@ namespace Narthex.Tools
             var playerMotor = GetActorComponent<PlayerMotorHost>(targetActor);
             var playerInput = GetActorComponent<PlayerInputHost>(targetActor);
             var melee = GetActorComponent<MeleeAttackHost>(targetActor);
+            var enemyAttack = GetActorComponent<EnemyAttackHost>(targetActor);
             var actor = GetActorComponent<CombatActorHost>(targetActor);
             var helte = GetActorComponent<HelteBossPatternHost>(targetActor);
             var body = GetActorComponent<Rigidbody2D>(targetActor);
@@ -464,6 +465,7 @@ namespace Narthex.Tools
                 playerMotor,
                 playerInput,
                 melee,
+                enemyAttack,
                 actor,
                 helte,
                 oldMotion,

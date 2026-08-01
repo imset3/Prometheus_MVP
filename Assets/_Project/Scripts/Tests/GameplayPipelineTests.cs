@@ -621,6 +621,104 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void HeltePatternPlanner_ResetRestartsTheOpeningSequence()
+        {
+            var planner = new HeltePatternPlanner(() => 1);
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+
+            planner.Reset();
+
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(false), Is.EqualTo(HeltePattern.BlinkDash));
+        }
+
+        [Test]
+        public void HeltePatternPlanner_FinalRushUsesReadableFourBeatSequence()
+        {
+            var planner = new HeltePatternPlanner(() => 2);
+
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(planner.Next(HelteCombatTempo.FinalRush), Is.EqualTo(HeltePattern.BlinkDash));
+        }
+
+        [Test]
+        public void HeltePatternPlanner_FriendlyPrototypeAddsFeintAndCounterWithoutReplacingCorePatterns()
+        {
+            var opening = new HeltePatternPlanner(() => 1);
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.FakeBlink));
+            Assert.That(opening.Next(HelteCombatTempo.Opening, true), Is.EqualTo(HeltePattern.BasicCombo));
+
+            var phaseTwo = new HeltePatternPlanner(() => 1);
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(phaseTwo.Next(HelteCombatTempo.PhaseTwo, true), Is.EqualTo(HeltePattern.CounterStance));
+
+            var finalTest = new HeltePatternPlanner(() => 1);
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BlinkDash));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.CounterStance));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.SummonSwords));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.BasicCombo));
+            Assert.That(finalTest.Next(HelteCombatTempo.FinalRush, true), Is.EqualTo(HeltePattern.FakeBlink));
+        }
+
+        [Test]
+        public void HelteFriendlyCombatPolicy_ReservesMercyBeforeLethalFollowUp()
+        {
+            Assert.That(HelteFriendlyCombatPolicy.IsMercyAvailable(30f, 30f), Is.True);
+            Assert.That(HelteFriendlyCombatPolicy.IsMercyAvailable(29.99f, 30f), Is.False);
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(32, 100, 15, 0.25f, true),
+                Is.EqualTo(7));
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(25, 100, 15, 0.25f, true),
+                Is.Zero);
+            Assert.That(
+                HelteFriendlyCombatPolicy.LimitDamageBeforeMercy(25, 100, 15, 0.25f, false),
+                Is.EqualTo(15));
+        }
+
+        [Test]
+        public void BossCombatCueResolver_ExplainsFriendlyAndFinalRushStates()
+        {
+            var fakeOpen = BossCombatCuePresenter.ResolveCue(HelteCombatState.FakeBlinkPause);
+            var counterRisk = BossCombatCuePresenter.ResolveCue(HelteCombatState.CounterStance);
+            var mercy = BossCombatCuePresenter.ResolveCue(HelteCombatState.MercyRetreat);
+            var finalRush = BossCombatCuePresenter.ResolveCue(HelteCombatState.FinalRushTransition);
+
+            Assert.That(fakeOpen.Visible, Is.True);
+            Assert.That(fakeOpen.Text, Does.Contain("공격하지 않습니다"));
+            Assert.That(counterRisk.Text, Does.Contain("밀려납니다"));
+            Assert.That(mercy.Text, Does.Contain("휴식"));
+            Assert.That(finalRush.Text, Does.Contain("FINAL TEST"));
+            Assert.That(BossCombatCuePresenter.ResolveCue(HelteCombatState.Waiting).Visible, Is.False);
+        }
+
+        [Test]
+        public void CharacterPngAnimationBridge_MapsFriendlyHelteStatesToExistingClips()
+        {
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FinalRushTransition),
+                Is.EqualTo("PhaseTransition"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FakeBlinkVanish),
+                Is.EqualTo("BlinkVanish"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.CounterTelegraph),
+                Is.EqualTo("BasicWindup"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.MercyRetreat),
+                Is.EqualTo("Recover"));
+        }
+
+        [Test]
         public void TutorialHudModeResolver_UsesResultDialogueBossPriority()
         {
             Assert.That(TutorialHudModeResolver.Resolve(false, false, false, false), Is.EqualTo(TutorialHudMode.Normal));

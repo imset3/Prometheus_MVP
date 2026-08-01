@@ -12,7 +12,6 @@ using UnityEngine.SceneManagement;
 
 namespace Narthex.Tools
 {
-    [InitializeOnLoad]
     public static class TutorialDebugSectionSkipSetup
     {
         private const string TargetScenePath = "Assets/Scenes/TutorialScene.unity";
@@ -22,15 +21,10 @@ namespace Narthex.Tools
             "DeveloperSectionSkip_JumpsFromFToGAndHelteWithoutCompletingSkippedQuests";
         private static TestRunnerApi testRunnerApi;
 
-        static TutorialDebugSectionSkipSetup()
-        {
-            EditorApplication.delayCall += TryAutoApply;
-        }
+        [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Developer Section Skip")]
+        public static void ApplyFromMenu() => Apply();
 
-        [MenuItem("sragon000/튜토리얼/개발자 F-G-헬테 구간 스킵 적용")]
-        public static void ApplyFromMenu() => Apply(false);
-
-        [MenuItem("sragon000/튜토리얼/개발자 구간 스킵 플레이 테스트 실행")]
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Developer Section Skip")]
         public static void RunSkipPlayModeTest()
         {
             if (testRunnerApi != null)
@@ -50,25 +44,12 @@ namespace Narthex.Tools
             Debug.Log("[sragon000][개발자 스킵][플레이 테스트] F→G→헬테 빠른 전환 검증을 시작합니다.");
         }
 
-        private static void TryAutoApply()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-            var scene = EditorSceneManager.GetActiveScene();
-            if (!scene.IsValid() || scene.path != TargetScenePath) return;
-            if (Find(scene, HostName) != null) return;
-            if (Find(scene, "F01_Spawn_ExteriorSide") == null ||
-                Find(scene, "G01_Spawn_FromF") == null ||
-                Find(scene, "H01_Spawn_FromG") == null)
-                return;
-            Apply(true);
-        }
-
-        private static void Apply(bool automatic)
+        private static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || scene.path != TargetScenePath)
             {
-                if (!automatic) Debug.LogWarning($"'{TargetScenePath}' 씬을 연 뒤 실행하세요.");
+                Debug.LogWarning($"'{TargetScenePath}' 씬을 연 뒤 실행하세요.");
                 return;
             }
 

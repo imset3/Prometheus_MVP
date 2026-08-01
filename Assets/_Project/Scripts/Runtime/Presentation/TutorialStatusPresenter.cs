@@ -49,6 +49,7 @@ namespace Narthex.Presentation
             serviceRoot.Events.Subscribe<QuestProgressChanged>(HandleQuestProgressChanged);
             serviceRoot.Events.Subscribe<TutorialCompleted>(HandleTutorialCompleted);
             if (playerInputHost != null) playerInputHost.BindingDisplayChanged += RefreshBindings;
+            RefreshFromCurrentQuest();
         }
 
         private void OnDisable()
@@ -62,17 +63,13 @@ namespace Narthex.Presentation
 
         private void Start()
         {
-            if (questSequenceHost != null && !string.IsNullOrWhiteSpace(questSequenceHost.CurrentObjectiveText))
-            {
-                currentObjective = new TutorialObjectiveChanged(
-                    questSequenceHost.CurrentQuestId,
-                    questSequenceHost.CurrentObjectiveText,
-                    0);
-                statusText.text = FormatObjective(currentObjective);
-                UpdateKeyPrompt(questSequenceHost.CurrentQuestId);
-                if (string.IsNullOrWhiteSpace(currentLocationName))
-                    UpdateLocationCaption(ResolveFallbackLocation(questSequenceHost.CurrentQuestId));
-            }
+            RefreshFromCurrentQuest();
+        }
+
+        private void LateUpdate()
+        {
+            if (questSequenceHost != null && questSequenceHost.CurrentQuestId != currentObjective.QuestId)
+                RefreshFromCurrentQuest();
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
@@ -137,6 +134,24 @@ namespace Narthex.Presentation
             if (statusText == null || string.IsNullOrWhiteSpace(currentObjective.QuestId)) return;
             statusText.text = FormatObjective(currentObjective);
             UpdateKeyPrompt(currentObjective.QuestId);
+        }
+
+        public void RefreshFromCurrentQuest()
+        {
+            if (statusText == null || questSequenceHost == null ||
+                string.IsNullOrWhiteSpace(questSequenceHost.CurrentQuestId))
+                return;
+
+            currentObjective = new TutorialObjectiveChanged(
+                questSequenceHost.CurrentQuestId,
+                questSequenceHost.CurrentObjectiveText,
+                questSequenceHost.CurrentStepIndex);
+            statusText.text = FormatObjective(currentObjective);
+            UpdateKeyPrompt(currentObjective.QuestId);
+            var fallbackLocation = ResolveFallbackLocation(currentObjective.QuestId);
+            if (string.IsNullOrWhiteSpace(currentLocationName) ||
+                currentObjective.QuestId is "QST-TUTO-007-A" or "QST-TUTO-007-B" or "QST-TUTO-008")
+                UpdateLocationCaption(fallbackLocation);
         }
 
         private void UpdateKeyPrompt(string questId)

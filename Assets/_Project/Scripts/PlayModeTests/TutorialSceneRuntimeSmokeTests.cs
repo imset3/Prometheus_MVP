@@ -23,15 +23,15 @@ namespace Narthex.PlayModeTests
     {
         private const string ImportedTutorialScenePath =
             "Assets/Scenes/TutorialScene.unity";
-        private const string HelteBossFsmDevScenePath =
-            "Assets/Scenes/HelteBossFsmDev.unity";
+        private const string BossDevelopmentScenePath =
+            "Assets/Scenes/BossDevelopmentScene.unity";
 
         [UnityTest]
-        public IEnumerator HelteBossFsmDevScene_BootstrapsDirectlyIntoHelte()
+        public IEnumerator BossDevelopmentScene_BootstrapsDirectlyIntoHelte()
         {
 #if UNITY_EDITOR
             var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
-                HelteBossFsmDevScenePath,
+                BossDevelopmentScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
             Assert.That(loadOperation, Is.Not.Null);
             while (!loadOperation.isDone) yield return null;
@@ -41,7 +41,7 @@ namespace Narthex.PlayModeTests
 #endif
 
             var scene = SceneManager.GetActiveScene();
-            Assert.That(scene.name, Is.EqualTo("HelteBossFsmDev"));
+            Assert.That(scene.name, Is.EqualTo("BossDevelopmentScene"));
             Assert.That(
                 FindSceneComponent<HelteBossFsmDevBootstrapHost>(scene),
                 Is.Not.Null,
@@ -56,22 +56,123 @@ namespace Narthex.PlayModeTests
             Assert.That(
                 FindSceneComponent<TutorialQuestSequenceHost>(scene).CurrentQuestId,
                 Is.EqualTo("QST-TUTO-008"));
+            Assert.That(
+                FindSceneComponent<TutorialStatusPresenter>(scene).CurrentProgressId,
+                Is.EqualTo("TUTO_H_01"),
+                "The development HUD must follow the debug-jumped Helte quest.");
+            Assert.That(
+                FindSceneComponent<TutorialStatusPresenter>(scene).CurrentLocationName,
+                Is.EqualTo("나디르 선착장"));
             Assert.That(FindSceneTransform(scene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneTransform(scene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.True);
             Assert.That(
                 FindSceneTransformOrDefault(scene, "BossArena_EntryGate_ART_SLOT"),
                 Is.Null,
                 "The development arena must use the permanently open Helte approach.");
+            var bossArena = FindSceneTransform(scene, "BossArena_Controller")
+                .GetComponent<TutorialBossArenaHost>();
+            Assert.That(bossArena.HasValidSetup, Is.True);
+            var helte = FindSceneTransform(scene, "TutorialHelte");
+            var heltePattern = helte.GetComponent<HelteBossPatternHost>();
+            var helteActor = helte.GetComponent<CombatActorHost>();
             Assert.That(
-                FindSceneTransform(scene, "BossArena_Controller")
-                    .GetComponent<TutorialBossArenaHost>()
-                    .HasValidSetup,
-                Is.True);
-            Assert.That(
-                FindSceneTransform(scene, "TutorialHelte")
-                    .GetComponent<HelteBossPatternHost>(),
+                heltePattern,
                 Is.Not.Null,
                 "The dedicated scene must retain the Helte FSM host for isolated development.");
+            Assert.That(
+                helteActor.Runtime.MaxHealth,
+                Is.EqualTo(5000),
+                "Helte health must support the five-minute encounter pacing target.");
+            Assert.That(
+                heltePattern.PhaseTwoHealthRatio,
+                Is.EqualTo(0.55f).Within(0.001f),
+                "Helte phase two must begin at 55% health.");
+            Assert.That(
+                heltePattern.FinalRushHealthRatio,
+                Is.EqualTo(0.2f).Within(0.001f),
+                "Helte's final rush must begin at 20% health.");
+            Assert.That(
+                heltePattern.FriendlyPatternPrototypeEnabled,
+                Is.True,
+                "The dedicated boss scene must enable the friendly-pattern prototype before tutorial promotion.");
+            Assert.That(
+                helte.GetComponent<HeltePatternVfxHost>().HasValidSetup,
+                Is.True,
+                "The development scene must expose state-driven VFX bindings.");
+            var telemetry = FindSceneTransform(scene, "BossArena_Controller")
+                .GetComponent<HelteCombatTelemetryHost>();
+            Assert.That(telemetry, Is.Not.Null);
+            Assert.That(telemetry.HasValidSetup, Is.True);
+            Assert.That(telemetry.TargetDurationSeconds, Is.EqualTo(300f));
+
+            FindSceneComponent<TutorialHelteEncounterDialogueHost>(scene).enabled = false;
+            var arenaTrigger = FindSceneTransform(scene, "BossArena_StartTrigger")
+                .GetComponent<Collider2D>();
+            var playerBody = FindSceneTransform(scene, "PlayerRoot")
+                .GetComponent<Rigidbody2D>();
+            var playerActor = playerBody.GetComponent<CombatActorHost>();
+            playerBody.linearVelocity = Vector2.zero;
+            playerBody.position = new Vector2(
+                arenaTrigger.bounds.min.x - 1f,
+                arenaTrigger.bounds.center.y);
+            Physics2D.SyncTransforms();
+            yield return null;
+
+            playerBody.position = new Vector2(
+                arenaTrigger.bounds.max.x + 1f,
+                arenaTrigger.bounds.center.y);
+            Physics2D.SyncTransforms();
+            yield return WaitForConditionRealtime(
+                () => bossArena.FightStarted,
+                1f,
+                "A fast player crossing must not skip the boss-arena start trigger.");
+            yield return WaitForConditionRealtime(
+                () => bossArena.CombatActive,
+                bossArena.IntroWarningSeconds + 1f,
+                "The boss FSM did not activate after the arena-entry warning.");
+
+            playerActor.SetScriptedInvulnerability(true);
+            Assert.That(
+                helteActor.CombatSystem.TryApplyDamage(
+                    helteActor.ActorId,
+                    new DamagePacket(playerActor.ActorId, "TEST-PHASE-TWO", 2300)),
+                Is.True);
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState == HelteCombatState.PhaseTransition,
+                5f,
+                "Helte did not enter the protected phase-two transition.");
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState != HelteCombatState.PhaseTransition &&
+                      !helteActor.Runtime.IsInvincible,
+                5f,
+                "Helte remained invincible after the phase-two transition.");
+
+            Assert.That(
+                helteActor.CombatSystem.TryApplyDamage(
+                    helteActor.ActorId,
+                    new DamagePacket(playerActor.ActorId, "TEST-FINAL-RUSH", 1800)),
+                Is.True);
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState == HelteCombatState.FinalRushTransition,
+                5f,
+                "Helte did not enter the protected final-rush transition.");
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState != HelteCombatState.FinalRushTransition &&
+                      !helteActor.Runtime.IsInvincible,
+                5f,
+                "Helte remained invincible after the final-rush transition.");
+
+            Assert.That(
+                helteActor.CombatSystem.TryApplyDamage(
+                    helteActor.ActorId,
+                    new DamagePacket(playerActor.ActorId, "TEST-BOSS-COMPLETE", helteActor.Runtime.CurrentHealth)),
+                Is.True);
+            yield return WaitForConditionRealtime(
+                () => bossArena.FightCompleted && !bossArena.CombatActive,
+                2f,
+                "Defeating Helte did not complete and close the boss encounter.");
+            Assert.That(telemetry.IsTiming, Is.False);
+            Assert.That(telemetry.LastCompletedDurationSeconds, Is.GreaterThan(0f));
         }
 
         [UnityTest]

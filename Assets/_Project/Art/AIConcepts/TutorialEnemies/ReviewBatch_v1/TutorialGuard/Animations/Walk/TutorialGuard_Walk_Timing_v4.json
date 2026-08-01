@@ -1,0 +1,21 @@
+{
+  "version": 4,
+  "loop": true,
+  "direction": "right",
+  "sampleRate": 7,
+  "frameOrder": [0, 1, 2, 2, 3, 4, 5, 6, 6, 7],
+  "cycleSeconds": 1.428571,
+  "leftStep": {
+    "lift": 0,
+    "reach": 1,
+    "heelContactHeld": [2, 2],
+    "weightTransfer": 3
+  },
+  "rightStep": {
+    "lift": 4,
+    "reach": 5,
+    "heelContactHeld": [6, 6],
+    "weightTransfer": 7
+  },
+  "notes": "Each footstep completes lift, reach, heel contact, and weight transfer before the opposite foot begins. Contact frames are duplicated for a deliberate planted feel."
+}

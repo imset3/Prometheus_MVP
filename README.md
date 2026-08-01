@@ -31,7 +31,7 @@
 | 2 | 숨겨진 방 | `F` 상호작용으로 사다리 이동, 테우스가 빛으로 변해 비행선 패스키를 비춤, 패스키 획득 |
 | 3 | 회의장 | 패스키 획득 후 동료들과 대화, 훈련장 이동 결정 |
 | 4 | 복도 | 훈련장으로 이동하는 연결 구간 |
-| 5 | 훈련장 | 대시 → 점프 → 더블 점프 → 기본 공격 → 원거리 공격 순차 훈련 |
+| 5 | 훈련장 | 대시 → 더블 점프 → 점프 → 기본 공격 → 원거리 공격 순차 훈련 |
 | 6 | 복도 | 훈련 종료 후 이동 중 습격 발생, 어두운 화면과 달리는 소리로 긴급 이동 연출 |
 | 7 | 회의장 | 습격 상황 확인과 긴급 대화 |
 | 8 | 복도 | 외부로 향하는 탈출 동선 |
@@ -48,9 +48,9 @@
 
 | 단계 | 훈련 | 완료·실패 규칙 |
 | --- | --- | --- |
-| 1 | 대시 | 지정 구간에서 대시 3회. 위에서 낙하물이 떨어지며 피격 시 해당 훈련을 재시작 |
-| 2 | 점프 | 전방 투사체 회피. 피격 또는 추락 시 해당 훈련을 재시작 |
-| 3 | 더블 점프 | 지정 구간 안에서 실제 더블 점프 수행 |
+| 1 | 대시 | 불기둥 3개를 무적 대시로 통과한 뒤 오른쪽 도착 마커에 접촉 |
+| 2 | 더블 점프 | 활성화된 발판을 이용해 가장 높은 발판의 도착 마커에 접촉 |
+| 3 | 점프 | 오른쪽 벽에서 1초 간격으로 발사되는 낮은 투사체 회피. 피격 시 해당 훈련을 재시작 |
 | 4 | 기본 공격 | 훈련 적에게 유효 근접 공격을 3회 적중 |
 | 5 | 원거리 공격 | `2` 키로 관통 도형을 발사해 훈련 표적 3개 적중 |
 
@@ -157,10 +157,27 @@ Assets/
       PlayModeTests/                 # 훈련·전체 흐름 런타임 테스트
 ```
 
-추가 설계와 작업 인수인계는 아래 문서를 참고합니다.
+## 도구 빠른 시작
 
-- `Assets/_Project/Docs/PROJECT_HANDOFF.md`
-- `Assets/_Project/Docs/TutorialImportedLevelIntegrationPlan.md`
+팀원과 AI는 같은 `Prometheus Scene Toolkit`을 사용합니다.
+
+1. Unity에서 `sragon000 > Prometheus Scene Toolkit`을 엽니다.
+2. 씬 수정 전 `스냅샷` 탭에서 기준 스냅샷을 생성합니다.
+3. 사람은 `마커` 탭에서 위치와 범위를 조정하고, AI는 JSON 명령을 먼저 `dryRun: true`로 실행합니다.
+4. `Scene Doctor`와 `구역 흐름` 탭에서 참조·Collider·진행 연결을 검사합니다.
+5. `기존 도구` 탭에서 검증 또는 플레이 테스트를 실행합니다.
+6. 수정 후 스냅샷을 다시 생성해 변경 내용을 비교합니다.
+
+`Legacy Migration`은 과거 씬 복구용입니다. 일반 레벨 작업에서는 실행하지 않으며, 실행 전에 반드시 씬 스냅샷을 남깁니다.
+
+## 문서
+
+- [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
+- [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
+- [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
+- [프로젝트 인수인계](Assets/_Project/Docs/PROJECT_HANDOFF.md) — 현재 구현 상태, 시나리오와 주의사항
+- [튜토리얼 레벨 통합 계획](Assets/_Project/Docs/TutorialImportedLevelIntegrationPlan.md) — 구역 통합 구조와 작업 기준
+- [헬테 FSM 개발 문서](Assets/_Project/Docs/HELTE_FSM_DEV.md) — 분리된 보스전 개발 기준
 
 ## 실행 방법
 
@@ -174,12 +191,15 @@ Assets/
 ## 검증 도구
 
 - 활성 튜토리얼 씬 검사: `sragon000 > Validation > Validate Active Tutorial Scene`
-- 수정 훈련장 플레이 테스트: `sragon000 > 튜토리얼 > 가져온 훈련장 플레이 테스트 실행`
-- 전체 튜토리얼 플레이 테스트: `sragon000 > 튜토리얼 > 가져온 전체 튜토리얼 플레이 테스트 실행`
+- 훈련장 마커 검사: `sragon000 > Validation > Validate Training Marker Layout`
+- 수정 훈련장 플레이 테스트: `sragon000 > Tests > Tutorial > Imported Training`
+- 전체 튜토리얼 플레이 테스트: `sragon000 > Tests > Tutorial > Full Tutorial`
+- G→H 구간 플레이 테스트: `sragon000 > Tests > Tutorial > G Wind To H`
+- 전체 도구 모음: `sragon000 > Prometheus Scene Toolkit > 기존 도구`
 - EditMode 테스트 어셈블리: `Narthex.Tests`
 - PlayMode 테스트 어셈블리: `Narthex.PlayModeTests`
 
-검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. 씬 자동 구성 도구를 다시 적용할 때는 팀원이 배치한 구역 자식 오브젝트를 덮어쓰지 않도록 적용 대상과 변경 목록을 확인해야 합니다.
+검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 
 ## 아트 연결 원칙과 남은 작업
 

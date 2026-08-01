@@ -1,0 +1,481 @@
+fileFormatVersion: 2
+guid: a777ceba9773146a6b8c083897dcf946
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4203666690338664997
+    second: TUTO_AC_TileSheet_4x3_v1_0
+  - first:
+      213: 4005817618164225569
+    second: TUTO_AC_TileSheet_4x3_v1_1
+  - first:
+      213: -6024664829616592708
+    second: TUTO_AC_TileSheet_4x3_v1_2
+  - first:
+      213: -3427801235704641364
+    second: TUTO_AC_TileSheet_4x3_v1_3
+  - first:
+      213: 5071965101200577980
+    second: TUTO_AC_TileSheet_4x3_v1_4
+  - first:
+      213: 4567095851564032426
+    second: TUTO_AC_TileSheet_4x3_v1_5
+  - first:
+      213: -959370235589872087
+    second: TUTO_AC_TileSheet_4x3_v1_6
+  - first:
+      213: -6932674691947592871
+    second: TUTO_AC_TileSheet_4x3_v1_7
+  - first:
+      213: 7261424629916666692
+    second: TUTO_AC_TileSheet_4x3_v1_8
+  - first:
+      213: -5519326511661049262
+    second: TUTO_AC_TileSheet_4x3_v1_9
+  - first:
+      213: 4713204206547097979
+    second: TUTO_AC_TileSheet_4x3_v1_10
+  - first:
+      213: -7924679276191689784
+    second: TUTO_AC_TileSheet_4x3_v1_11
+  - first:
+      213: -3271794901074968872
+    second: TUTO_AC_TileSheet_4x3_v1_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_0
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 616
+        width: 234
+        height: 143
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52237c7359c665a30800000000000000
+      internalID: 4203666690338664997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_1
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 603
+        width: 11
+        height: 102
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1261ea566e5879730800000000000000
+      internalID: 4005817618164225569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_2
+      rect:
+        serializedVersion: 2
+        x: 314
+        y: 603
+        width: 385
+        height: 165
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb8e9ebe147146ca0800000000000000
+      internalID: -6024664829616592708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_3
+      rect:
+        serializedVersion: 2
+        x: 743
+        y: 603
+        width: 281
+        height: 165
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca80e29ffe00e60d0800000000000000
+      internalID: -3427801235704641364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 507
+        width: 266
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb51d3a136d336640800000000000000
+      internalID: 5071965101200577980
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_5
+      rect:
+        serializedVersion: 2
+        x: 316
+        y: 507
+        width: 381
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa162afba75916f30800000000000000
+      internalID: 4567095851564032426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_6
+      rect:
+        serializedVersion: 2
+        x: 744
+        y: 507
+        width: 278
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 926359b8ad1afa2f0800000000000000
+      internalID: -959370235589872087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 301
+        width: 269
+        height: 171
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9538f1b39113acf90800000000000000
+      internalID: -6932674691947592871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_8
+      rect:
+        serializedVersion: 2
+        x: 314
+        y: 301
+        width: 384
+        height: 171
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44b847d6a33c5c460800000000000000
+      internalID: 7261424629916666692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_9
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 300
+        width: 279
+        height: 172
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25a1c01c7c96763b0800000000000000
+      internalID: -5519326511661049262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 269
+        height: 269
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b79dd15114aa86140800000000000000
+      internalID: 4713204206547097979
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_11
+      rect:
+        serializedVersion: 2
+        x: 314
+        y: 0
+        width: 415
+        height: 269
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c3d1bf5f22e50290800000000000000
+      internalID: -7924679276191689784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TUTO_AC_TileSheet_4x3_v1_12
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 0
+        width: 279
+        height: 268
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8defd774fdf3892d0800000000000000
+      internalID: -3271794901074968872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TUTO_AC_TileSheet_4x3_v1_0: 4203666690338664997
+      TUTO_AC_TileSheet_4x3_v1_1: 4005817618164225569
+      TUTO_AC_TileSheet_4x3_v1_10: 4713204206547097979
+      TUTO_AC_TileSheet_4x3_v1_11: -7924679276191689784
+      TUTO_AC_TileSheet_4x3_v1_12: -3271794901074968872
+      TUTO_AC_TileSheet_4x3_v1_2: -6024664829616592708
+      TUTO_AC_TileSheet_4x3_v1_3: -3427801235704641364
+      TUTO_AC_TileSheet_4x3_v1_4: 5071965101200577980
+      TUTO_AC_TileSheet_4x3_v1_5: 4567095851564032426
+      TUTO_AC_TileSheet_4x3_v1_6: -959370235589872087
+      TUTO_AC_TileSheet_4x3_v1_7: -6932674691947592871
+      TUTO_AC_TileSheet_4x3_v1_8: 7261424629916666692
+      TUTO_AC_TileSheet_4x3_v1_9: -5519326511661049262
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

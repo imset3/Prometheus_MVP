@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "name": "PZ Platform Tiles Universal",
+  "cellSizePixels": 256,
+  "pixelsPerUnit": 256,
+  "grid": {
+    "columns": 4,
+    "rows": 3,
+    "unityCellSize": [1, 1]
+  },
+  "sheet": "Generated/PZ_PlatformTiles_Universal_4x3_v1.png",
+  "tiles": [
+    { "index": 0, "column": 0, "row": 0, "name": "Platform_Isolated" },
+    { "index": 1, "column": 1, "row": 0, "name": "Platform_Left" },
+    { "index": 2, "column": 2, "row": 0, "name": "Platform_Middle" },
+    { "index": 3, "column": 3, "row": 0, "name": "Platform_Right" },
+    { "index": 4, "column": 0, "row": 1, "name": "Block_TopLeft" },
+    { "index": 5, "column": 1, "row": 1, "name": "Block_Top" },
+    { "index": 6, "column": 2, "row": 1, "name": "Block_TopRight" },
+    { "index": 7, "column": 3, "row": 1, "name": "Block_Fill" },
+    { "index": 8, "column": 0, "row": 2, "name": "Wall_Left" },
+    { "index": 9, "column": 1, "row": 2, "name": "Block_FillAlt" },
+    { "index": 10, "column": 2, "row": 2, "name": "Wall_Right" },
+    { "index": 11, "column": 3, "row": 2, "name": "Support_Pillar" }
+  ],
+  "import": {
+    "spriteMode": "Single",
+    "filterMode": "Bilinear",
+    "compression": "Uncompressed",
+    "mipmaps": false,
+    "alphaIsTransparency": true,
+    "wrapMode": "Clamp"
+  }
+}
