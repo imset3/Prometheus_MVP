@@ -12,14 +12,20 @@
 - uGUI 기반 튜토리얼 HUD
 - ScriptableObject 기반 퀘스트·조건·모듈 데이터
 - 단일 씬 내 구역 활성화와 페이드 전환 방식
+- 공식 Unity Pipeline MCP `com.unity.pipeline 0.4.0-exp.1`
 
 ## 현재 기준 씬
 
 - 메인 튜토리얼: `Assets/Scenes/TutorialScene.unity`
 - 빌드 시작 씬: `Assets/_Project/Scenes/Boot.unity`
 - 튜토리얼 이후 연결 씬: `Assets/Scenes/Chapter01.unity`
+- 보스 격리 개발씬: `Assets/Scenes/BossDevelopmentScene.unity`
+- AI 아트 적용 리뷰씬: `Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity`
+- AI 적용 전 보존본: `Assets/Scenes/AIReview/TutorialScene_Backup_PreAIPilot_20260801.unity`
 
 기존 튜토리얼 씬은 팀원이 새로 배치한 레벨과 최신 기능이 통합된 `TutorialScene`으로 대체되었습니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
+
+`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. `AIReview` 아래 두 씬은 아트 적용 전후 비교용이며 플레이어 빌드에는 포함하지 않습니다. 최종 튜토리얼 기준은 계속 `TutorialScene`입니다.
 
 ## 챕터 0 진행 흐름
 
@@ -107,6 +113,10 @@
 - 이도류 일반 연속 공격
 - 블링크 재배치 후 돌진과 X 베기
 - 2페이즈 진입 후 세 자루 칼 순차 소환·발사
+- 페이크 블링크, 카운터 자세, 저체력 자비 후퇴로 비적대적인 성격 표현
+- 체력 `55%`에서 2페이즈, `20%`에서 최종 시험 진입
+- 전환 중 무적 처리와 패턴별 VFX 연결 슬롯
+- 목표 전투 시간 `300초`와 패턴 횟수를 기록하는 개발 계측 HUD
 - 보스전 진입·완료 대화와 결과 흐름
 
 ### 대화와 HUD
@@ -140,11 +150,16 @@
 Assets/
   Scenes/
     TutorialScene.unity              # 새 레벨이 통합된 현재 기준 씬
+    BossDevelopmentScene.unity       # 헬테 FSM·밸런스 격리 개발씬
+    AIReview/                        # AI 아트 적용 전후 검토용 씬
     Chapter01.unity
+  TileMap/                           # 팀원이 공유한 구역별 TileMap 프리팹
   _Project/
     Art/
       Motions/                       # 원본 PNG 시퀀스
       Generated/                     # 자동 생성 Animation·Controller
+      AIConcepts/                    # 배경·적·타일셋 AI 리뷰 에셋
+      PlatformTiles/AI/              # 플랫폼 타일 생성본과 매니페스트
     Docs/                            # 인수인계·레벨 통합 문서
     GameData/Tutorial/               # 퀘스트·조건 ScriptableObject
     Scenes/Boot.unity
@@ -169,6 +184,18 @@ Assets/
 6. 수정 후 스냅샷을 다시 생성해 변경 내용을 비교합니다.
 
 `Legacy Migration`은 과거 씬 복구용입니다. 일반 레벨 작업에서는 실행하지 않으며, 실행 전에 반드시 씬 스냅샷을 남깁니다.
+
+## 공식 Unity MCP
+
+Unity 자동화는 비공식 `unityMCP` 대신 공식 Unity Pipeline MCP만 사용합니다.
+
+- 패키지: `com.unity.pipeline 0.4.0-exp.1`
+- Codex 서버 명령: `unity mcp --project-path <프로젝트 경로>`
+- 씬 수정 전 스냅샷과 `dryRun` 실행
+- 수정 후 Scene Doctor, 사후 스냅샷 비교와 Console 오류 확인
+- 수작업으로 배치된 씬에는 `Legacy Migration` 자동 적용 금지
+
+AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람은 `sragon000 > Prometheus Scene Toolkit`에서 같은 기능을 사용할 수 있습니다.
 
 ## 문서
 
@@ -199,11 +226,15 @@ Assets/
 - EditMode 테스트 어셈블리: `Narthex.Tests`
 - PlayMode 테스트 어셈블리: `Narthex.PlayModeTests`
 
+최근 공식 MCP 검증 결과는 EditMode `53/53`, PlayMode `7/7`, Console 오류 `0`입니다. 보스 개발씬 테스트에는 전투 진입, 2페이즈·최종 시험 전환, 전환 무적 해제와 처치 후 계측 종료가 포함됩니다.
+
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 
 ## 아트 연결 원칙과 남은 작업
 
 현재 구현은 레벨 흐름과 기능 검증을 위한 블록아웃 단계입니다.
+
+`Assets/_Project/Art/AIConcepts`와 `Assets/_Project/Art/PlatformTiles/AI`의 결과물은 최종 아트가 아니라 팀 검토용 후보입니다. `AIReview` 씬에서 비교한 뒤 승인된 에셋만 `TutorialScene`에 수작업으로 승격합니다.
 
 - 구역 최고 부모의 위치는 유지하면서 내부 도형을 최종 배경·플랫폼 스프라이트로 교체
 - 플레이어, 동료, 적, 헬테의 최종 PNG 시퀀스 연결
