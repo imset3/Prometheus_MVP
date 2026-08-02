@@ -126,5 +126,6 @@ namespace Narthex.Presentation
             if (meleeAttackHost != null && meleeAttackHost.IsAttackDirectionLocked) return;
             facingDirection = direction < 0f ? -1f : 1f;
         }
+
     }
 }

@@ -79,6 +79,25 @@ namespace Narthex.PlayModeTests
                 heltePattern,
                 Is.Not.Null,
                 "The dedicated scene must retain the Helte FSM host for isolated development.");
+            var sawBasicPattern = false;
+            var sawBlinkPattern = false;
+            var sawFakeBlinkPattern = false;
+            var sawFakeBlinkPause = false;
+            var sawCounterPattern = false;
+            var sawCounterWindow = false;
+            heltePattern.PatternStarted += pattern =>
+            {
+                sawBasicPattern |= pattern == HeltePattern.BasicCombo;
+                sawBlinkPattern |= pattern == HeltePattern.BlinkDash;
+                sawFakeBlinkPattern |= pattern == HeltePattern.FakeBlink;
+                sawCounterPattern |= pattern == HeltePattern.CounterStance;
+            };
+            heltePattern.StateChanged += state =>
+            {
+                sawFakeBlinkPause |= state == HelteCombatState.FakeBlinkPause;
+                sawCounterWindow |= state == HelteCombatState.CounterStance ||
+                                    state == HelteCombatState.CounterOpen;
+            };
             Assert.That(
                 helteActor.Runtime.MaxHealth,
                 Is.EqualTo(5000),
@@ -132,6 +151,36 @@ namespace Narthex.PlayModeTests
                 "The boss FSM did not activate after the arena-entry warning.");
 
             playerActor.SetScriptedInvulnerability(true);
+            yield return WaitForConditionRealtime(
+                () => sawBasicPattern && sawBlinkPattern && sawFakeBlinkPattern && sawFakeBlinkPause,
+                12f,
+                "The friendly opening did not execute BasicCombo, BlinkDash and the readable FakeBlink pause.");
+
+            playerActor.SetScriptedInvulnerability(false);
+            var mercyTargetHealth = Mathf.Max(
+                1,
+                Mathf.FloorToInt(playerActor.Runtime.MaxHealth * 0.2f));
+            Assert.That(
+                playerActor.CombatSystem.TryApplyDamage(
+                    playerActor.ActorId,
+                    new DamagePacket(
+                        helteActor.ActorId,
+                        "TEST-MERCY-THRESHOLD",
+                        playerActor.Runtime.CurrentHealth - mercyTargetHealth)),
+                Is.True,
+                "The boss test could not lower the player to Helte's mercy threshold.");
+            playerActor.SetScriptedInvulnerability(true);
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState == HelteCombatState.MercyRetreat,
+                4f,
+                "Low player health did not trigger Helte's mercy retreat.");
+            yield return WaitForConditionRealtime(
+                () => heltePattern.CurrentState != HelteCombatState.MercyRetreat &&
+                      playerActor.Runtime.CurrentHealth >=
+                      Mathf.CeilToInt(playerActor.Runtime.MaxHealth * 0.6f),
+                4f,
+                "Helte's mercy retreat did not restore the player to the configured recovery floor.");
+
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
@@ -146,12 +195,19 @@ namespace Narthex.PlayModeTests
                       !helteActor.Runtime.IsInvincible,
                 5f,
                 "Helte remained invincible after the phase-two transition.");
+            yield return WaitForConditionRealtime(
+                () => sawCounterPattern && sawCounterWindow &&
+                      !helteActor.Runtime.IsInvincible,
+                15f,
+                "The friendly phase-two loop did not reach its counter stance and readable response window.");
 
+            helteActor.SetScriptedInvulnerability(false);
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
                     new DamagePacket(playerActor.ActorId, "TEST-FINAL-RUSH", 1800)),
-                Is.True);
+                Is.True,
+                "The boss test could not lower Helte to the final-rush threshold after the counter window.");
             yield return WaitForConditionRealtime(
                 () => heltePattern.CurrentState == HelteCombatState.FinalRushTransition,
                 5f,
@@ -752,6 +808,7 @@ namespace Narthex.PlayModeTests
             var actionScopes = FindSceneComponent<TutorialTrainingActionScopeHost>(tutorialScene);
             var meleeAttack = FindSceneComponent<MeleeAttackHost>(tutorialScene);
             var rangedAttack = FindSceneComponent<PlayerRangedAttackHost>(tutorialScene);
+            var playerAnimation = inputHost.GetComponentInChildren<CharacterPngAnimationBridge>(true);
 
             Assert.That(trainingSpawn.HasValidSetup, Is.True);
             Assert.That(trainingFlow.HasValidSetup, Is.True);
@@ -760,6 +817,12 @@ namespace Narthex.PlayModeTests
             Assert.That(actionScopes.HasValidSetup, Is.True);
             Assert.That(meleeAttack.HasValidSetup, Is.True);
             Assert.That(rangedAttack.HasValidSetup, Is.True);
+            Assert.That(playerAnimation, Is.Not.Null,
+                "Prome must retain the PNG animation bridge used by the single-attack presentation.");
+            Assert.That(playerAnimation.HasAttack01Clip, Is.True,
+                "Prome's PNG animator must contain the generated Attack01 sequence.");
+            Assert.That(meleeAttack.EffectiveCooldownSeconds, Is.EqualTo(0.5f).Within(0.02f),
+                "Prome's melee cooldown must let the 15-frame Attack01 motion finish before another attack.");
             Assert.That(introductionCard.PromptDelay, Is.EqualTo(1f).Within(0.01f));
             Assert.That(playerCollider, Is.Not.Null);
 
@@ -920,6 +983,9 @@ namespace Narthex.PlayModeTests
             GetPrivateField<CombatActorHost>(meleeAttack, "sourceActor").ResetRuntime();
             var attackHitbox = GetPrivateField<Collider2D>(meleeAttack, "attackHitbox");
             var attackAnchor = GetPrivateField<Transform>(meleeAttack, "attackAnchor");
+            var playerSprite = playerAnimation.GetComponentInChildren<SpriteRenderer>(true);
+            Assert.That(playerSprite, Is.Not.Null);
+            var playerBaseSortingOrder = playerSprite.sortingOrder;
             var attackPoint = (Vector2)attackHitbox.transform.TransformPoint(attackHitbox.offset);
             tutorialEnemy.transform.position = attackPoint;
             Physics2D.SyncTransforms();
@@ -971,6 +1037,14 @@ namespace Narthex.PlayModeTests
                 yield return null;
                 Assert.That(meleeAttack.IsAttackDirectionLocked, Is.True,
                     "The player's facing must stay locked while the single attack animation is readable.");
+                Assert.That(playerAnimation.IsSingleAttackMotionPlaying, Is.True,
+                    "Each accepted melee input must start one visible Prome attack motion.");
+                Assert.That(playerAnimation.IsAttackSortingPriorityActive, Is.True,
+                    "Prome's attack motion must temporarily render above level geometry.");
+                Assert.That(playerSprite.sortingOrder, Is.GreaterThan(playerBaseSortingOrder),
+                    "Prome's attack SpriteRenderer did not move to the foreground sorting order.");
+                Assert.That(playerAnimation.PresentedAttackCount, Is.EqualTo(hitIndex),
+                    "Prome must present exactly one attack motion per accepted melee input.");
                 Assert.That(
                     acceptedAttackCount,
                     Is.EqualTo(hitIndex),
@@ -996,7 +1070,7 @@ namespace Narthex.PlayModeTests
                         tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth,
                         Is.EqualTo(healthAfterInput),
                         "Repeated input during the attack cooldown must not deal extra damage.");
-                    yield return new WaitForSeconds(0.27f);
+                    yield return new WaitForSeconds(meleeAttack.EffectiveCooldownSeconds + 0.02f);
                     Assert.That(acceptedAttackCount, Is.EqualTo(hitIndex),
                         "One melee input must not schedule follow-up combo attacks.");
                     Assert.That(
@@ -1005,12 +1079,16 @@ namespace Narthex.PlayModeTests
                         "One melee input dealt additional delayed damage without another press.");
                     Assert.That(meleeAttack.IsAttackDirectionLocked, Is.False,
                         "The player facing lock must release before the next independent attack.");
+                    Assert.That(playerAnimation.IsAttackSortingPriorityActive, Is.False,
+                        "Prome's foreground sorting priority must clear after the attack motion.");
+                    Assert.That(playerSprite.sortingOrder, Is.EqualTo(playerBaseSortingOrder),
+                        "Prome's SpriteRenderer sorting order was not restored after the attack.");
                 }
             }
             InvokePrivateMethod(inputHost, "UpdateAimDirection", -1f);
             Assert.That(attackAnchor.localScale.x, Is.GreaterThan(0f),
                 "Changing aim during an attack must not flip the active hit direction.");
-            yield return new WaitForSeconds(0.27f);
+            yield return new WaitForSeconds(meleeAttack.EffectiveCooldownSeconds + 0.02f);
             tutorialEnemyCollider.enabled = false;
             InvokePrivateMethod(meleeAttack, "TryAttack");
             Assert.That(acceptedAttackCount, Is.EqualTo(4),

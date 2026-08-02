@@ -26,3 +26,9 @@
 
 # Local validation captures
 Assets/Screenshots/
+Assets/Scenes/AIReview/Captures/
+Assets/Scenes/AIReview/Captures.meta
+
+# AI generation intermediates; Unity scenes reference Generated assets only
+Assets/_Project/Art/AIConcepts/**/Source/
+Assets/_Project/Art/AIConcepts/**/Source.meta

@@ -16,6 +16,11 @@ namespace Narthex.Tools
     {
         private const string DefaultOutputFolder = "Assets/_Project/Art/Generated/Characters";
         private const string GeneratedVisualName = "CharacterSprite_ART";
+        private const string PromeSequenceFolder = "Assets/_Project/Art/Motions/Prome";
+        private const string PromeAttackClipPath =
+            "Assets/_Project/Art/Generated/Characters/PlayerVisual/Animations/Attack01.anim";
+        private const string PromeControllerPath =
+            "Assets/_Project/Art/Generated/Characters/PlayerVisual/Controllers/PlayerVisual.controller";
         private static readonly Regex TrailingNumber =
             new Regex(@"(?<number>\d+)(?=\.png$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -56,6 +61,50 @@ namespace Narthex.Tools
         {
             var window = GetWindow<CharacterPngSequenceSetupWindow>("PNG Sequence Setup");
             window.minSize = new Vector2(360f, 280f);
+        }
+
+        [MenuItem(PrometheusToolMenuPaths.Root + "Art/Build Prome Attack01 Clip")]
+        public static void BuildPromeAttack01Clip()
+        {
+            var folder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(PromeSequenceFolder);
+            var scan = ScanSequenceFolder(folder, CharacterPngAnimationPreset.Prome);
+            var attack = scan.Motions.FirstOrDefault(motion =>
+                motion.Name.Equals("Attack01", StringComparison.OrdinalIgnoreCase));
+            if (attack == null || attack.Frames.Count == 0)
+                throw new InvalidOperationException($"{PromeSequenceFolder}/Attack01에 PNG 프레임이 없습니다.");
+            if (attack.Errors.Count > 0)
+                throw new InvalidOperationException(string.Join("\n", attack.Errors));
+
+            var builder = CreateInstance<CharacterPngSequenceSetupWindow>();
+            try
+            {
+                builder.framesPerSecond = 30f;
+                builder.pixelsPerUnit = 100f;
+                builder.pivot = new Vector2(0.5f, 0f);
+                builder.filterMode = FilterMode.Bilinear;
+                builder.compression = TextureImporterCompression.Uncompressed;
+                var sprites = builder.ImportFrames(attack);
+                var clip = builder.CreateOrUpdateClip(
+                    sprites,
+                    PromeAttackClipPath,
+                    "Attack01",
+                    false);
+                CreateOrUpdateController(
+                    PromeControllerPath,
+                    new Dictionary<string, AnimationClip>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["Attack01"] = clip
+                    });
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log(
+                    $"[sragon000][Prome] Attack01 적용 완료: {sprites.Count} frames / 30fps / " +
+                    $"{clip.length:0.###}s. 누락 번호는 시간 공백 없이 압축 재생합니다.");
+            }
+            finally
+            {
+                DestroyImmediate(builder);
+            }
         }
 
         private void OnGUI()
@@ -770,7 +819,8 @@ namespace Narthex.Tools
             {
                 if (frame != expected)
                 {
-                    motion.Errors.Add($"{expected:D3}.png 프레임이 누락됐습니다.");
+                    motion.Warnings.Add(
+                        $"{expected:D3}.png 프레임이 누락됐습니다. 적용 시 다음 프레임을 이어 붙여 시간 공백 없이 재생합니다.");
                     expected = frame;
                 }
                 expected++;

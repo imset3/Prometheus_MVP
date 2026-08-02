@@ -32,6 +32,13 @@ namespace Narthex.Tools
             "object.set-active",
             "object.transform",
             "background.backplate.apply",
+            "background.zenith-approach.apply",
+            "training.art.apply",
+            "exterior.art.apply",
+            "dock.art.apply",
+            "hidden-room.art.apply",
+            "meeting-room.art.apply",
+            "corridor.art.apply",
             "component.inspect",
             "component.set",
             "code.usage",
@@ -173,6 +180,41 @@ namespace Narthex.Tools
                     break;
                 case "background.backplate.apply":
                     ApplyBackgroundBackplate(scene, request, response);
+                    break;
+                case "background.zenith-approach.apply":
+                    ApplyZenithApproach(scene, request, response);
+                    break;
+                case "training.art.apply":
+                    response.changes = PrometheusTrainingArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} D training hall art package ({response.changes.Count} change(s)).";
+                    break;
+                case "exterior.art.apply":
+                    response.changes = PrometheusExteriorArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} E exterior art package ({response.changes.Count} change(s)).";
+                    break;
+                case "dock.art.apply":
+                    response.changes = PrometheusDockArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} H Nadir dock art package ({response.changes.Count} change(s)).";
+                    break;
+                case "hidden-room.art.apply":
+                    response.changes = PrometheusHiddenRoomArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} B hidden-room functional art package ({response.changes.Count} change(s)).";
+                    break;
+                case "meeting-room.art.apply":
+                    response.changes = PrometheusMeetingRoomArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " A meeting-room art package (" + response.changes.Count + " change(s)).";
+                    break;
+                case "corridor.art.apply":
+                    response.changes = PrometheusCorridorArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " C corridor art package (" + response.changes.Count + " change(s)).";
                     break;
                 case "component.inspect":
                     InspectComponent(scene, request, response);
@@ -405,6 +447,34 @@ namespace Narthex.Tools
             response.changed = !request.dryRun;
             response.message =
                 $"{(request.dryRun ? "Previewed" : "Applied")} tutorial background backplate.";
+        }
+
+        private static void ApplyZenithApproach(
+            Scene scene,
+            PrometheusAiCommandRequest request,
+            PrometheusAiCommandResponse response)
+        {
+            response.changes.Add(PrometheusZenithApproachAutomation.Apply(
+                scene,
+                request.Get("spritePath"),
+                request.Get("playerPath", "TutorialRuntimeRoot/StageRoot/PlayerRoot"),
+                request.GetFloat("startWorldX", 239f),
+                request.GetFloat("endWorldX", 867.87f),
+                new Vector2(
+                    request.GetFloat("farViewportX", 0.80f),
+                    request.GetFloat("farViewportY", 0.70f)),
+                new Vector2(
+                    request.GetFloat("nearViewportX", 0.70f),
+                    request.GetFloat("nearViewportY", 0.58f)),
+                request.GetFloat("farScreenWidth", 0.14f),
+                request.GetFloat("nearScreenWidth", 0.56f),
+                request.GetFloat("farOpacity", 0.72f),
+                request.GetFloat("nearOpacity", 1f),
+                (int)request.GetFloat("sortingOrder", -990f),
+                request.dryRun));
+            response.changed = !request.dryRun;
+            response.message =
+                $"{(request.dryRun ? "Previewed" : "Applied")} continuous Zenith approach.";
         }
 
         private static void ValidateFlow(

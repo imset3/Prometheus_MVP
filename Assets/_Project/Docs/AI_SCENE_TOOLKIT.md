@@ -27,6 +27,7 @@
 | 오브젝트 활성화 | `object.set-active` | Hierarchy |
 | 오브젝트 위치 | `object.transform` | Scene View Transform 도구 |
 | 튜토리얼 배경판 | `background.backplate.apply` | Inspector / Scene View |
+| 제니스 연속 접근 | `background.zenith-approach.apply` | Inspector / Scene View |
 | 코드 영향 확인 | `code.usage` | 씬 검색 |
 
 ## Unity MCP 사용
@@ -131,6 +132,20 @@ Unity `JsonUtility` 호환을 위해 인자는 Dictionary가 아니라 배열이
 `AI_TutorialBackgroundRoot` 아래에 카메라 추적용 배경 SpriteRenderer를
 생성하거나 갱신한다. 런타임에는 `TutorialLocationChanged` 이벤트에 따라
 A~H 배경 슬롯을 전환한다.
+
+- `background.zenith-approach.apply`
+  - `spritePath`: 투명 배경의 단일 제니스 PNG Sprite 경로
+  - 선택값: `playerPath`(기본 `TutorialRuntimeRoot/StageRoot/PlayerRoot`)
+  - 월드 진행 범위: `startWorldX`(기본 `239`), `endWorldX`(기본 `867.87`)
+  - 화면 위치: `farViewportX/Y`, `nearViewportX/Y`
+  - 화면 너비 비율: `farScreenWidth`(기본 `0.14`), `nearScreenWidth`(기본 `0.56`)
+  - 투명도: `farOpacity`(기본 `0.72`), `nearOpacity`(기본 `1`)
+  - `sortingOrder`(기본 `-990`)
+
+이 명령은 E 진입부터 H 보스 아레나까지 플레이어의 월드 X를 기준으로
+제니스의 화면상 위치·크기·투명도를 매 프레임 연속 보간한다. E/F/G/H
+위치 이벤트가 바뀌어도 진행도를 리셋하지 않으며, 하늘 배경판의 색감과
+제니스 원근 연출을 서로 분리한다.
 
 대상 선택 우선순위는 `objectId → markerId → hierarchyPath`다. 마커 ID가 가장 팀 친화적이고, GlobalObjectId가 AI에게 가장 정확하다.
 

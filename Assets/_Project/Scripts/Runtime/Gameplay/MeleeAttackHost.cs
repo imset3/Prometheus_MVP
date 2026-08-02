@@ -20,6 +20,7 @@ namespace Narthex.Gameplay
         private float cooldownEndsAt;
         private float deactivateAt;
         private float attackDirectionLockedUntil;
+        private float presentationLockSeconds;
         private Vector3 attackAnchorLocalPosition;
         private Vector3 attackAnchorLocalScale;
         private uint attackSequence;
@@ -28,8 +29,15 @@ namespace Narthex.Gameplay
         public bool UsesSingleHitAttacks => true;
         public float CooldownSeconds => cooldownSeconds;
         public float DirectionLockSeconds => directionLockSeconds;
+        public float EffectiveCooldownSeconds => Mathf.Max(cooldownSeconds, presentationLockSeconds);
+        public float EffectiveDirectionLockSeconds => Mathf.Max(directionLockSeconds, presentationLockSeconds);
         public bool IsAttackDirectionLocked => Time.time < attackDirectionLockedUntil;
         public event System.Action AttackStarted;
+
+        public void SetPresentationLockDuration(float duration)
+        {
+            presentationLockSeconds = Mathf.Max(0f, duration);
+        }
 
         private void Awake()
         {
@@ -74,9 +82,9 @@ namespace Narthex.Gameplay
             if (!sourceActor.Runtime.IsAlive || sourceActor.Runtime.State is CombatState.Hit or CombatState.Stun) return;
 
             ApplyAimDirection(inputHost.AimDirectionX);
-            cooldownEndsAt = Time.time + cooldownSeconds;
+            cooldownEndsAt = Time.time + EffectiveCooldownSeconds;
             deactivateAt = Time.time + activeSeconds;
-            attackDirectionLockedUntil = Time.time + Mathf.Max(activeSeconds, directionLockSeconds);
+            attackDirectionLockedUntil = Time.time + Mathf.Max(activeSeconds, EffectiveDirectionLockSeconds);
             attackHitbox.enabled = true;
             attackSequence++;
             AttackStarted?.Invoke();

@@ -1,3 +1,4 @@
+using System.Linq;
 using Narthex.Gameplay;
 using UnityEngine;
 
@@ -37,6 +38,7 @@ namespace Narthex.Presentation
         [SerializeField, Min(0.01f)] private float attackTwoDuration = 0.22f;
         [SerializeField, Min(0.01f)] private float attackThreeDuration = 0.25f;
         [SerializeField, Min(0.01f)] private float hitDuration = 0.16f;
+        [SerializeField] private int attackSortingOrder = 1000;
         [SerializeField, HideInInspector] private bool setupBackupCaptured;
         [SerializeField, HideInInspector] private Renderer[] originalRenderers;
         [SerializeField, HideInInspector] private bool[] originalRendererEnabledStates;
@@ -50,11 +52,29 @@ namespace Narthex.Presentation
 
         private string currentState = string.Empty;
         private float actionLockedUntil;
+        private float proceduralAttackStartedAt;
+        private float proceduralAttackEndsAt;
+        private float proceduralAttackDirection = 1f;
+        private Vector3 proceduralAttackBasePosition;
+        private Quaternion proceduralAttackBaseRotation;
+        private Vector3 proceduralAttackBaseScale;
+        private bool proceduralAttackBaseCaptured;
+        private int baseSortingOrder;
+        private bool sortingOrderCaptured;
+        private bool attackSortingPriorityActive;
         private bool deathPresented;
         private bool subscribedToCombatEvents;
 
         public CharacterPngAnimationPreset Preset => preset;
         public bool HasValidSetup => animator != null && spriteRenderer != null;
+        public bool HasAttack01Clip => HasAnimatorState("Attack01");
+        public bool IsSingleAttackMotionPlaying => Time.time < actionLockedUntil &&
+                                                   (currentState == "Attack01" ||
+                                                    Time.time < proceduralAttackEndsAt);
+        public bool IsUsingProceduralAttackFallback => Time.time < proceduralAttackEndsAt;
+        public bool IsAttackSortingPriorityActive => attackSortingPriorityActive;
+        public int BaseSortingOrder => baseSortingOrder;
+        public int PresentedAttackCount { get; private set; }
         public bool HasSetupBackup => setupBackupCaptured;
         public Transform OriginalContractVisualRoot => originalContractVisualRoot;
         public Renderer[] OriginalContractRenderers => originalContractRenderers;
@@ -162,7 +182,11 @@ namespace Narthex.Presentation
             {
                 Debug.LogError("CharacterPngAnimationBridge requires an Animator and SpriteRenderer.", this);
                 enabled = false;
+                return;
             }
+
+            CaptureProceduralAttackBasePose();
+            CaptureSortingOrder();
         }
 
         private void OnEnable()
@@ -174,6 +198,7 @@ namespace Narthex.Presentation
             if (enemyAttack != null) enemyAttack.PhaseChanged += HandleEnemyAttackPhaseChanged;
             if (heltePattern != null) heltePattern.StateChanged += HandleHelteStateChanged;
             TrySubscribeCombatEvents();
+            SyncMeleeAttackPresentationLock();
             ApplyInitialFacing();
         }
 
@@ -186,6 +211,8 @@ namespace Narthex.Presentation
             if (subscribedToCombatEvents && actor != null && actor.Events != null)
                 actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
             subscribedToCombatEvents = false;
+            RestoreProceduralAttackBasePose();
+            RestoreSortingOrder();
         }
 
         private void Update()
@@ -193,6 +220,7 @@ namespace Narthex.Presentation
             if (!HasValidSetup) return;
             TrySubscribeCombatEvents();
             UpdateFacing();
+            UpdateAttackSortingPriority();
 
             if (actor != null && actor.Runtime != null && !actor.Runtime.IsAlive)
             {
@@ -206,7 +234,10 @@ namespace Narthex.Presentation
 
             deathPresented = false;
             if (preset == CharacterPngAnimationPreset.Prome)
+            {
+                UpdateProceduralAttackMotion();
                 UpdatePromeLocomotion();
+            }
             else if (preset == CharacterPngAnimationPreset.Generic && Time.time >= actionLockedUntil)
                 PlayState("Work");
         }
@@ -234,7 +265,17 @@ namespace Narthex.Presentation
         {
             if (spriteRenderer != null && playerInput != null)
                 spriteRenderer.flipX = ShouldFlipForDirection(playerInput.AimDirectionX);
-            PlayLockedState("Attack01", attackOneDuration);
+            proceduralAttackDirection = playerInput == null || playerInput.AimDirectionX >= 0f ? 1f : -1f;
+            PresentedAttackCount++;
+            ApplyAttackSortingPriority();
+            if (HasAttack01Clip)
+            {
+                RestoreProceduralAttackBasePose();
+                PlayLockedState("Attack01", ResolveAnimationDuration("Attack01", attackOneDuration));
+                return;
+            }
+
+            BeginProceduralAttackMotion();
         }
 
         private void HandleEnemyAttackPhaseChanged(EnemyAttackPhase phase)
@@ -257,30 +298,7 @@ namespace Narthex.Presentation
             {
                 HelteCombatState.Disabled => "Idle",
                 HelteCombatState.Waiting => "Idle",
-                HelteCombatState.PhaseTransition => "PhaseTransition",
-                HelteCombatState.FinalRushTransition => "PhaseTransition",
-                HelteCombatState.MercyRetreat => "Recover",
-                HelteCombatState.BasicWindup => "BasicWindup",
-                HelteCombatState.BasicLeftSlash => "BasicLeftSlash",
-                HelteCombatState.BasicAdvance => "DashApproach",
-                HelteCombatState.BasicRightSlash => "BasicRightSlash",
-                HelteCombatState.BlinkVanish => "BlinkVanish",
-                HelteCombatState.BlinkReappear => "BlinkReappear",
-                HelteCombatState.DashTelegraph => "BlinkReappear",
-                HelteCombatState.DashApproach => "DashApproach",
-                HelteCombatState.CrossSlashTelegraph => "CrossSlash",
-                HelteCombatState.CrossSlash => "CrossSlash",
-                HelteCombatState.SwordFocus => "SwordFocus",
-                HelteCombatState.SwordVolley => "SwordVolley",
-                HelteCombatState.FakeBlinkVanish => "BlinkVanish",
-                HelteCombatState.FakeBlinkReappear => "BlinkReappear",
-                HelteCombatState.FakeBlinkPause => "Recover",
-                HelteCombatState.CounterTelegraph => "BasicWindup",
-                HelteCombatState.CounterStance => "Idle",
-                HelteCombatState.CounterSucceeded => "Recover",
-                HelteCombatState.CounterOpen => "Recover",
-                HelteCombatState.Recover => "Recover",
-                _ => "Idle"
+                _ => state.ToString()
             };
         }
 
@@ -293,8 +311,8 @@ namespace Narthex.Presentation
         private void HandleAimDirectionChanged(float direction)
         {
             if (preset == CharacterPngAnimationPreset.Prome &&
-                meleeAttack != null &&
-                meleeAttack.IsAttackDirectionLocked)
+                ((meleeAttack != null && meleeAttack.IsAttackDirectionLocked) ||
+                 Time.time < actionLockedUntil))
                 return;
             if (spriteRenderer != null && !Mathf.Approximately(direction, 0f))
                 spriteRenderer.flipX = ShouldFlipForDirection(direction);
@@ -306,7 +324,8 @@ namespace Narthex.Presentation
 
             if (preset == CharacterPngAnimationPreset.Prome)
             {
-                if (meleeAttack != null && meleeAttack.IsAttackDirectionLocked) return;
+                if ((meleeAttack != null && meleeAttack.IsAttackDirectionLocked) ||
+                    Time.time < actionLockedUntil) return;
                 if (movementBody == null) return;
                 var horizontalVelocity = movementBody.linearVelocity.x;
                 if (Mathf.Abs(horizontalVelocity) > runVelocityThreshold)
@@ -354,6 +373,133 @@ namespace Narthex.Presentation
                 0,
                 0f);
             currentState = stateName;
+        }
+
+        private bool HasAnimatorState(string stateName)
+        {
+            if (animator == null || string.IsNullOrWhiteSpace(stateName)) return false;
+            return animator.HasState(0, Animator.StringToHash($"Base Layer.{stateName}"));
+        }
+
+        private float ResolveAnimationDuration(string stateName, float fallback)
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+                return Mathf.Max(0.01f, fallback);
+
+            var clip = animator.runtimeAnimatorController.animationClips.FirstOrDefault(candidate =>
+                candidate != null && candidate.name.Equals(stateName, System.StringComparison.OrdinalIgnoreCase));
+            return clip == null ? Mathf.Max(0.01f, fallback) : Mathf.Max(0.01f, clip.length);
+        }
+
+        private void SyncMeleeAttackPresentationLock()
+        {
+            if (preset != CharacterPngAnimationPreset.Prome || meleeAttack == null) return;
+            meleeAttack.SetPresentationLockDuration(
+                ResolveAnimationDuration("Attack01", attackOneDuration));
+        }
+
+        private void BeginProceduralAttackMotion()
+        {
+            CaptureProceduralAttackBasePose();
+            var duration = Mathf.Max(0.01f, attackOneDuration);
+            proceduralAttackStartedAt = Time.time;
+            proceduralAttackEndsAt = Time.time + duration;
+            actionLockedUntil = proceduralAttackEndsAt;
+        }
+
+        private void UpdateProceduralAttackMotion()
+        {
+            if (!proceduralAttackBaseCaptured || spriteRenderer == null) return;
+            if (Time.time >= proceduralAttackEndsAt)
+            {
+                RestoreProceduralAttackBasePose();
+                return;
+            }
+
+            var duration = Mathf.Max(0.01f, proceduralAttackEndsAt - proceduralAttackStartedAt);
+            var progress = Mathf.Clamp01((Time.time - proceduralAttackStartedAt) / duration);
+            float lunge;
+            float rotation;
+            float stretch;
+            if (progress < 0.2f)
+            {
+                var pose = Mathf.SmoothStep(0f, 1f, progress / 0.2f);
+                lunge = Mathf.Lerp(0f, -0.045f, pose);
+                rotation = Mathf.Lerp(0f, 10f, pose);
+                stretch = Mathf.Lerp(0f, -0.04f, pose);
+            }
+            else if (progress < 0.62f)
+            {
+                var pose = Mathf.SmoothStep(0f, 1f, (progress - 0.2f) / 0.42f);
+                lunge = Mathf.Lerp(-0.045f, 0.2f, pose);
+                rotation = Mathf.Lerp(10f, -28f, pose);
+                stretch = Mathf.Lerp(-0.04f, 0.16f, pose);
+            }
+            else
+            {
+                var pose = Mathf.SmoothStep(0f, 1f, (progress - 0.62f) / 0.38f);
+                lunge = Mathf.Lerp(0.2f, 0f, pose);
+                rotation = Mathf.Lerp(-28f, 0f, pose);
+                stretch = Mathf.Lerp(0.16f, 0f, pose);
+            }
+
+            var visual = spriteRenderer.transform;
+            visual.localPosition = proceduralAttackBasePosition +
+                                   Vector3.right * (lunge * proceduralAttackDirection);
+            visual.localRotation = proceduralAttackBaseRotation *
+                                   Quaternion.Euler(0f, 0f, rotation * proceduralAttackDirection);
+            visual.localScale = Vector3.Scale(
+                proceduralAttackBaseScale,
+                new Vector3(1f + stretch, 1f - (stretch * 0.35f), 1f));
+        }
+
+        private void CaptureProceduralAttackBasePose()
+        {
+            if (proceduralAttackBaseCaptured || spriteRenderer == null) return;
+            var visual = spriteRenderer.transform;
+            proceduralAttackBasePosition = visual.localPosition;
+            proceduralAttackBaseRotation = visual.localRotation;
+            proceduralAttackBaseScale = visual.localScale;
+            proceduralAttackBaseCaptured = true;
+        }
+
+        private void RestoreProceduralAttackBasePose()
+        {
+            if (!proceduralAttackBaseCaptured || spriteRenderer == null) return;
+            var visual = spriteRenderer.transform;
+            visual.localPosition = proceduralAttackBasePosition;
+            visual.localRotation = proceduralAttackBaseRotation;
+            visual.localScale = proceduralAttackBaseScale;
+            proceduralAttackStartedAt = 0f;
+            proceduralAttackEndsAt = 0f;
+        }
+
+        private void CaptureSortingOrder()
+        {
+            if (sortingOrderCaptured || spriteRenderer == null) return;
+            baseSortingOrder = spriteRenderer.sortingOrder;
+            sortingOrderCaptured = true;
+        }
+
+        private void ApplyAttackSortingPriority()
+        {
+            CaptureSortingOrder();
+            if (!sortingOrderCaptured || spriteRenderer == null) return;
+            spriteRenderer.sortingOrder = Mathf.Max(baseSortingOrder + 1, attackSortingOrder);
+            attackSortingPriorityActive = true;
+        }
+
+        private void UpdateAttackSortingPriority()
+        {
+            if (!attackSortingPriorityActive || Time.time < actionLockedUntil) return;
+            RestoreSortingOrder();
+        }
+
+        private void RestoreSortingOrder()
+        {
+            if (!sortingOrderCaptured || spriteRenderer == null) return;
+            spriteRenderer.sortingOrder = baseSortingOrder;
+            attackSortingPriorityActive = false;
         }
 
         private void ResolveMissingParentReferences()

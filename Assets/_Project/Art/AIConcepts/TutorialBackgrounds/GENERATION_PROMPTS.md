@@ -67,8 +67,9 @@ shot using visually distinct mechanical equipment without readable labels.
 
 A short, easy exterior route with the hidden HQ exit, a panoramic lookout, and
 the entrance toward the combat district. Reveal smoke, restrained red warning
-lights, the layered lower industrial city of Nadir, and distant Zenith floating
-high above the clouds. Keep the playable route empty and hazard-free.
+lights, the layered lower industrial city of Nadir, and the bright cloud sea.
+Keep the playable route empty and hazard-free. Do not paint Zenith into this
+backplate; it is rendered as a separate continuous camera-space sprite.
 
 ### F — Exterior combat I
 
@@ -89,6 +90,52 @@ industrial gate. Preserve unmistakable hazard color coding and a clean route.
 A lower-city airship dock with a long horizontal floor: a tighter approach
 corridor on the left leading into a broad, uncluttered boss arena on the right.
 Include cargo cranes, hooks and chains away from the gameplay lane, ore
-containers, docking machinery, mooring structures, clouds, distant floating
-industry, and dramatic amber dusk with restrained cyan aether lighting.
+containers, docking machinery, mooring structures, clouds, and distant floating
+industry. Keep the sky in the same bright daytime grade as E through G; use
+amber and cyan only as local material accents.
 
+## Zenith approach continuity
+
+E through H form one continuous exterior approach toward the same floating
+Zenith city. The E/F/G/H backplates must not contain Zenith. Use one transparent
+Zenith sprite with a fixed silhouette, architecture, viewing angle, and crystal
+placement, then change its apparent distance every frame from player world X.
+
+- Progress start: E HQ-exit spawn, world X `239`.
+- Progress end: H boss-arena centre, world X `867.87`.
+- Far state: roughly 14% of screen width at viewport anchor `(0.80, 0.70)`.
+- Near state: roughly 56% of screen width at viewport anchor `(0.70, 0.58)`.
+- Interpolation: clamped continuous SmoothStep; never reset on an E/F/G/H
+  location event or scene marker transition.
+
+Keep the sky and overall exposure consistently pale and bright across E through
+H. Do not use a late-afternoon, dusk, navy, or violet grade to communicate
+progress. Distance is communicated only by Zenith scale, camera-space position,
+and opacity in the same sprite.
+
+### Shared E–H bright sky layer
+
+Create a wide 16:9 side-scroller backplate containing only pale cyan-blue sky,
+warm ivory daylight, soft layered clouds, and a distant cloud sea. Use polished
+hand-drawn 2D anime background rendering with soft painterly cel shading,
+restrained linework, and simplified detail density compatible with chibi
+character sprites. No city, Zenith, characters, enemies, platforms, props,
+text, frame, watermark, dark navy cast, storm, night, or vignette.
+
+### Continuous Zenith cutout
+
+Create one romantic lost sky-civilization grown around a broad floating rock
+island. Use weathered ivory stone terraces, round towers, arched bridges,
+observatory domes, garden levels, vines, shrubs, small trees, exposed roots,
+layered stone strata, and a few narrow waterfalls. Keep stone and greenery at
+roughly 65–70% of the design, then integrate 30–35% restrained steampunk/Aether
+engineering: two elegant aged-brass lift rings embedded in the underside,
+several compact turbine pods, thin copper conduits that follow architectural
+curves, selected copper roof ribs, one clockwork observatory mechanism, small
+pressure vents, and cyan energy lines connected to the crystal lift anchors.
+Do not use a locomotive hull, factory ship, giant boiler, dense pipe clutter,
+dark iron mass, or a skyline of smokestacks. Render it as simplified hand-drawn 2D anime game art with
+clean slightly imperfect dark-brown linework, 2–3 cel-shaded values per
+material, large readable forms, and no micro-detail or crushed shadows. Isolate
+the complete silhouette with generous padding and no cast shadow, surrounding
+clouds, character, robot, airship, text, logo, UI, frame, or watermark.

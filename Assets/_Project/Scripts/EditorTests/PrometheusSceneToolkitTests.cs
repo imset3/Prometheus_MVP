@@ -189,6 +189,59 @@ namespace Narthex.Tools.EditorTests
         }
 
         [Test]
+        public void ZenithApproach_DryRunPreservesSceneAndCommitCreatesContinuousPresenter()
+        {
+            const string assetPath = "Assets/_Project/Art/AIConcepts/ZenithApproachEditorTest.png";
+            Directory.CreateDirectory(Path.GetDirectoryName(assetPath));
+            var cameraObject = new GameObject("Main Camera");
+            SceneManager.MoveGameObjectToScene(cameraObject, scene);
+            cameraObject.tag = "MainCamera";
+            cameraObject.AddComponent<Camera>().orthographic = true;
+            var runtimeRoot = new GameObject("TutorialRuntimeRoot");
+            SceneManager.MoveGameObjectToScene(runtimeRoot, scene);
+            var stageRoot = new GameObject("StageRoot");
+            stageRoot.transform.SetParent(runtimeRoot.transform);
+            var playerRoot = new GameObject("PlayerRoot");
+            playerRoot.transform.SetParent(stageRoot.transform);
+            var texture = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            texture.SetPixels(Enumerable.Repeat(new Color(0.8f, 0.7f, 0.6f, 0.5f), 16).ToArray());
+            texture.Apply();
+            File.WriteAllBytes(assetPath, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
+            try
+            {
+                var preview = PrometheusZenithApproachAutomation.Apply(
+                    scene, assetPath, "TutorialRuntimeRoot/StageRoot/PlayerRoot",
+                    239f, 867.87f, new Vector2(0.8f, 0.7f), new Vector2(0.7f, 0.58f),
+                    0.14f, 0.56f, 0.72f, 1f, -990, true);
+
+                Assert.That(preview.action, Is.EqualTo("create-zenith-approach"));
+                Assert.That(scene.GetRootGameObjects().Any(item =>
+                    item.name == "AI_TutorialBackgroundRoot"), Is.False);
+
+                PrometheusZenithApproachAutomation.Apply(
+                    scene, assetPath, "TutorialRuntimeRoot/StageRoot/PlayerRoot",
+                    239f, 867.87f, new Vector2(0.8f, 0.7f), new Vector2(0.7f, 0.58f),
+                    0.14f, 0.56f, 0.72f, 1f, -990, false);
+
+                var root = scene.GetRootGameObjects().Single(item =>
+                    item.name == "AI_TutorialBackgroundRoot");
+                var presenter = root.GetComponent<ZenithApproachPresenter>();
+                Assert.That(presenter, Is.Not.Null);
+                Assert.That(presenter.StartWorldX, Is.EqualTo(239f));
+                Assert.That(presenter.EndWorldX, Is.EqualTo(867.87f));
+                Assert.That(root.transform.Find("Zenith_Continuous"), Is.Not.Null);
+                Assert.That(ZenithApproachPresenter.CalculateProgress(553.435f, 239f, 867.87f),
+                    Is.EqualTo(0.5f).Within(0.0001f));
+            }
+            finally
+            {
+                AssetDatabase.DeleteAsset(assetPath);
+            }
+        }
+
+        [Test]
         public void RunFile_WritesMachineReadableResponse()
         {
             var directory = Path.Combine(Path.GetTempPath(), $"prometheus-toolkit-{Guid.NewGuid():N}");
