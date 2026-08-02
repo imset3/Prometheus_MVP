@@ -31,10 +31,10 @@ heavy bloom, no dramatic depth of field.
 | B | 숨겨진 방 | `TUTO_B_HiddenRoom_Backplate_v2.png` |
 | C | 공중 기관차 복도 | `TUTO_C_Corridor_Backplate_v2.png` |
 | D | 훈련장 | `TUTO_D_Training_Backplate_v2.png` |
-| E | 본부 외부 | `TUTO_E_Exterior_Backplate_v2.png` |
-| F | 전투 스테이지 1 | `TUTO_F_Combat01_Backplate_v2.png` |
-| G | 전투 스테이지 2 / 선착장 진입로 | `TUTO_G_Combat02_Backplate_v2.png` |
-| H | 나디르 선착장 | `TUTO_H_NadirDock_Backplate_v2.png` |
+| E | 본부 외부 | `TUTO_EH_BrightSky_Continuous_v4.png` + `TUTO_Zenith_Continuous_Cutout_v6.png` |
+| F | 전투 스테이지 1 | E와 같은 연속 하늘·제니스 레이어 |
+| G | 전투 스테이지 2 / 선착장 진입로 | E와 같은 연속 하늘·제니스 레이어 |
+| H | 나디르 선착장 | E와 같은 연속 하늘·제니스 레이어 |
 
 이미지는 `Assets/_Project/Art/AIConcepts/TutorialBackgrounds/`에 둔다.
 
@@ -48,6 +48,9 @@ heavy bloom, no dramatic depth of field.
 - 적용 후 `scene.doctor.scan`과 두 번째 스냅샷 비교를 실행한다.
 - 배경판은 카메라를 따라가며 `TutorialLocationChanged` 이벤트에 맞춰 A~H
   슬롯을 전환한다. 기존 수작업 지형과 충돌체는 수정하지 않는다.
+- E~H에서는 구역 전환으로 제니스 크기를 바꾸지 않는다. 밝은 하늘을
+  유지하고 `ZenithApproachPresenter`가 플레이어 월드 X를 기준으로 같은
+  v6 제니스 스프라이트의 크기·위치·불투명도를 연속 보간한다.
 
 예시 요청:
 

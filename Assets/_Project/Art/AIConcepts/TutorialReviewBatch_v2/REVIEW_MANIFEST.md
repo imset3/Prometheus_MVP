@@ -53,15 +53,14 @@ These are visual-only structures. Existing traversal colliders remain separate.
 | # | Asset | Status |
 |---|---|---|
 | 12 | `TUTO_CHAR_FriendA_v1.png` | Adapted from supplied orange-haired goggle character |
-| 13 | `TUTO_CHAR_FriendB_v1.png` | **Deprecated:** source was later confirmed to be Helte, not Friend B |
-| 14 | `TUTO_CHAR_FriendC_Provisional_v1.png` | Provisional, no established design |
-| 15 | `TUTO_CHAR_Cryon_Provisional_v1.png` | Provisional, no established design |
-| 16 | `TUTO_CHAR_Theus_v1.png` | Faithful standalone adaptation from supplied Theus art |
+| 13 | `TUTO_CHAR_FriendC_Provisional_v1.png` | Provisional, no established design |
+| 14 | `TUTO_CHAR_Cryon_Provisional_v1.png` | Provisional, no established design |
+| 15 | `TUTO_CHAR_Theus_v1.png` | Faithful standalone adaptation from supplied Theus art |
 
 Friend A and Theus preserve supplied design anchors. The former Friend B asset
-must not be placed in the meeting scene; its source was the Helte concept and is
-now tracked under `TutorialHelte/ReviewBatch_v1`. Friend C and Cryon must not be
-treated as canon until explicitly approved.
+was deleted during cleanup because its source was the Helte concept; the
+canonical asset is tracked under `TutorialHelte/ReviewBatch_v1`. Friend C and
+Cryon must not be treated as canon until explicitly approved.
 
 ## Candidate-scene application
 
@@ -76,9 +75,9 @@ treated as canon until explicitly approved.
   `A-MEETING-SEAT-01` and `A-MEETING-SEAT-05`, with no colliders.
 - Provisional Cryon is bound to `ART_SLOT_Cryon`; Theus is bound to the guide
   companion's `Visual/ModelSlot`.
-- Deprecated Friend B is deliberately not instantiated. The already-applied
-  canonical Helte body resolves that source concept without duplicating Helte
-  in the meeting room.
+- The removed Friend B is not instantiated. The already-applied canonical Helte
+  body resolves that source concept without duplicating Helte in the meeting
+  room.
 
 Verification on 2026-08-02: 67 visual-only bindings, 15 distinct batch sprites,
 zero added colliders, Scene Doctor unchanged at the 54 known baseline collider

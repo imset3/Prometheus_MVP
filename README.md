@@ -3,7 +3,7 @@
 `Prometheus`는 공중 도시 제니스와 하층 세계 나디르를 배경으로 하는 2D 액션 게임 프로토타입입니다.  
 현재 저장소에는 새로 배치된 챕터 0 튜토리얼 레벨과 대화, 훈련, 습격, 외부 전투, 헬테 보스전까지 이어지는 1회 플레이 흐름이 구현되어 있습니다.
 
-캐릭터와 배경은 최종 아트 연결 전 단계입니다. 레벨은 흰색 도형을 중심으로 구성되어 있으며, 팀원이 구역별 아트와 스프라이트를 교체해도 게임 로직이 유지되도록 비주얼과 판정 오브젝트를 분리합니다.
+게임플레이 기준 씬은 판정과 진행 로직을 안정적으로 유지하고, AI 생성 배경·타일·소품·적·헬테 애니메이션은 별도 리뷰 씬에 통합되어 있습니다. 비주얼과 판정 오브젝트는 분리되어 있으므로 승인된 아트를 기준 씬으로 승격해도 Rigidbody, Collider, 진행 Trigger를 그대로 유지할 수 있습니다.
 
 ## 개발 환경
 
@@ -20,12 +20,27 @@
 - 빌드 시작 씬: `Assets/_Project/Scenes/Boot.unity`
 - 튜토리얼 이후 연결 씬: `Assets/Scenes/Chapter01.unity`
 - 보스 격리 개발씬: `Assets/Scenes/BossDevelopmentScene.unity`
-- AI 아트 적용 리뷰씬: `Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity`
+- AI 아트 통합 후보씬: `Assets/Scenes/AIReview/TutorialScene_ArtCandidate.unity`
+- F 구역 초기 파일럿 리뷰씬: `Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity`
 - AI 적용 전 보존본: `Assets/Scenes/AIReview/TutorialScene_Backup_PreAIPilot_20260801.unity`
 
 기존 튜토리얼 씬은 팀원이 새로 배치한 레벨과 최신 기능이 통합된 `TutorialScene`으로 대체되었습니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
 
-`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. `AIReview` 아래 두 씬은 아트 적용 전후 비교용이며 플레이어 빌드에는 포함하지 않습니다. 최종 튜토리얼 기준은 계속 `TutorialScene`입니다.
+`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. `TutorialScene_ArtCandidate`에는 현재 생성된 아트와 헬테 연출이 통합되어 있으며, `AIReview` 아래 씬은 플레이어 빌드에 포함하지 않습니다. 사람 검수와 승격이 끝날 때까지 최종 게임플레이 기준은 계속 `TutorialScene`입니다.
+
+## AI 아트 통합 상태
+
+`TutorialScene_ArtCandidate`는 현재 시각 검수 기준본입니다.
+
+- 회의장·숨겨진 방·복도·훈련장 배경과 구역별 플랫폼 타일 적용
+- 외부 E~H 구간에 밝은 연속 하늘과 플레이어의 월드 X에 따라 점진적으로 가까워지는 제니스 v6 적용
+- 회의장·복도·숨겨진 방·훈련장·선착장 소품 적용
+- 튜토리얼 근접 적의 Walk·Attack·Die와 공격 경고 연출 연결
+- 훈련 보상·투사체·피격 VFX·HQ 전환·동료 후보를 포함한 15개 유효 리뷰 에셋 적용
+- 헬테 본체, Idle·Attack·Dash·Hit·Death, 23개 패턴 동기화 클립과 보스 VFX 연결
+- 67개 시각 전용 바인딩을 추가했으며 Collider는 추가하거나 변경하지 않음
+
+구형 v1 배경, v2로 교체된 훈련장 소품 v1, 폐기된 적 애니메이션, 잘못 분류됐던 FriendB, 교체 전 헬테 컨트롤러는 정리했습니다. 애니메이션 타이밍을 위해 같은 그림을 의도적으로 반복한 프레임은 서로 다른 GUID로 참조되므로 유지합니다.
 
 ## 챕터 0 진행 흐름
 
@@ -232,9 +247,9 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 ## 아트 연결 원칙과 남은 작업
 
-현재 구현은 레벨 흐름과 기능 검증을 위한 블록아웃 단계입니다.
+현재 게임플레이 기준 씬은 기능 검증이 끝난 블록아웃이며, 생성 아트가 통합된 `TutorialScene_ArtCandidate`는 사람 검수와 기준 씬 승격을 기다리는 단계입니다.
 
-`Assets/_Project/Art/AIConcepts`와 `Assets/_Project/Art/PlatformTiles/AI`의 결과물은 최종 아트가 아니라 팀 검토용 후보입니다. `AIReview` 씬에서 비교한 뒤 승인된 에셋만 `TutorialScene`에 수작업으로 승격합니다.
+`Assets/_Project/Art/AIConcepts`와 `Assets/_Project/Art/PlatformTiles/AI`의 결과물은 최종 아트가 아니라 팀 검토용 후보입니다. `TutorialScene_ArtCandidate`에서 전체 흐름을 확인한 뒤 승인된 에셋만 `TutorialScene`에 승격합니다.
 
 - 구역 최고 부모의 위치는 유지하면서 내부 도형을 최종 배경·플랫폼 스프라이트로 교체
 - 플레이어, 동료, 적, 헬테의 최종 PNG 시퀀스 연결

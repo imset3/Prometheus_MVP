@@ -29,9 +29,10 @@ The controller exposes 26 exact runtime states. All 25 values of
 `HelteCombatState` resolve to an existing state (`Disabled` and `Waiting` share
 `Idle`); `Hit` and `Death` are driven by combat events.
 
-The original shared-motion controller is preserved as
-`HelteBoss_PrePatternSync.controller`. The active `HelteBoss.controller` uses 23
-additional pattern subclips under `UnityGenerated/PatternClips`.
+The active `HelteBoss.controller` uses 23 additional pattern subclips under
+`UnityGenerated/PatternClips`. The superseded pre-pattern-sync controller was
+removed after the active controller passed pattern mapping and Play Mode smoke
+validation.
 
 ## Pattern synchronization
 
