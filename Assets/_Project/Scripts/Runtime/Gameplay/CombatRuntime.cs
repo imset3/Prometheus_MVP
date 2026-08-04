@@ -7,7 +7,7 @@ namespace Narthex.Gameplay
     {
         public string ActorId { get; }
         public CombatActorKind Kind { get; }
-        public int MaxHealth { get; }
+        public int MaxHealth { get; internal set; }
         public int CurrentHealth { get; internal set; }
         public CombatState State { get; internal set; } = CombatState.Idle;
         public bool IsInvincible { get; set; }
@@ -21,6 +21,14 @@ namespace Narthex.Gameplay
             Kind = kind;
             MaxHealth = maxHealth;
             CurrentHealth = maxHealth;
+        }
+
+        public void SetMaximumHealth(int maximumHealth, bool refill)
+        {
+            MaxHealth = System.Math.Max(1, maximumHealth);
+            if (refill) CurrentHealth = MaxHealth;
+            else CurrentHealth = System.Math.Min(CurrentHealth, MaxHealth);
+            if (CurrentHealth > 0 && State == CombatState.Dead) State = CombatState.Idle;
         }
     }
 

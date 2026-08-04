@@ -17,6 +17,9 @@ namespace Narthex.Presentation
         [SerializeField, Min(0f)] private float hoverFrequency = 2.5f;
         [SerializeField, Min(0.1f)] private float guideAdvanceDistance = 2.5f;
         [SerializeField, Min(0.01f)] private float waypointArrivalDistance = 0.15f;
+        [Header("Runtime art fallback")]
+        [SerializeField, Min(0.1f)] private float worldArtScale = 0.18f;
+        [SerializeField] private int worldArtSortingOrder = 120;
 
         public bool HasValidSetup => player != null && visualRoot != null;
         public bool IsGuiding => guideMode;
@@ -36,6 +39,7 @@ namespace Narthex.Presentation
             }
 
             visualBaseLocalPosition = visualRoot.localPosition;
+            EnsureRuntimeArt();
         }
 
         private void LateUpdate()
@@ -65,6 +69,20 @@ namespace Narthex.Presentation
             guideMode = false;
             guidePoints = Array.Empty<Transform>();
             guidePointIndex = 0;
+        }
+
+        private void EnsureRuntimeArt()
+        {
+            var modelSlot = visualRoot.Find("ModelSlot");
+            if (modelSlot == null) return;
+
+            var renderer = modelSlot.GetComponent<SpriteRenderer>();
+            if (renderer == null) renderer = modelSlot.gameObject.AddComponent<SpriteRenderer>();
+            if (renderer.sprite == null)
+                renderer.sprite = TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Theus);
+            renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, worldArtSortingOrder);
+            modelSlot.localScale = Vector3.one * worldArtScale;
+            modelSlot.localPosition = new Vector3(0f, 0.9f, -0.1f);
         }
 
         private Vector3 GetTargetPosition()

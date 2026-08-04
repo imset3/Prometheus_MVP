@@ -114,11 +114,19 @@ namespace Narthex.Gameplay
             for (var index = 0; index < rangedTargets.Length; index++)
             {
                 var target = rangedTargets[index];
-                if (rangedTargetRenderers != null && index < rangedTargetRenderers.Length &&
-                    rangedTargetRenderers[index] != null)
-                    rangedTargetRenderers[index].enabled = active;
                 if (target != null && target.activeSelf != active)
                     target.SetActive(active);
+
+                if (rangedTargetRenderers != null && index < rangedTargetRenderers.Length &&
+                    rangedTargetRenderers[index] != null)
+                {
+                    rangedTargetRenderers[index].enabled = active;
+                    if (active && rangedTargetRenderers[index] is SpriteRenderer sr)
+                    {
+                        if (sr.sprite == null) sr.sprite = Resources.Load<Sprite>("TutorialArt/Cryon");
+                        sr.color = Color.white;
+                    }
+                }
             }
         }
 

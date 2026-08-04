@@ -117,6 +117,8 @@ namespace Narthex.Gameplay
         [SerializeField, Min(1)] private int swordDamage = 10;
         [SerializeField, Min(1f)] private float phaseTwoDamageMultiplier = 1.15f;
         [SerializeField, Min(1f)] private float finalRushDamageMultiplier = 1.3f;
+        [SerializeField] private bool applyTutorialBalance = true;
+        [SerializeField] private float visualGroundOffsetY;
 
         private readonly Collider2D[] overlapResults = new Collider2D[8];
         private readonly HeltePatternPlanner planner = new HeltePatternPlanner();
@@ -124,6 +126,7 @@ namespace Narthex.Gameplay
         private int activeSwordCount;
         private bool phaseTwoPresented;
         private bool finalRushPresented;
+        private bool phaseTwoHealthRestored;
         private float nextMercyAvailableTime;
         private Vector3 basicHitboxLocalPosition;
         private Vector3 initialBossPosition;
@@ -153,6 +156,8 @@ namespace Narthex.Gameplay
             basicHitboxLocalPosition = basicHitbox.transform.localPosition;
             initialBossPosition = transform.position;
             initialBossRotation = transform.rotation;
+            ApplyTutorialBalance();
+            AlignVisualToArenaFloor();
             ResetPresentation();
         }
 
@@ -204,6 +209,11 @@ namespace Narthex.Gameplay
                 if (IsPhaseTwoHealth() && !phaseTwoPresented)
                 {
                     phaseTwoPresented = true;
+                    if (!phaseTwoHealthRestored && playerActor != null)
+                    {
+                        playerActor.RestoreHealthToMax();
+                        phaseTwoHealthRestored = true;
+                    }
                     yield return RunPhaseTransition();
                     if (!CanRunPattern()) break;
                 }
@@ -676,6 +686,34 @@ namespace Narthex.Gameplay
             };
         }
 
+        private void ApplyTutorialBalance()
+        {
+            if (!applyTutorialBalance) return;
+
+            // Slower pattern pacing to allow players to read and react
+            normalAttackCooldownSeconds = 1.8f;
+            swordRecoverySeconds = 1.2f;
+            specialRecoverySeconds = 1.0f;
+
+            // Generous, highly distinct warning windows and telegraphs
+            basicWindupSeconds = 0.55f;
+            blinkTelegraphSeconds = 0.65f;
+            dashTelegraphSeconds = 0.70f;
+            crossSlashWarningSeconds = 0.50f;
+            swordFocusSeconds = 0.85f;
+
+            // Align Helte visual to arena floor
+            visualGroundOffsetY = -0.68f;
+        }
+
+        private void AlignVisualToArenaFloor()
+        {
+            if (bossVisualSlot == null) return;
+            var localPosition = bossVisualSlot.transform.localPosition;
+            localPosition.y = visualGroundOffsetY;
+            bossVisualSlot.transform.localPosition = localPosition;
+        }
+
         private int ScaleDamage(int damage)
         {
             var multiplier = ResolveCombatTempo() switch
@@ -715,6 +753,7 @@ namespace Narthex.Gameplay
             planner.Reset();
             phaseTwoPresented = false;
             finalRushPresented = false;
+            phaseTwoHealthRestored = false;
             nextMercyAvailableTime = float.NegativeInfinity;
             sourceActor?.SetScriptedInvulnerability(false);
             CurrentPattern = HeltePattern.None;

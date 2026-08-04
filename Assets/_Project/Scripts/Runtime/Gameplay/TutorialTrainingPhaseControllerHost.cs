@@ -55,6 +55,7 @@ namespace Narthex.Gameplay
         [SerializeField] private Renderer exitGateRenderer;
 
         private Coroutine transitionRoutine;
+        private bool doubleJumpLayoutApplied;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null &&
                                      questManagerHost != null && playerInputHost != null &&
@@ -135,13 +136,71 @@ namespace Narthex.Gameplay
             {
                 phaseAreas[index].enabled =
                     TutorialTrainingPhasePolicy.ShouldActivatePhase(CurrentPhaseIndex, index);
-                phaseContentRoots[index].SetActive(
-                    TutorialTrainingPhasePolicy.ShouldActivatePhase(CurrentPhaseIndex, index));
+                var active = TutorialTrainingPhasePolicy.ShouldActivatePhase(CurrentPhaseIndex, index);
+                phaseContentRoots[index].SetActive(active);
+                RefreshPhaseContentPresentation(phaseContentRoots[index], active);
             }
+
+            if (CurrentPhaseIndex == 1) ArrangeDoubleJumpCourseMarkers();
 
             IsExitLocked = TutorialTrainingPhasePolicy.ShouldLockExit(CurrentPhaseIndex);
             exitGateCollider.enabled = IsExitLocked;
             exitGateRenderer.enabled = IsExitLocked;
+        }
+
+        private static void RefreshPhaseContentPresentation(GameObject phaseRoot, bool active)
+        {
+            if (!active || phaseRoot == null) return;
+
+            // A few authored training targets were intentionally hidden while their
+            // primitive art was being replaced. Re-enable only target-shaped children;
+            // unrelated level geometry keeps its authored active state.
+            foreach (var child in phaseRoot.GetComponentsInChildren<Transform>(true))
+            {
+                var name = child.name;
+                if (name.StartsWith("RangedTarget_", StringComparison.Ordinal) || name == "Enemy")
+                    child.gameObject.SetActive(true);
+
+                if (name.StartsWith("RangedTarget_", StringComparison.Ordinal) || name == "Enemy")
+                {
+                    foreach (var renderer in child.GetComponentsInChildren<SpriteRenderer>(true))
+                        renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 80);
+                }
+            }
+        }
+
+        private void ArrangeDoubleJumpCourseMarkers()
+        {
+            if (doubleJumpLayoutApplied) return;
+            var root = GameObject.Find("DoubleJumpPracticeRoot");
+            if (root == null) return;
+
+            // The authored names are the contract here. Do not infer the course
+            // order from X: a level designer may zig-zag the route while the
+            // High marker must remain the equipment/arrival target.
+            var low = root.transform.Find("DoubleJumpPlatform_Low_ART_SLOT");
+            var landing = root.transform.Find("DoubleJumpPlatform_Landing_ART_SLOT");
+            var high = root.transform.Find("DoubleJumpPlatform_High_ART_SLOT");
+            if (low == null || landing == null || high == null) return;
+
+            var minimumY = Mathf.Min(low.position.y, landing.position.y, high.position.y);
+            var maximumY = Mathf.Max(low.position.y, landing.position.y, high.position.y);
+            if (maximumY <= minimumY) return;
+
+            var middleY = Mathf.Lerp(minimumY, maximumY, 0.5f);
+            SetWorldY(low, minimumY);
+            SetWorldY(landing, middleY);
+            SetWorldY(high, maximumY);
+
+            doubleJumpLayoutApplied = true;
+            Debug.Log("[sragon000] 더블점프 발판을 낮은 지점 → 최고 지점 순으로 정렬했습니다.", this);
+        }
+
+        private static void SetWorldY(Transform marker, float y)
+        {
+            var position = marker.position;
+            position.y = y;
+            marker.position = position;
         }
 
         public void RefreshCurrentQuest()

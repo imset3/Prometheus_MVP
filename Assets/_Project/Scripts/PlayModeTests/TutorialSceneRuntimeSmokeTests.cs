@@ -99,9 +99,9 @@ namespace Narthex.PlayModeTests
                                     state == HelteCombatState.CounterOpen;
             };
             Assert.That(
-                helteActor.Runtime.MaxHealth,
-                Is.EqualTo(5000),
-                "Helte health must support the five-minute encounter pacing target.");
+                bossArena.BossHealthOverride,
+                Is.EqualTo(2500),
+                "The tutorial boss balance must halve Helte's runtime health at encounter start.");
             Assert.That(
                 heltePattern.PhaseTwoHealthRatio,
                 Is.EqualTo(0.55f).Within(0.001f),
@@ -149,6 +149,8 @@ namespace Narthex.PlayModeTests
                 () => bossArena.CombatActive,
                 bossArena.IntroWarningSeconds + 1f,
                 "The boss FSM did not activate after the arena-entry warning.");
+            Assert.That(helteActor.Runtime.MaxHealth, Is.EqualTo(2500));
+            Assert.That(playerActor.Runtime.MaxHealth, Is.EqualTo(500));
 
             playerActor.SetScriptedInvulnerability(true);
             yield return WaitForConditionRealtime(
@@ -157,6 +159,17 @@ namespace Narthex.PlayModeTests
                 "The friendly opening did not execute BasicCombo, BlinkDash and the readable FakeBlink pause.");
 
             playerActor.SetScriptedInvulnerability(false);
+            Assert.That(
+                playerActor.CombatSystem.TryApplyDamage(
+                    playerActor.ActorId,
+                    new DamagePacket(helteActor.ActorId, "TEST-THEUS-RESCUE", playerActor.Runtime.CurrentHealth)),
+                Is.True,
+                "The boss test could not trigger the one-time rescue path.");
+            yield return null;
+            Assert.That(bossArena.RescueUsed, Is.True);
+            Assert.That(playerActor.Runtime.IsAlive, Is.True);
+            Assert.That(playerActor.Runtime.CurrentHealth, Is.EqualTo(playerActor.Runtime.MaxHealth));
+            playerActor.SetScriptedInvulnerability(true);
             var mercyTargetHealth = Mathf.Max(
                 1,
                 Mathf.FloorToInt(playerActor.Runtime.MaxHealth * 0.2f));
@@ -181,10 +194,14 @@ namespace Narthex.PlayModeTests
                 4f,
                 "Helte's mercy retreat did not restore the player to the configured recovery floor.");
 
+            var phaseTwoDamage = Mathf.Max(
+                1,
+                helteActor.Runtime.CurrentHealth - Mathf.CeilToInt(
+                    helteActor.Runtime.MaxHealth * heltePattern.PhaseTwoHealthRatio) + 1);
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
-                    new DamagePacket(playerActor.ActorId, "TEST-PHASE-TWO", 2300)),
+                    new DamagePacket(playerActor.ActorId, "TEST-PHASE-TWO", phaseTwoDamage)),
                 Is.True);
             yield return WaitForConditionRealtime(
                 () => heltePattern.CurrentState == HelteCombatState.PhaseTransition,
@@ -202,10 +219,14 @@ namespace Narthex.PlayModeTests
                 "The friendly phase-two loop did not reach its counter stance and readable response window.");
 
             helteActor.SetScriptedInvulnerability(false);
+            var finalRushDamage = Mathf.Max(
+                1,
+                helteActor.Runtime.CurrentHealth - Mathf.CeilToInt(
+                    helteActor.Runtime.MaxHealth * heltePattern.FinalRushHealthRatio) + 1);
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
-                    new DamagePacket(playerActor.ActorId, "TEST-FINAL-RUSH", 1800)),
+                    new DamagePacket(playerActor.ActorId, "TEST-FINAL-RUSH", finalRushDamage)),
                 Is.True,
                 "The boss test could not lower Helte to the final-rush threshold after the counter window.");
             yield return WaitForConditionRealtime(

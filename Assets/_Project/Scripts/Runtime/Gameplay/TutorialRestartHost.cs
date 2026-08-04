@@ -126,6 +126,7 @@ namespace Narthex.Gameplay
         private void HandlePlayerDead(PlayerDead message)
         {
             if (message.PlayerId != playerActor.ActorId) return;
+            if (bossArenaHost != null && bossArenaHost.TryRescuePlayer(message.PlayerId)) return;
             TryRestartAtCheckpoint();
         }
 

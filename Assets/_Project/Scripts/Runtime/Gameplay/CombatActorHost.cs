@@ -29,6 +29,21 @@ namespace Narthex.Gameplay
                                           Time.time < dashInvulnerabilityEndsAt;
         public float HitRecoverySeconds => hitRecoverySeconds;
 
+        public void SetMaximumHealth(int maximumHealth, bool refill)
+        {
+            if (Runtime == null || maximumHealth <= 0) return;
+            Runtime.SetMaximumHealth(maximumHealth, refill);
+            Runtime.IsInvincible = scriptedInvulnerabilityActive || dashInvulnerabilityActive || IsHitRecoveryActive();
+        }
+
+        public void RestoreHealthToMax()
+        {
+            if (Runtime == null) return;
+            Runtime.CurrentHealth = Runtime.MaxHealth;
+            Runtime.State = CombatState.Idle;
+            Runtime.IsInvincible = scriptedInvulnerabilityActive || dashInvulnerabilityActive || IsHitRecoveryActive();
+        }
+
         public void ResetRuntime()
         {
             if (Runtime == null) return;

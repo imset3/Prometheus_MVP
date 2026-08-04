@@ -16,7 +16,6 @@ namespace Narthex.Presentation
         [SerializeField, Min(0.01f)] private float beamThickness = 0.32f;
         [SerializeField, Min(0f)] private float corePulseAmount = 0.12f;
         [SerializeField, Min(0f)] private float corePulseSpeed = 5f;
-
         private Vector3 coreBaseScale;
         private bool lightFormActive;
 
@@ -34,7 +33,28 @@ namespace Narthex.Presentation
             }
 
             coreBaseScale = lightCoreVisual.localScale;
+            EnsureRuntimeArt();
             ExitLightForm();
+        }
+
+        private void EnsureRuntimeArt()
+        {
+            if (lightCoreVisual != null)
+            {
+                var sr = lightCoreVisual.GetComponent<SpriteRenderer>();
+                if (sr == null) sr = lightCoreVisual.gameObject.AddComponent<SpriteRenderer>();
+                if (sr.sprite == null) sr.sprite = TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Theus);
+                sr.sortingOrder = 150;
+                sr.color = new Color(0.4f, 0.8f, 1f, 0.95f);
+            }
+            if (lightBeamVisual != null)
+            {
+                var sr = lightBeamVisual.GetComponent<SpriteRenderer>();
+                if (sr == null) sr = lightBeamVisual.gameObject.AddComponent<SpriteRenderer>();
+                if (sr.sprite == null) sr.sprite = TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Theus);
+                sr.sortingOrder = 145;
+                sr.color = new Color(0.2f, 0.9f, 1f, 0.7f);
+            }
         }
 
         private void LateUpdate()
@@ -51,6 +71,8 @@ namespace Narthex.Presentation
             lightFormActive = true;
             normalVisualRoot.SetActive(false);
             lightFormRoot.SetActive(true);
+            lightCoreVisual.gameObject.SetActive(true);
+            lightBeamVisual.gameObject.SetActive(true);
             AimAtPasskey();
         }
 
@@ -75,5 +97,6 @@ namespace Narthex.Presentation
                 Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
             lightBeamVisual.localScale = new Vector3(distance, beamThickness, 0.12f);
         }
+
     }
 }

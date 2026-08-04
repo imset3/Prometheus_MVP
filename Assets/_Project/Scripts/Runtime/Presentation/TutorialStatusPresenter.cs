@@ -117,16 +117,18 @@ namespace Narthex.Presentation
                 : string.Format(progressFormat, message.StepIndex + 1, totalSteps);
             var notionId = ResolveNotionProgressId(message.QuestId);
             var objective = ResolveContextualObjective(message.QuestId, message.ObjectiveText);
-            var heading = string.IsNullOrWhiteSpace(notionId)
-                ? progress
-                : string.IsNullOrWhiteSpace(progress)
-                    ? notionId
-                    : $"{progress} · {notionId}";
+
+            var header = progress;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!string.IsNullOrWhiteSpace(notionId))
+                header = string.IsNullOrWhiteSpace(header) ? $"[{notionId}]" : $"{header}  <color=#888888>[{notionId}]</color>";
+#endif
+
             return string.IsNullOrWhiteSpace(objective)
-                ? heading
-                : string.IsNullOrWhiteSpace(heading)
+                ? header
+                : string.IsNullOrWhiteSpace(header)
                     ? objective
-                    : $"{heading}\n{objective}";
+                    : $"{header}\n<size=18><b>{objective}</b></size>";
         }
 
         private void RefreshCurrentStatus()
@@ -160,15 +162,15 @@ namespace Narthex.Presentation
 
             keyPromptText.text = questId switch
             {
-                "QST-TUTO-001" => $"이동  [ {Binding("Move", "A / D")} ]",
-                "QST-TUTO-002" => $"점프 · 활공  [ {Binding("Jump", "SPACE")} ]",
-                "QST-TUTO-003" => $"기본 공격  [ {Binding("Attack", "LMB")} ]",
-                "QST-TUTO-004" => $"대시  [ {Binding("Sprint", "LEFT SHIFT")} ]",
-                "QST-TUTO-005" => $"원거리 공격  [ {Binding("Next", "2")} ]",
-                "QST-TUTO-006" => $"더블 점프  [ {Binding("Jump", "SPACE")} ×2 ]",
-                "QST-TUTO-007" => $"상호작용  [ {Binding("Interact", "F")} ]",
-                "QST-TUTO-007-A" or "QST-TUTO-007-B" => $"기본 공격 [ {Binding("Attack", "LMB")} ]  ·  원거리 공격 [ {Binding("Next", "2")} ]",
-                "QST-TUTO-008" => $"기본 공격 [ {Binding("Attack", "LMB")} ]  ·  원거리 공격 [ {Binding("Next", "2")} ]",
+                "QST-TUTO-001" => $"이동  <color=#FFD700><b>[ {Binding("Move", "A / D")} ]</b></color>",
+                "QST-TUTO-002" => $"점프 · 활공  <color=#FFD700><b>[ {Binding("Jump", "SPACE")} ]</b></color>",
+                "QST-TUTO-003" => $"기본 공격  <color=#FFD700><b>[ {Binding("Attack", "LMB")} ]</b></color>",
+                "QST-TUTO-004" => $"대시  <color=#FFD700><b>[ {Binding("Sprint", "LEFT SHIFT")} ]</b></color>",
+                "QST-TUTO-005" => $"원거리 공격  <color=#FFD700><b>[ {Binding("Next", "2")} ]</b></color>",
+                "QST-TUTO-006" => $"더블 점프  <color=#FFD700><b>[ {Binding("Jump", "SPACE")} ×2 ]</b></color>",
+                "QST-TUTO-007" => $"상호작용  <color=#FFD700><b>[ {Binding("Interact", "F")} ]</b></color>",
+                "QST-TUTO-007-A" or "QST-TUTO-007-B" => $"기본 공격 <color=#FFD700><b>[ {Binding("Attack", "LMB")} ]</b></color>  ·  원거리 공격 <color=#FFD700><b>[ {Binding("Next", "2")} ]</b></color>",
+                "QST-TUTO-008" => $"기본 공격 <color=#FFD700><b>[ {Binding("Attack", "LMB")} ]</b></color>  ·  원거리 공격 <color=#FFD700><b>[ {Binding("Next", "2")} ]</b></color>",
                 _ => string.Empty
             };
         }

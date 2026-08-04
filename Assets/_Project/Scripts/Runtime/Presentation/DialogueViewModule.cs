@@ -68,18 +68,36 @@ namespace Narthex.Presentation
             if (isPlayer)
             {
                 SetText(leftSpeakerLabel, speaker);
-                SetPlaceholderColor(leftPortraitImage, ResolveSpeakerColor(speaker));
+                ApplyPortrait(leftPortraitImage, ResolveSpeakerPortrait(speaker), ResolveSpeakerColor(speaker));
             }
             else if (hasSpeaker)
             {
                 SetText(rightSpeakerLabel, speaker);
-                SetPlaceholderColor(rightPortraitImage, ResolveSpeakerColor(speaker));
+                ApplyPortrait(rightPortraitImage, ResolveSpeakerPortrait(speaker), ResolveSpeakerColor(speaker));
             }
         }
 
-        private static void SetPlaceholderColor(Image portraitImage, Color color)
+        private static void ApplyPortrait(Image portraitImage, Sprite sprite, Color placeholderColor)
         {
-            if (portraitImage != null && portraitImage.sprite == null) portraitImage.color = color;
+            if (portraitImage == null) return;
+            portraitImage.enabled = true;
+            portraitImage.sprite = sprite;
+            portraitImage.preserveAspect = true;
+            portraitImage.color = sprite != null ? Color.white : placeholderColor;
+        }
+
+        private static Sprite ResolveSpeakerPortrait(string speaker)
+        {
+            return speaker switch
+            {
+                "프로메" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Prome),
+                "테우스" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Theus),
+                "아르온" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.FriendA),
+                "에온" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.FriendC),
+                "엘륨" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.FriendA),
+                "크리온" => TutorialRuntimeArtLibrary.LoadSprite(TutorialRuntimeArtLibrary.Cryon),
+                _ => null
+            };
         }
 
         private static Color ResolveSpeakerColor(string speaker)

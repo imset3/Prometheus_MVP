@@ -28,7 +28,10 @@ namespace Narthex.Presentation
                 enabled = false;
                 return;
             }
-
+            // BGM uses a separate source and is intentionally created at runtime so
+            // the designer-arranged scene does not need a serialized audio migration.
+            if (GetComponent<TutorialBgmCueHost>() == null)
+                gameObject.AddComponent<TutorialBgmCueHost>();
         }
 
         private void OnEnable()
