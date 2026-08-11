@@ -184,6 +184,7 @@ namespace Narthex.Presentation
         private bool auxiliaryDialogue;
         private bool resumeGuideAfterDialogue;
         private bool transitionRunning;
+        public bool CanExitToTraining => state == TutorialChapter0IntroState.SeekTrainingExit && HasPasskey;
         private bool meetingDepartureLineShown;
         private bool glideLaunchLineShown;
         private Vector2 previousPlayerPosition;

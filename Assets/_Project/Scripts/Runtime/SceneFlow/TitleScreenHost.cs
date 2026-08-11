@@ -94,7 +94,6 @@ namespace Narthex.SceneFlow
         private bool menuShown;
         private bool loading;
         private bool usesAuthoredPresentation;
-        private float resetConfirmationExpiresAt;
 
         public bool HasValidSetup => backgroundSprite != null && zenithSprite != null &&
                                      promeIdleFrames != null && promeIdleFrames.Length > 0;
@@ -150,8 +149,6 @@ namespace Narthex.SceneFlow
         {
             elapsed += Time.unscaledDeltaTime;
             AnimateArtLayers();
-            if (resetConfirmationExpiresAt > 0f && Time.unscaledTime > resetConfirmationExpiresAt)
-                CancelResetConfirmation();
             if (!menuShown && !loading && AnyInputPressed()) ShowMenu();
             else if (menuShown && !loading) HandleManualUiInput();
         }
@@ -507,7 +504,6 @@ namespace Narthex.SceneFlow
 
         private void HideSettings()
         {
-            CancelResetConfirmation();
             SetGroup(settingsGroup, false);
             if (menuShown && !loading) SetGroup(menuGroup, true);
             SelectFirstVisibleButton();
@@ -515,38 +511,16 @@ namespace Narthex.SceneFlow
 
         private void RequestResetAllData()
         {
-            if (resetConfirmationExpiresAt > 0f && Time.unscaledTime <= resetConfirmationExpiresAt)
-            {
-                GameLaunchSession.ResetAllLocalData();
-                saveData = GameLaunchSession.LoadSave();
-                ApplySavedSettings();
-                if (continueButton != null) continueButton.interactable = false;
-                resetConfirmationExpiresAt = 0f;
-                RestoreResetButtonLabel();
-                menuShown = false;
-                loading = false;
-                SetGroup(settingsGroup, false);
-                SetGroup(menuGroup, false);
-                SetGroup(loadingGroup, false);
-                SetGroup(introGroup, true);
-                return;
-            }
-
-            resetConfirmationExpiresAt = Time.unscaledTime + 3f;
-            if (resetButtonLabel != null && resetConfirmLabelSprite != null)
-                resetButtonLabel.sprite = resetConfirmLabelSprite;
-        }
-
-        private void CancelResetConfirmation()
-        {
-            resetConfirmationExpiresAt = 0f;
-            RestoreResetButtonLabel();
-        }
-
-        private void RestoreResetButtonLabel()
-        {
-            if (resetButtonLabel != null && resetLabelSprite != null)
-                resetButtonLabel.sprite = resetLabelSprite;
+            GameLaunchSession.ResetAllLocalData();
+            saveData = GameLaunchSession.LoadSave();
+            ApplySavedSettings();
+            if (continueButton != null) continueButton.interactable = false;
+            menuShown = false;
+            loading = false;
+            SetGroup(settingsGroup, false);
+            SetGroup(menuGroup, false);
+            SetGroup(loadingGroup, false);
+            SetGroup(introGroup, true);
         }
 
         private void ApplyAndCloseSettings()

@@ -59,9 +59,10 @@ namespace Narthex.Gameplay
             if (serviceRoot == null) return;
             serviceRoot.Initialize();
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            // The phase root itself is activated by the same objective-change event.
+            // Starting from the current quest here avoids depending on subscriber order.
+            SetTrainingActive(questSequenceHost.CurrentQuestId == jumpQuestId);
         }
-
-        private void Start() => SetTrainingActive(questSequenceHost.CurrentQuestId == jumpQuestId);
 
         private void OnDisable()
         {

@@ -70,6 +70,7 @@ namespace Narthex.Presentation
         private Vector2 previousPlayerPosition;
         private bool hasPreviousPlayerPosition;
         private bool playerInsideTrigger;
+        private TutorialChapter0IntroFlowHost chapter0IntroFlowHost;
 
         public bool UsesLadderSequence => useLadderSequence;
         public bool RequiresInteraction => requireInteractInput;
@@ -104,6 +105,7 @@ namespace Narthex.Presentation
             }
 
             serviceRoot.Initialize();
+            chapter0IntroFlowHost = FindFirstObjectByType<TutorialChapter0IntroFlowHost>(FindObjectsInactive.Include);
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
             fadeCanvasGroup.interactable = false;
@@ -178,7 +180,12 @@ namespace Narthex.Presentation
             StartCoroutine(TransitionRoutine());
         }
 
-        private bool IsTransitionUnlocked() => questSequenceHost.CurrentQuestId == requiredQuestId;
+        private bool IsTransitionUnlocked()
+        {
+            if (questSequenceHost.CurrentQuestId != requiredQuestId) return false;
+            if (portalSignalTargetId != "TUTORIAL-HQ-EXIT") return true;
+            return chapter0IntroFlowHost != null && chapter0IntroFlowHost.CanExitToTraining;
+        }
 
         private bool IsPlayer(Collider2D other)
         {

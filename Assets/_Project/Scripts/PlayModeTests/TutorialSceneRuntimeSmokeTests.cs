@@ -163,7 +163,7 @@ namespace Narthex.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TitleResetButton_RequiresConfirmationAndClearsContinueData()
+        public IEnumerator TitleResetButton_ClearsContinueDataImmediately()
         {
             var savePath = GameLaunchSession.SavePath;
             var hadSave = File.Exists(savePath);
@@ -190,15 +190,6 @@ namespace Narthex.PlayModeTests
                 InvokePrivateMethod(host, "ShowMenu");
                 InvokePrivateMethod(host, "ShowSettings");
                 var resetButton = FindSceneTransform(scene, "초기화").GetComponent<Button>();
-                var label = resetButton.transform.Find("Label").GetComponent<Image>();
-                var initialLabel = label.sprite;
-
-                resetButton.onClick.Invoke();
-                Assert.That(File.Exists(savePath), Is.True,
-                    "The first reset click must only arm confirmation.");
-                Assert.That(label.sprite, Is.Not.EqualTo(initialLabel),
-                    "The armed reset button must show its confirmation sprite.");
-
                 resetButton.onClick.Invoke();
                 yield return null;
                 Assert.That(File.Exists(savePath), Is.False);
@@ -404,6 +395,24 @@ namespace Narthex.PlayModeTests
                     Assert.That(labelImage?.sprite, Is.Not.Null,
                         $"Pause button '{buttonName}' must use a generated label sprite.");
                 }
+            }
+            InvokePrivateMethod(pauseMenu, "ShowSettings");
+            foreach (var slider in new[]
+                     {
+                         GetPrivateField<Slider>(pauseMenu, "masterSlider"),
+                         GetPrivateField<Slider>(pauseMenu, "musicSlider"),
+                         GetPrivateField<Slider>(pauseMenu, "sfxSlider")
+                     })
+            {
+                slider.value = 1f;
+                Canvas.ForceUpdateCanvases();
+                var sliderRect = (RectTransform)slider.transform;
+                var fillBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                    sliderRect,
+                    slider.fillRect);
+                Assert.That(fillBounds.min.x, Is.GreaterThanOrEqualTo(sliderRect.rect.xMin - 0.1f));
+                Assert.That(fillBounds.max.x, Is.LessThanOrEqualTo(sliderRect.rect.xMax + 0.1f),
+                    $"Pause volume fill '{slider.name}' must remain inside its slider and modal panel.");
             }
             InvokePrivateMethod(pauseMenu, "Resume");
             Time.timeScale = 1f;
@@ -1185,6 +1194,12 @@ namespace Narthex.PlayModeTests
 
             AdvanceDialogue(dialogue, 1);
             Assert.That(introFlow.State, Is.EqualTo(TutorialChapter0IntroState.SeekHiddenRoom));
+            var headquartersExit = Resources.FindObjectsOfTypeAll<TutorialZoneTransitionHost>()
+                .First(host => host != null && host.gameObject.scene == tutorialScene &&
+                               GetPrivateField<string>(host, "portalSignalTargetId") == "TUTORIAL-HQ-EXIT");
+            Assert.That(introFlow.CanExitToTraining, Is.False);
+            Assert.That(InvokePrivateFunction<bool>(headquartersExit, "IsTransitionUnlocked"), Is.False,
+                "Walking right must not bypass the hidden room before the passkey is collected.");
 
             var hiddenRoomEntry = FindSceneTransformOrDefault(
                 tutorialScene,
@@ -1465,6 +1480,14 @@ namespace Narthex.PlayModeTests
                 () => jumpProjectile.activeInHierarchy,
                 2f,
                 "The jump lesson projectile did not become visible.");
+            var jumpProjectileStart = jumpProjectile.transform.position;
+            var jumpProjectileSprite = jumpProjectile.GetComponentInChildren<SpriteRenderer>(true);
+            Assert.That(jumpProjectileSprite, Is.Not.Null);
+            Assert.That(jumpProjectileSprite.enabled && jumpProjectileSprite.sprite != null, Is.True,
+                "The active jump projectile must have visible sprite art.");
+            yield return new WaitForSeconds(0.15f);
+            Assert.That(jumpProjectile.transform.position.x, Is.LessThan(jumpProjectileStart.x - 0.05f),
+                "The right-wall jump projectile must visibly travel toward the player lane.");
             Assert.That(jumpTraining.TryRestartJumpSection(playerCollider), Is.True);
             yield return new WaitForFixedUpdate();
             Assert.That(
@@ -2352,6 +2375,15 @@ namespace Narthex.PlayModeTests
             var method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, $"Method '{methodName}' was not found on {target.GetType().Name}.");
             method.Invoke(target, arguments);
+        }
+
+        private static T InvokePrivateFunction<T>(object target, string methodName, params object[] arguments)
+        {
+            var method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}'.");
+            return (T)method.Invoke(target, arguments);
         }
 
         private static void AssertUniformSkillIconLayout(Scene scene)

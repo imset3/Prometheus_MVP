@@ -230,6 +230,9 @@ namespace Narthex.SceneFlow
             SetRect(track.rectTransform, Vector2.zero, new Vector2(350f, 8f));
             var fill = CreateImage("Fill", root.transform, new Color(0.25f, 0.86f, 0.9f, 1f));
             SetRect(fill.rectTransform, Vector2.zero, new Vector2(350f, 8f));
+            // Slider drives fillRect's horizontal anchors. A fixed 350px sizeDelta would
+            // be added on top of that anchored width and push the bar outside the modal.
+            fill.rectTransform.sizeDelta = new Vector2(0f, 8f);
             var handle = CreateImage("Handle", root.transform, Color.white);
             SetRect(handle.rectTransform, Vector2.zero, new Vector2(22f, 22f));
             var slider = root.GetComponent<Slider>();
