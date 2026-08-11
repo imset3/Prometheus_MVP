@@ -15,7 +15,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusTutorialFPilotArtBuilder
     {
-        const string ScenePath="Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        const string ScenePath="Assets/Scenes/TutorialScene.unity";
         const string TilePng="Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1/F_RustCargo/Generated";
         const string TileOut="Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1/F_RustCargo/Tiles";
         const string Enemy="Assets/_Project/Art/AIConcepts/TutorialEnemies/ReviewBatch_v1/TutorialGuard";

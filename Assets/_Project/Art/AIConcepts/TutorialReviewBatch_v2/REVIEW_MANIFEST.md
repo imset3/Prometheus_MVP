@@ -1,6 +1,6 @@
 # Tutorial art — four-group review batch v1
 
-Status: applied to `Assets/Scenes/AIReview/TutorialScene_ArtCandidate.unity`
+Status: promoted to `Assets/Scenes/TutorialScene.unity`
 for review. The original tutorial scene remains untouched.
 
 ## Shared production prompt

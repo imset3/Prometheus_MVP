@@ -11,7 +11,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusCorridorArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string ArtRoot = "Assets/_Project/Art/AIConcepts/TutorialCorridorProps/Generated";
         private const string CratesPath = ArtRoot + "/TUTO_C_TransportCrates_v1.png";
         private const string ChestPath = ArtRoot + "/TUTO_C_MaintenanceChest_v1.png";

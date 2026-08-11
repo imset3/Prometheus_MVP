@@ -67,7 +67,7 @@ namespace Narthex.Presentation
                            moduleTreeManagerHost.System.TryGetModuleState(tutorialModule.StableId, out var state) && state.Unlocked;
             moduleStateText.text = unlocked ? "원거리 공격  |  사용 가능" : "원거리 공격  |  훈련 전";
             detailText.text = unlocked
-                ? "프로메의 기본 원거리 공격\n바라보는 방향 발사  |  키 2  |  재사용 1.5초"
+                ? "프로메의 기본 원거리 공격\n바라보는 방향 발사  |  키 1  |  재사용 1.5초"
                 : "훈련장에서 기본 원거리 공격 사용법을 익힙니다.";
         }
     }

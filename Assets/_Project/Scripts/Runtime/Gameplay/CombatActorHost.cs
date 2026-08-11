@@ -42,6 +42,37 @@ namespace Narthex.Gameplay
             if (Runtime is PlayerRuntimeState player) player.HitCount = 0;
         }
 
+        public bool RestoreHealth(int amount)
+        {
+            if (Runtime == null || !Runtime.IsAlive || amount <= 0) return false;
+            Runtime.CurrentHealth = Mathf.Min(Runtime.MaxHealth, Runtime.CurrentHealth + amount);
+            if (Runtime.State == CombatState.Hit) Runtime.State = CombatState.Idle;
+            return true;
+        }
+
+        public bool RestoreFullHealth()
+        {
+            if (Runtime == null || !Runtime.IsAlive) return false;
+            Runtime.CurrentHealth = Runtime.MaxHealth;
+            Runtime.State = CombatState.Idle;
+            return true;
+        }
+
+        public bool Revive(int health, float invulnerabilitySeconds)
+        {
+            if (Runtime == null || Runtime.IsAlive || health <= 0) return false;
+            Runtime.CurrentHealth = Mathf.Clamp(health, 1, Runtime.MaxHealth);
+            Runtime.State = CombatState.Idle;
+            hitRecoveryEndsAt = 0f;
+            dashInvulnerabilityEndsAt = 0f;
+            dashInvulnerabilityActive = false;
+            scriptedInvulnerabilityActive = invulnerabilitySeconds > 0f;
+            if (scriptedInvulnerabilityActive)
+                StartCoroutine(ClearScriptedInvulnerabilityAfter(invulnerabilitySeconds));
+            Runtime.IsInvincible = scriptedInvulnerabilityActive;
+            return true;
+        }
+
         public void SetScriptedInvulnerability(bool active)
         {
             scriptedInvulnerabilityActive = active;
@@ -129,6 +160,12 @@ namespace Narthex.Gameplay
         {
             return Runtime != null && Runtime.State == CombatState.Hit &&
                    Time.time < hitRecoveryEndsAt;
+        }
+
+        private System.Collections.IEnumerator ClearScriptedInvulnerabilityAfter(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            SetScriptedInvulnerability(false);
         }
     }
 }

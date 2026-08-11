@@ -52,10 +52,16 @@ namespace Narthex.Presentation
 
         public bool HasTarget(string questId)
         {
-            if (string.IsNullOrWhiteSpace(questId) || targets == null) return false;
+            return GetTarget(questId) != null;
+        }
+
+        public Transform GetTarget(string questId)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || targets == null) return null;
             foreach (var target in targets)
-                if (target != null && target.QuestId == questId && target.Target != null) return true;
-            return false;
+                if (target != null && target.QuestId == questId && target.Target != null)
+                    return target.Target;
+            return null;
         }
 
         private void Awake()
@@ -88,6 +94,11 @@ namespace Narthex.Presentation
         {
             if (externalTargetActive) currentTarget = externalTarget;
             else RefreshEquipmentQuestTarget();
+            RefreshBeaconVisual();
+        }
+
+        private void RefreshBeaconVisual()
+        {
             if (currentTarget == null)
             {
                 SetVisualActive(false);
@@ -117,6 +128,7 @@ namespace Narthex.Presentation
             externalTarget = target;
             externalTargetActive = true;
             currentTarget = target;
+            RefreshBeaconVisual();
         }
 
         public void ClearExternalTarget()
@@ -128,15 +140,7 @@ namespace Narthex.Presentation
 
         private void SetTarget(string questId)
         {
-            currentTarget = null;
-            foreach (var candidate in targets)
-            {
-                if (candidate != null && candidate.Target != null && candidate.QuestId == questId)
-                {
-                    currentTarget = candidate.Target;
-                    break;
-                }
-            }
+            currentTarget = GetTarget(questId);
 
             RefreshEquipmentQuestTarget();
 

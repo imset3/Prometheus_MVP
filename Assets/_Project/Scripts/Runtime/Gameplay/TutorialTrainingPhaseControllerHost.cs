@@ -47,6 +47,8 @@ namespace Narthex.Gameplay
         [SerializeField] private Collider2D[] phaseAreas = Array.Empty<Collider2D>();
         [SerializeField] private GameObject[] phaseContentRoots = Array.Empty<GameObject>();
         [SerializeField] private Transform[] phaseStartMarkers = Array.Empty<Transform>();
+        [SerializeField] private TutorialImportedTrainingFlowHost importedTrainingFlow;
+        [SerializeField] private TutorialTrainingSpawnHost trainingSpawnHost;
         [SerializeField, Min(0f)] private float fadeOutDuration = 0.18f;
         [SerializeField, Min(0f)] private float fadeInDuration = 0.22f;
 
@@ -86,6 +88,9 @@ namespace Narthex.Gameplay
 
         private void Awake()
         {
+            if (importedTrainingFlow == null) importedTrainingFlow = GetComponent<TutorialImportedTrainingFlowHost>();
+            if (trainingSpawnHost == null)
+                trainingSpawnHost = FindFirstObjectByType<TutorialTrainingSpawnHost>(FindObjectsInactive.Include);
             if (HasValidSetup) return;
             Debug.LogError(
                 "TutorialTrainingPhaseControllerHost requires five marker-authored phases, player transition references, and one exit gate.",
@@ -142,6 +147,8 @@ namespace Narthex.Gameplay
             IsExitLocked = TutorialTrainingPhasePolicy.ShouldLockExit(CurrentPhaseIndex);
             exitGateCollider.enabled = IsExitLocked;
             exitGateRenderer.enabled = IsExitLocked;
+            importedTrainingFlow?.RefreshForQuest(questId);
+            trainingSpawnHost?.RefreshForQuest(questId);
         }
 
         public void RefreshCurrentQuest()

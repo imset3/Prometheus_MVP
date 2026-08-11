@@ -96,12 +96,47 @@ namespace Narthex.Gameplay
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => TryStartForQuest(message.QuestId);
 
+        public void RefreshForQuest(string questId) => TryStartForQuest(questId);
+
         private void TryStartForQuest(string questId)
         {
             if (questId == fallingQuestId && !fallingSequenceStarted && !fallingStartPending)
                 StartCoroutine(StartFallingWhenDialogueCloses());
-            if (questId == enemyQuestId && !enemySequenceStarted && !enemyStartPending)
+
+            if (questId != enemyQuestId)
+            {
+                if (enemySequenceStarted || enemyStartPending || tutorialEnemy.activeSelf)
+                {
+                    enemySequenceStarted = false;
+                    enemyStartPending = false;
+                    PrepareEnemy();
+                }
+                return;
+            }
+
+            // A stationary training dummy is phase content, not an arrival cutscene.
+            // Make it available as soon as the melee phase becomes current so a
+            // lingering dialogue claim cannot leave the tutorial soft-locked.
+            if (stationaryEnemy)
+            {
+                ShowStationaryEnemy();
+                return;
+            }
+
+            if (!enemySequenceStarted && !enemyStartPending)
                 StartCoroutine(StartEnemyWhenDialogueCloses());
+        }
+
+        private void ShowStationaryEnemy()
+        {
+            enemySequenceStarted = true;
+            enemyStartPending = false;
+            enemySpawnWarning.SetActive(false);
+            tutorialEnemy.transform.position = enemyLandingPoint.position;
+            tutorialEnemy.SetActive(true);
+            tutorialEnemy.GetComponent<CombatActorHost>()?.ResetRuntime();
+            enemyCollider.enabled = true;
+            enemyAttackBehaviour.enabled = false;
         }
 
         private void PrepareFallingObjects()
@@ -177,11 +212,7 @@ namespace Narthex.Gameplay
             enemySequenceStarted = true;
             if (stationaryEnemy)
             {
-                enemySpawnWarning.SetActive(false);
-                tutorialEnemy.transform.position = enemyLandingPoint.position;
-                tutorialEnemy.SetActive(true);
-                enemyCollider.enabled = true;
-                enemyAttackBehaviour.enabled = false;
+                ShowStationaryEnemy();
                 yield break;
             }
 

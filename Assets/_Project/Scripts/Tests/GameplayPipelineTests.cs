@@ -64,6 +64,88 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void TutorialSkillUnlockPolicy_UnlocksAtRangedLessonAndRemainsUnlockedAfterward()
+        {
+            const int rangedLessonStep = 6;
+            Assert.That(TutorialSkillUnlockPolicy.HasReachedStep(5, rangedLessonStep), Is.False);
+            Assert.That(TutorialSkillUnlockPolicy.HasReachedStep(6, rangedLessonStep), Is.True);
+            Assert.That(TutorialSkillUnlockPolicy.HasReachedStep(10, rangedLessonStep), Is.True);
+            Assert.That(TutorialSkillUnlockPolicy.HasReachedStep(10, -1), Is.False);
+        }
+
+        [Test]
+        public void TitleDisplayModePolicy_MigratesLegacyFullscreenAndKeepsThreeExplicitModes()
+        {
+            var legacyWindowed = new SettingsSaveData { Fullscreen = false, HasDisplayModeSelection = false };
+            var legacyFullscreen = new SettingsSaveData { Fullscreen = true, HasDisplayModeSelection = false };
+            Assert.That(TitleScreenHost.ResolveDisplayMode(legacyWindowed), Is.EqualTo(FullScreenMode.Windowed));
+            Assert.That(TitleScreenHost.ResolveDisplayMode(legacyFullscreen), Is.EqualTo(FullScreenMode.FullScreenWindow));
+
+            foreach (var mode in new[]
+                     {
+                         FullScreenMode.Windowed,
+                         FullScreenMode.ExclusiveFullScreen,
+                         FullScreenMode.FullScreenWindow
+                     })
+            {
+                var settings = new SettingsSaveData
+                {
+                    DisplayMode = (int)mode,
+                    HasDisplayModeSelection = true
+                };
+                Assert.That(TitleScreenHost.ResolveDisplayMode(settings), Is.EqualTo(mode));
+            }
+        }
+
+        [Test]
+        public void TitleResolutionPolicy_UsesDetectedDisplayModesAndClosestSavedChoice()
+        {
+            var options = TitleScreenHost.BuildResolutionOptions(
+                new[]
+                {
+                    new Vector2Int(800, 600),
+                    new Vector2Int(1920, 1080),
+                    new Vector2Int(2560, 1440),
+                    new Vector2Int(1920, 1080)
+                },
+                new Vector2Int(2560, 1440));
+
+            Assert.That(options, Is.EqualTo(new[]
+            {
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1440)
+            }));
+            Assert.That(
+                TitleScreenHost.FindClosestSupportedResolution(options, new Vector2Int(2304, 1296)),
+                Is.EqualTo(new Vector2Int(2560, 1440)));
+        }
+
+        [Test]
+        public void TheusFocusedVolleyPolicy_RequiresUnlockAndUsesLargerFinalShot()
+        {
+            Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(true, false, 0f, true, false), Is.True);
+            Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(false, false, 0f, true, false), Is.False);
+            Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(true, false, 0.1f, true, false), Is.False);
+            Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(true, true, 0f, true, false), Is.False);
+            Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(true, false, 0f, true, true), Is.False);
+            Assert.That(TutorialTheusRangedSupportHost.ResolveFocusedVolleyScale(3, 5, 1.35f), Is.EqualTo(1f));
+            Assert.That(TutorialTheusRangedSupportHost.ResolveFocusedVolleyScale(4, 5, 1.35f), Is.EqualTo(1.35f));
+        }
+
+        [Test]
+        public void DemoEndingFlightPolicy_MovesTowardZenithAndShrinksRearViewAirship()
+        {
+            var start = new Vector2(-560f, -180f);
+            var end = new Vector2(520f, 190f);
+
+            Assert.That(TutorialDemoEndingSequenceHost.CalculateFlightPosition(start, end, 0f), Is.EqualTo(start));
+            Assert.That(TutorialDemoEndingSequenceHost.CalculateFlightPosition(start, end, 1f), Is.EqualTo(end));
+            Assert.That(TutorialDemoEndingSequenceHost.CalculateFlightScale(1f, 0.12f, 0f), Is.EqualTo(1f));
+            Assert.That(TutorialDemoEndingSequenceHost.CalculateFlightScale(1f, 0.12f, 1f), Is.EqualTo(0.12f).Within(0.001f));
+            Assert.That(TutorialDemoEndingSequenceHost.SmoothProgress(0.5f), Is.EqualTo(0.5f).Within(0.001f));
+        }
+
+        [Test]
         public void TutorialCameraPolicy_UsesVelocityLookAheadAndBossWeightedCenter()
         {
             Assert.That(TutorialCameraPolicy.ResolveLookAhead(0.05f, 2f, 0.2f), Is.Zero);
@@ -87,6 +169,14 @@ namespace Narthex.Tests
             Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 0), Is.EqualTo(4.2f));
             Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 1), Is.EqualTo(2.8f));
             Assert.That(TutorialSubtitleTimingPolicy.ResolveVisibleDuration(4.2f, 2.8f, 4), Is.EqualTo(2.8f));
+        }
+
+        [Test]
+        public void TutorialSubtitleDismissPolicy_UnlocksSpaceAfterOneSecond()
+        {
+            Assert.That(TutorialSubtitleDismissPolicy.CanDismiss(0.99f, 1f, true), Is.False);
+            Assert.That(TutorialSubtitleDismissPolicy.CanDismiss(1f, 1f, false), Is.False);
+            Assert.That(TutorialSubtitleDismissPolicy.CanDismiss(1f, 1f, true), Is.True);
         }
 
         [Test]
@@ -712,10 +802,23 @@ namespace Narthex.Tests
                 Is.EqualTo("BlinkVanish"));
             Assert.That(
                 CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.CounterTelegraph),
-                Is.EqualTo("BasicWindup"));
+                Is.EqualTo("CounterTelegraph"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FakeBlinkReappear),
+                Is.EqualTo("BlinkReappear"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.FakeBlinkPause),
+                Is.EqualTo("Recover"));
+            Assert.That(
+                CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.CounterSucceeded),
+                Is.EqualTo("CounterStance"));
             Assert.That(
                 CharacterPngAnimationBridge.ResolveHelteAnimationState(HelteCombatState.MercyRetreat),
                 Is.EqualTo("Recover"));
+            Assert.That(CharacterPngAnimationBridge.ShouldFlipAuthoredSprite(false, 1f), Is.True,
+                "Helte's authored left-facing frames must flip when the player is to the right.");
+            Assert.That(CharacterPngAnimationBridge.ShouldFlipAuthoredSprite(false, -1f), Is.False,
+                "Helte's authored left-facing frames must remain unflipped when the player is to the left.");
         }
 
         [Test]
@@ -725,7 +828,54 @@ namespace Narthex.Tests
             Assert.That(TutorialHudModeResolver.Resolve(false, false, false, true), Is.EqualTo(TutorialHudMode.BossCombat));
             Assert.That(TutorialHudModeResolver.Resolve(false, true, false, true), Is.EqualTo(TutorialHudMode.Dialogue));
             Assert.That(TutorialHudModeResolver.Resolve(false, false, true, true), Is.EqualTo(TutorialHudMode.Dialogue));
+            Assert.That(TutorialHudModeResolver.Resolve(false, true, true, false, true), Is.EqualTo(TutorialHudMode.Epilogue));
             Assert.That(TutorialHudModeResolver.Resolve(true, true, true, true), Is.EqualTo(TutorialHudMode.Result));
+        }
+
+        [Test]
+        public void PromeBossSkillPolicy_UsesCooldownAndResolvesFourStrikes()
+        {
+            Assert.That(PromeBossSkillHost.CanActivate(true, true, true, 0f, false), Is.True);
+            Assert.That(PromeBossSkillHost.CanActivate(true, true, true, 0.1f, false), Is.False);
+            Assert.That(PromeBossSkillHost.CanActivate(true, true, true, 0f, true), Is.False);
+            Assert.That(PromeBossSkillHost.CanActivate(false, true, true, 0f, false), Is.False);
+
+            var strikes = new[] { 35, 40, 45, 100 };
+            Assert.That(PromeBossSkillHost.ResolveStrikeDamage(strikes, 0), Is.EqualTo(35));
+            Assert.That(PromeBossSkillHost.ResolveStrikeDamage(strikes, 3), Is.EqualTo(100));
+            Assert.That(PromeBossSkillHost.ResolveStrikeDamage(strikes, 4), Is.Zero);
+            Assert.That(PromeBossSkillHost.ResolveSkillFacing(-1f, 1f), Is.EqualTo(-1f),
+                "The player's current input-facing direction must override stale visual state.");
+            Assert.That(PromeBossSkillHost.ResolveSkillFacing(0f, -1f), Is.EqualTo(-1f));
+            Assert.That(PromeBossSkillHost.ShouldFlipStrikeSprite(1f), Is.False,
+                "The authored right-facing slash must stay unflipped while Prome faces right.");
+            Assert.That(PromeBossSkillHost.ShouldFlipStrikeSprite(-1f), Is.True,
+                "The slash sprite must mirror while Prome faces left.");
+            Assert.That(PromeBossSkillHost.IsBossInForwardRange(-3f, -1f, 4.5f), Is.True);
+            Assert.That(PromeBossSkillHost.IsBossInForwardRange(3f, -1f, 4.5f), Is.False);
+            Assert.That(CharacterPngAnimationBridge.ShouldSuppressHitReaction(true), Is.True,
+                "Taking damage must not cancel the active four-slash presentation.");
+        }
+
+        [Test]
+        public void BossHealthBarPresenter_ExplainsSafeAndUnsafeHelteWindows()
+        {
+            Assert.That(BossHealthBarPresenter.ResolveStateLabel(HelteCombatState.FakeBlinkPause), Is.EqualTo("공격 기회"));
+            Assert.That(BossHealthBarPresenter.ResolveStateLabel(HelteCombatState.CounterStance), Is.EqualTo("공격 금지"));
+            Assert.That(BossHealthBarPresenter.ResolveStateLabel(HelteCombatState.PhaseTransition), Is.EqualTo("PHASE 2"));
+            Assert.That(BossHealthBarPresenter.ResolveStateLabel(HelteCombatState.Waiting), Is.Empty);
+            Assert.That(BossHealthBarPresenter.ResolveHealthLabel("헬테", 1250, 2500),
+                Is.EqualTo("헬테   1,250 / 2,500   ·   50%"));
+        }
+
+        [Test]
+        public void BossHealthBarPresenter_KeepsHudFixedForTheWholeEncounter()
+        {
+            Assert.That(BossHealthBarPresenter.ShouldKeepVisible(true, false, true), Is.True,
+                "The fixed HUD must stay visible throughout active Helte patterns.");
+            Assert.That(BossHealthBarPresenter.ShouldKeepVisible(false, false, true), Is.False);
+            Assert.That(BossHealthBarPresenter.ShouldKeepVisible(true, true, true), Is.False);
+            Assert.That(BossHealthBarPresenter.ShouldKeepVisible(true, false, false), Is.False);
         }
 
         private static ModuleDefinition CreateModule(string id, string treeId, AbilityDefinition ability, int cost)

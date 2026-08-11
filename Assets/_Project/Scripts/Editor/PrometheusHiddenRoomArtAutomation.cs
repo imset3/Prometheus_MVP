@@ -11,7 +11,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusHiddenRoomArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string ArtRoot = "Assets/_Project/Art/AIConcepts/TutorialHiddenRoomProps/Generated";
         private const string UpdraftPath = ArtRoot + "/TUTO_B_UpdraftDevice_v1.png";
         private const string PasskeyPath = ArtRoot + "/TUTO_B_AirshipPasskey_v1.png";

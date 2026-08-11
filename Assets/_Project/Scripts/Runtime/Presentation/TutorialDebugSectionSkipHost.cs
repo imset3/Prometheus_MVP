@@ -72,7 +72,7 @@ namespace Narthex.Presentation
             Array.Empty<TutorialDebugSectionDefinition>();
 
         [Header("Controls")]
-        [SerializeField] private bool showOverlay = true;
+        [SerializeField] private bool showOverlay;
 
         private int activeSectionIndex = -1;
 
@@ -113,18 +113,7 @@ namespace Narthex.Presentation
 
         private void OnGUI()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (!showOverlay || !HasValidSetup) return;
-
-            const float width = 330f;
-            const float height = 76f;
-            var area = new Rect(16f, Screen.height - height - 16f, width, height);
-            GUI.Box(area, "개발자 구간 스킵 · 저장 영향 없음");
-            if (GUI.Button(new Rect(area.x + 10f, area.y + 28f, 145f, 36f), "F8  F 구역 바로가기"))
-                JumpToFSection();
-            if (GUI.Button(new Rect(area.x + 165f, area.y + 28f, 155f, 36f), "F9  다음 구역"))
-                JumpToNextSection();
-#endif
+            // Intentionally no development overlay. F8/F9 keyboard shortcuts remain available.
         }
 
         public bool JumpToFSection() => JumpToSection(0);

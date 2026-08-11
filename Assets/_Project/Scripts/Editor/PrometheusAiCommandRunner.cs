@@ -39,6 +39,24 @@ namespace Narthex.Tools
             "hidden-room.art.apply",
             "meeting-room.art.apply",
             "corridor.art.apply",
+            "audio.music.apply",
+            "audio.sfx.apply",
+            "tutorial.world-polish.apply",
+            "tutorial.exterior-march.apply",
+            "tutorial.theus-projectile.apply",
+            "tutorial.enemy-projectile-art.apply",
+            "tutorial.wind-dialogue-art.apply",
+            "tutorial.ui-polish.apply",
+            "tutorial.double-jump-platform-align",
+            "tutorial.demo-ending.apply",
+            "tutorial.training-dummies.apply",
+            "tilemap.clearance.audit",
+            "tilemap.clearance.apply",
+            "title.scene.apply",
+            "boss.polish.apply",
+            "boss.helte-animation-v2.apply",
+            "boss.helte-animation-v2.pacing",
+            "art.prome-motion.apply",
             "component.inspect",
             "component.set",
             "code.usage",
@@ -215,6 +233,133 @@ namespace Narthex.Tools
                     response.changed = !request.dryRun && response.changes.Count > 0;
                     response.message = (request.dryRun ? "Previewed" : "Applied") +
                                        " C corridor art package (" + response.changes.Count + " change(s)).";
+                    break;
+                case "audio.music.apply":
+                    response.changes = PrometheusTutorialMusicAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial adaptive music package (" + response.changes.Count + " change(s)).";
+                    break;
+                case "audio.sfx.apply":
+                    response.changes = PrometheusTutorialSfxAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial SFX package (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.world-polish.apply":
+                    response.changes = PrometheusTutorialWorldPolishAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial world polish (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.exterior-march.apply":
+                    response.changes = PrometheusTutorialWorldPolishAutomation.ApplyExteriorMarchOnly(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " exterior enemy march (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.theus-projectile.apply":
+                    response.changes = PrometheusTutorialWorldPolishAutomation.ApplyTheusProjectile(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " Theus projectile art (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.enemy-projectile-art.apply":
+                    response.changes = PrometheusRangedEnemyProjectileAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " ranged-enemy projectile art (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.wind-dialogue-art.apply":
+                    response.changes = PrometheusTutorialWorldPolishAutomation.ApplyWindAndDialogueArt(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial wind and dialogue art (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.ui-polish.apply":
+                    response.changes = PrometheusTutorialUiPolishAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial readable sprite UI (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.double-jump-platform-align":
+                    response.changes = PrometheusTutorialUiPolishAutomation.AlignDoubleJumpPlatforms(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " double-jump platform deck alignment (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.demo-ending.apply":
+                    response.changes = PrometheusTutorialDemoEndingAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " tutorial demo airship ending (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.training-dummies.apply":
+                    response.changes = PrometheusTrainingDummyIntegration.Apply(scene, request.dryRun)
+                        .Select((description, index) => new PrometheusAiChange
+                        {
+                            action = "integrate-ranged-training-dummy",
+                            hierarchyPath = "훈련장-수정본/원거리공격훈련",
+                            before = index < 3 ? "visual-only authored dummy" : "duplicate runtime targets",
+                            after = description
+                        })
+                        .ToList();
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " existing ranged training dummies (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tilemap.clearance.audit":
+                    response.records = PrometheusTilemapSceneIntegrator.AuditSolidColliders(
+                        scene,
+                        new Vector2(request.GetFloat("x"), request.GetFloat("y")),
+                        new Vector2(request.GetFloat("width", 0.5f), request.GetFloat("height", 1f)));
+                    response.message = $"Found {response.records.Count} solid collider(s) in the requested clearance area.";
+                    break;
+                case "tilemap.clearance.apply":
+                    response.changes = PrometheusTilemapSceneIntegrator.ApplyTilemapClearance(
+                        scene,
+                        request.Get("markerId"),
+                        request.Get("zone"),
+                        new Vector2(request.GetFloat("x"), request.GetFloat("y")),
+                        new Vector2(request.GetFloat("width", 1f), request.GetFloat("height", 1f)),
+                        request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} tilemap clearance " +
+                                       $"'{request.Get("markerId")}' ({response.changes.Count} change(s)).";
+                    break;
+                case "title.scene.apply":
+                    response.changes = PrometheusTitleSceneAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " animated title and loading scene (" + response.changes.Count + " change(s)).";
+                    break;
+                case "boss.polish.apply":
+                    response.changes = PrometheusBossPolishAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " Helte boss polish (" + response.changes.Count + " change(s)).";
+                    break;
+                case "boss.helte-animation-v2.apply":
+                    response.changes = PrometheusHelteAnimationV2Automation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " dedicated Helte PNG animation v2 (" +
+                                       response.changes.Count + " change(s)).";
+                    break;
+                case "boss.helte-animation-v2.pacing":
+                    response.changes = PrometheusHelteAnimationV2Automation.ApplyReadableMotionPacing(
+                        scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " readable Helte animation pacing (" +
+                                       response.changes.Count + " change(s)).";
+                    break;
+                case "art.prome-motion.apply":
+                    response.changes = PrometheusPromeArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " Prome dash, jump, and dialogue expressions (" +
+                                       response.changes.Count + " change(s)).";
                     break;
                 case "component.inspect":
                     InspectComponent(scene, request, response);

@@ -42,6 +42,8 @@ namespace Narthex.Tools
             "Narthex.PlayModeTests.TutorialSceneRuntimeSmokeTests." +
             "GWindRoute_LiftsPromeThroughAllColumnsAndReachesHNormally";
         private static TestRunnerApi trainingTestRunnerApi;
+        private static string trainingTestRunGuid = string.Empty;
+        private static double trainingTestStartedAt;
         private static string runningTestLabel = "훈련장";
 
         [MenuItem(PrometheusToolMenuPaths.Legacy + "Apply Training Integration")]
@@ -78,6 +80,19 @@ namespace Narthex.Tools
                             $"phase={controller.CurrentPhaseIndex}, " +
                             $"activeAreas={controller.ActivePhaseAreaCount}, " +
                             $"exitLocked={controller.IsExitLocked}");
+
+                    if (TrainingQuestOrder[index] == "QST-TUTO-003")
+                    {
+                        var dummy = FindSceneComponents<CombatActorHost>(scene)
+                            .Single(actor => actor.gameObject.name == "TutorialEnemy");
+                        var dummyCollider = dummy.GetComponent<Collider2D>();
+                        var hasVisibleRenderer = dummy.GetComponentsInChildren<Renderer>(true)
+                            .Any(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy);
+                        if (!dummy.gameObject.activeInHierarchy || dummyCollider == null ||
+                            !dummyCollider.enabled || !hasVisibleRenderer)
+                            throw new InvalidOperationException(
+                                "근접 훈련 마네킹이 활성·충돌·렌더링 상태로 준비되지 않았습니다.");
+                    }
                 }
 
                 controller.Refresh("QST-TUTO-007");
@@ -89,7 +104,7 @@ namespace Narthex.Tools
 
                 Debug.Log(
                     "[sragon000][훈련장][런타임 스모크 통과] 5개 단계 각각 행동 범위 1개, " +
-                    "훈련 중 출구 잠금, 완료 후 전 범위 비활성·출구 개방 정상.");
+                    "근접 마네킹 표시·충돌, 훈련 중 출구 잠금, 완료 후 전 범위 비활성·출구 개방 정상.");
                 controller.RefreshCurrentQuest();
             }
             catch (Exception exception)
@@ -126,20 +141,50 @@ namespace Narthex.Tools
         {
             if (trainingTestRunnerApi != null)
             {
-                Debug.LogWarning($"[sragon000][{runningTestLabel}][플레이 테스트] 이미 테스트가 실행 중입니다.");
-                return;
+                // PlayMode 진입 중에는 현재 실행을 보존하고, 편집 모드로 돌아온 뒤에도
+                // 콜백이 남아 있다면 완료 콜백을 놓친 핸들이므로 즉시 정리한다.
+                if (!EditorApplication.isPlayingOrWillChangePlaymode ||
+                    EditorApplication.timeSinceStartup - trainingTestStartedAt > 15d)
+                {
+                    if (!string.IsNullOrEmpty(trainingTestRunGuid))
+                        TestRunnerApi.CancelTestRun(trainingTestRunGuid);
+                    UnityEngine.Object.DestroyImmediate(trainingTestRunnerApi);
+                    trainingTestRunnerApi = null;
+                    trainingTestRunGuid = string.Empty;
+                    Debug.LogWarning("[sragon000][플레이 테스트] 응답 없는 이전 테스트 핸들을 정리했습니다.");
+                }
+                else
+                {
+                    Debug.LogWarning($"[sragon000][{runningTestLabel}][플레이 테스트] 이미 테스트가 실행 중입니다.");
+                    return;
+                }
             }
 
             runningTestLabel = label;
             trainingTestRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
+            trainingTestStartedAt = EditorApplication.timeSinceStartup;
             trainingTestRunnerApi.RegisterCallbacks(new ImportedTrainingTestCallbacks());
-            trainingTestRunnerApi.Execute(new ExecutionSettings(new Filter
+            trainingTestRunGuid = trainingTestRunnerApi.Execute(new ExecutionSettings(new Filter
             {
                 testMode = TestMode.PlayMode,
                 testNames = new[] { testName },
                 assemblyNames = new[] { "Narthex.PlayModeTests" }
             }));
             Debug.Log($"[sragon000][{label}][플레이 테스트] 새 레벨 씬 통합 테스트를 시작합니다.");
+        }
+
+        [MenuItem(PrometheusToolMenuPaths.Tests + "Reset Stale Test Runner")]
+        public static void ResetStalePlayModeTestRunner()
+        {
+            if (!string.IsNullOrEmpty(trainingTestRunGuid))
+                TestRunnerApi.CancelTestRun(trainingTestRunGuid);
+            if (trainingTestRunnerApi != null)
+                UnityEngine.Object.DestroyImmediate(trainingTestRunnerApi);
+            trainingTestRunnerApi = null;
+            trainingTestRunGuid = string.Empty;
+            trainingTestStartedAt = 0d;
+            runningTestLabel = string.Empty;
+            Debug.Log("[sragon000][플레이 테스트] 테스트 러너 핸들을 초기화했습니다.");
         }
 
         private sealed class ImportedTrainingTestCallbacks : ICallbacks
@@ -156,6 +201,8 @@ namespace Narthex.Tools
                     $"status={result.TestStatus}, pass={result.PassCount}, fail={result.FailCount}, " +
                     $"skip={result.SkipCount}, duration={result.Duration:F2}s");
                 trainingTestRunnerApi = null;
+                trainingTestRunGuid = string.Empty;
+                trainingTestStartedAt = 0d;
             }
 
             public void TestStarted(ITestAdaptor test)
@@ -1415,7 +1462,7 @@ namespace Narthex.Tools
                 !scopes.HasValidSetup || !flow.HasValidSetup || !phaseController.HasValidSetup)
                 throw new InvalidOperationException("수정 훈련장 핵심 로직 중 유효하지 않거나 비활성인 항목이 있습니다.");
             if (!ranged.HasValidSetup || !ranged.HasAssignedInput)
-                throw new InvalidOperationException("원거리 공격의 2번 입력 또는 투사체 참조가 유효하지 않습니다.");
+                throw new InvalidOperationException("원거리 공격의 1번 입력 또는 투사체 참조가 유효하지 않습니다.");
             if (singleExitGate.GetComponent<Collider2D>() == null ||
                 singleExitGate.GetComponent<Renderer>() == null ||
                 activeLegacyGates.Length != 0)

@@ -12,7 +12,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusExteriorArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string TileRoot = "Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1/E_Exterior";
         private const string NaturalPlatformPath = TileRoot + "/Generated/TUTO_E_Natural_Platform_Middle_v2.png";
 

@@ -27,6 +27,7 @@ namespace Narthex.Presentation
         [SerializeField] private EnemyAttackHost enemyAttack;
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private HelteBossPatternHost heltePattern;
+        [SerializeField] private PromeBossSkillHost bossSkill;
         [SerializeField] private CombatVisualMotionHost proceduralVisualMotion;
         [SerializeField] private bool sourceFramesFaceRight;
         [SerializeField] private Transform facingTarget;
@@ -64,16 +65,20 @@ namespace Narthex.Presentation
         private bool attackSortingPriorityActive;
         private bool deathPresented;
         private bool subscribedToCombatEvents;
+        private float externalPlaybackResetAt;
 
         public CharacterPngAnimationPreset Preset => preset;
         public bool HasValidSetup => animator != null && spriteRenderer != null;
         public bool HasAttack01Clip => HasAnimatorState("Attack01");
+        public bool HasDashClip => HasAnimatorState("Dash");
+        public bool HasJumpClip => HasAnimatorState("Jump");
         public bool IsSingleAttackMotionPlaying => Time.time < actionLockedUntil &&
                                                    (currentState == "Attack01" ||
                                                     Time.time < proceduralAttackEndsAt);
         public bool IsUsingProceduralAttackFallback => Time.time < proceduralAttackEndsAt;
         public bool IsAttackSortingPriorityActive => attackSortingPriorityActive;
         public int BaseSortingOrder => baseSortingOrder;
+        public float FacingDirection => ResolveVisualFacingDirection();
         public int PresentedAttackCount { get; private set; }
         public bool HasSetupBackup => setupBackupCaptured;
         public Transform OriginalContractVisualRoot => originalContractVisualRoot;
@@ -211,6 +216,8 @@ namespace Narthex.Presentation
             if (subscribedToCombatEvents && actor != null && actor.Events != null)
                 actor.Events.Unsubscribe<HitConfirmed>(HandleHitConfirmed);
             subscribedToCombatEvents = false;
+            if (animator != null) animator.speed = 1f;
+            externalPlaybackResetAt = 0f;
             RestoreProceduralAttackBasePose();
             RestoreSortingOrder();
         }
@@ -218,6 +225,11 @@ namespace Narthex.Presentation
         private void Update()
         {
             if (!HasValidSetup) return;
+            if (externalPlaybackResetAt > 0f && Time.time >= externalPlaybackResetAt)
+            {
+                animator.speed = 1f;
+                externalPlaybackResetAt = 0f;
+            }
             TrySubscribeCombatEvents();
             UpdateFacing();
             UpdateAttackSortingPriority();
@@ -254,7 +266,10 @@ namespace Narthex.Presentation
             else if (velocity.y > airborneVelocityThreshold)
                 PlayState("Jump");
             else if (velocity.y < -airborneVelocityThreshold)
-                PlayState("Fall");
+            {
+                if (HasAnimatorState("Fall")) PlayState("Fall");
+                else PlayState("Jump");
+            }
             else if (Mathf.Abs(velocity.x) > runVelocityThreshold)
                 PlayState("Run");
             else
@@ -278,6 +293,35 @@ namespace Narthex.Presentation
             BeginProceduralAttackMotion();
         }
 
+        public void PresentBossSkillStrike(float playbackSpeed, float lockSeconds)
+        {
+            PresentBossSkillStrike(playbackSpeed, lockSeconds,
+                playerInput == null ? ResolveVisualFacingDirection() : playerInput.AimDirectionX);
+        }
+
+        public void PresentBossSkillStrike(float playbackSpeed, float lockSeconds, float facingDirection)
+        {
+            if (!HasValidSetup || preset != CharacterPngAnimationPreset.Prome) return;
+            var direction = facingDirection >= 0f ? 1f : -1f;
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = ShouldFlipForDirection(direction);
+            proceduralAttackDirection = direction;
+            PresentedAttackCount++;
+            ApplyAttackSortingPriority();
+            var duration = Mathf.Max(0.05f, lockSeconds);
+            animator.speed = Mathf.Max(0.1f, playbackSpeed);
+            externalPlaybackResetAt = Time.time + duration;
+            if (HasAttack01Clip)
+            {
+                RestoreProceduralAttackBasePose();
+                PlayLockedState("Attack01", duration);
+                return;
+            }
+
+            attackOneDuration = duration;
+            BeginProceduralAttackMotion();
+        }
+
         private void HandleEnemyAttackPhaseChanged(EnemyAttackPhase phase)
         {
             if (preset != CharacterPngAnimationPreset.Generic) return;
@@ -289,6 +333,9 @@ namespace Narthex.Presentation
 
         private void HandleHelteStateChanged(HelteCombatState state)
         {
+            // Blink and dash can relocate Helte in the same frame as a state change.
+            // Refresh the authored left-facing sprite before the attack frame is shown.
+            UpdateFacing();
             PlayState(ResolveHelteAnimationState(state));
         }
 
@@ -298,6 +345,13 @@ namespace Narthex.Presentation
             {
                 HelteCombatState.Disabled => "Idle",
                 HelteCombatState.Waiting => "Idle",
+                HelteCombatState.FinalRushTransition => "PhaseTransition",
+                HelteCombatState.FakeBlinkVanish => "BlinkVanish",
+                HelteCombatState.FakeBlinkReappear => "BlinkReappear",
+                HelteCombatState.FakeBlinkPause => "Recover",
+                HelteCombatState.CounterSucceeded => "CounterStance",
+                HelteCombatState.CounterOpen => "Recover",
+                HelteCombatState.MercyRetreat => "Recover",
                 _ => state.ToString()
             };
         }
@@ -305,8 +359,11 @@ namespace Narthex.Presentation
         private void HandleHitConfirmed(HitConfirmed message)
         {
             if (actor == null || message.TargetId != actor.ActorId) return;
+            if (ShouldSuppressHitReaction(bossSkill != null && bossSkill.IsExecuting)) return;
             PlayLockedState("Hit", hitDuration);
         }
+
+        public static bool ShouldSuppressHitReaction(bool bossSkillExecuting) => bossSkillExecuting;
 
         private void HandleAimDirectionChanged(float direction)
         {
@@ -336,7 +393,11 @@ namespace Narthex.Presentation
             if ((preset != CharacterPngAnimationPreset.Helte && preset != CharacterPngAnimationPreset.Generic) ||
                 facingTarget == null) return;
             var delta = facingTarget.position.x - transform.position.x;
-            if (!Mathf.Approximately(delta, 0f)) spriteRenderer.flipX = delta < 0f;
+            // Helte's authored frames currently face left.  Do not assume every
+            // enemy source faces right: use the same authored-frame convention as
+            // Prome so blink, dash, and slash states always look at the player.
+            if (!Mathf.Approximately(delta, 0f))
+                spriteRenderer.flipX = ShouldFlipForDirection(delta);
         }
 
         private void ApplyInitialFacing()
@@ -511,6 +572,7 @@ namespace Narthex.Presentation
             if (enemyAttack == null) enemyAttack = GetComponentInParent<EnemyAttackHost>(true);
             if (actor == null) actor = GetComponentInParent<CombatActorHost>(true);
             if (heltePattern == null) heltePattern = GetComponentInParent<HelteBossPatternHost>(true);
+            if (bossSkill == null) bossSkill = GetComponentInParent<PromeBossSkillHost>(true);
             if (proceduralVisualMotion == null)
                 proceduralVisualMotion = GetComponentInParent<CombatVisualMotionHost>(true);
         }
@@ -523,7 +585,19 @@ namespace Narthex.Presentation
 
         private bool ShouldFlipForDirection(float direction)
         {
-            return sourceFramesFaceRight ? direction < 0f : direction > 0f;
+            return ShouldFlipAuthoredSprite(sourceFramesFaceRight, direction);
+        }
+
+        public static bool ShouldFlipAuthoredSprite(bool sourceFacesRight, float direction) =>
+            sourceFacesRight ? direction < 0f : direction > 0f;
+
+        private float ResolveVisualFacingDirection()
+        {
+            if (spriteRenderer == null)
+                return playerInput == null || playerInput.AimDirectionX >= 0f ? 1f : -1f;
+            if (sourceFramesFaceRight)
+                return spriteRenderer.flipX ? -1f : 1f;
+            return spriteRenderer.flipX ? 1f : -1f;
         }
     }
 }

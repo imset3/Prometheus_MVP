@@ -62,6 +62,8 @@ namespace Narthex.Presentation
         [SerializeField, Min(0f)] private float blackHoldDuration = 0.15f;
         [SerializeField, Min(0f)] private float fadeInDuration = 0.45f;
         [SerializeField, Min(0.5f)] private float maximumSweptCrossingDistance = 6f;
+        [SerializeField, Min(0f)] private float destinationSpawnVerticalClearance = 0.12f;
+        [SerializeField, Range(1, 4)] private int destinationSettleFixedSteps = 2;
 
         private bool transitionRunning;
         private Collider2D transitionTrigger;
@@ -218,12 +220,27 @@ namespace Narthex.Presentation
             SetActive(deactivateOnArrival, false);
             SetActive(activateOnArrival, true);
             guideCompanion.CancelGuide();
-            playerBody.position = destinationSpawn.position;
-            player.position = destinationSpawn.position;
-            previousPlayerPosition = destinationSpawn.position;
+            var safeDestination = destinationSpawn.position + Vector3.up * destinationSpawnVerticalClearance;
+            playerBody.position = safeDestination;
+            player.position = safeDestination;
+            previousPlayerPosition = safeDestination;
             playerBody.linearVelocity = Vector2.zero;
+            playerBody.angularVelocity = 0f;
             playerBody.simulated = restoreSimulation;
             Physics2D.SyncTransforms();
+            // Give Physics2D one simulation step with zero velocity before input is
+            // restored. This prevents a carry-over contact impulse at destination
+            // floors (notably the Nadir dock entry) from bouncing Prome into a tile.
+            if (restoreSimulation)
+            {
+                for (var step = 0; step < destinationSettleFixedSteps; step++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    playerBody.linearVelocity = Vector2.zero;
+                    playerBody.angularVelocity = 0f;
+                    Physics2D.SyncTransforms();
+                }
+            }
             if (playerMotor != null) playerMotor.ResetTransientInput();
             guideCompanion.transform.position = destinationSpawn.position + guideArrivalOffset;
             if (destinationCameraTracksVertical)

@@ -17,6 +17,7 @@ namespace Narthex.Save
 
         private void Awake()
         {
+            if (GameLaunchSession.ConsumeTutorialLaunchOverride()) return;
             if (!resetProgressOnSceneStart) return;
             if (saveSystemHost == null || !saveSystemHost.Initialize())
             {

@@ -12,6 +12,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
@@ -25,6 +26,250 @@ namespace Narthex.PlayModeTests
             "Assets/Scenes/TutorialScene.unity";
         private const string BossDevelopmentScenePath =
             "Assets/Scenes/BossDevelopmentScene.unity";
+        private const string TitleScenePath =
+            "Assets/Scenes/TitleScene.unity";
+
+        [UnityTest]
+        public IEnumerator TitleScene_BuildsAnimatedPresentationAndLoadingFlow()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                TitleScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The title scene smoke test runs in the Unity Editor.");
+            yield break;
+#endif
+            yield return new WaitForSecondsRealtime(0.25f);
+            var scene = SceneManager.GetActiveScene();
+            Assert.That(scene.name, Is.EqualTo("TitleScene"));
+            var host = FindSceneComponent<TitleScreenHost>(scene);
+            Assert.That(host, Is.Not.Null);
+            Assert.That(host.HasValidSetup, Is.True,
+                "Title art must retain the background, Zenith and Prome sequence bindings.");
+            Assert.That(host.HasThemeSpriteSetup, Is.True,
+                "Title logo, buttons and loading presentation must retain their theme sprites.");
+            Assert.That(host.HasButtonLabelSpriteSetup, Is.True,
+                "Every fixed title button label must be bound as a replaceable sprite asset.");
+            Assert.That(host.UsesAuthoredPresentation, Is.True,
+                "Title buttons must be authored in the scene hierarchy instead of created only at runtime.");
+            Assert.That(FindSceneTransformOrDefault(scene, "TitleCanvas"), Is.Not.Null);
+            Assert.That(FindSceneTransformOrDefault(scene, "LoadingScreen"), Is.Not.Null);
+            var prome = FindSceneTransformOrDefault(scene, "Prome") as RectTransform;
+            var zenith = FindSceneTransformOrDefault(scene, "Zenith") as RectTransform;
+            Assert.That(prome, Is.Not.Null);
+            Assert.That(zenith, Is.Not.Null);
+            Assert.That(prome.sizeDelta.y, Is.LessThan(zenith.sizeDelta.y),
+                "Prome must remain secondary to the large central Zenith composition.");
+            Assert.That(zenith.sizeDelta.x, Is.GreaterThanOrEqualTo(1200f));
+            var title = FindSceneTransformOrDefault(scene, "Title")?.GetComponent<Text>();
+            Assert.That(title?.text, Is.EqualTo("PROME&THEUS"));
+            var displayMode = FindSceneTransformOrDefault(scene, "DisplayModeDropdown")?.GetComponent<Dropdown>();
+            var resolution = FindSceneTransformOrDefault(scene, "ResolutionDropdown")?.GetComponent<Dropdown>();
+            Assert.That(resolution, Is.Not.Null);
+            var expectedResolutions = TitleScreenHost.BuildResolutionOptions(
+                Screen.resolutions.Select(item => new Vector2Int(item.width, item.height)),
+                new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height));
+            Assert.That(resolution.options.Select(option => option.text), Is.EqualTo(
+                expectedResolutions.Select(item => $"{item.x} × {item.y}")));
+            Assert.That(displayMode, Is.Not.Null);
+            Assert.That(displayMode.options.Select(option => option.text), Is.EqualTo(new[]
+            {
+                "창 모드", "전체 화면", "창 없는 전체 화면"
+            }));
+
+            Assert.That(host.RegisteredButtonCount, Is.EqualTo(7),
+                "The title must register the five main-menu and two settings buttons exactly once.");
+            Assert.That(host.HasUniqueButtonBindings, Is.True,
+                "A title button must never receive duplicate manual/action bindings.");
+            InvokePrivateMethod(host, "ShowMenu");
+            InvokePrivateMethod(host, "ShowSettings");
+            Assert.That(host.SettingsVisible, Is.True);
+            Assert.That(host.MainMenuVisible, Is.False,
+                "The main menu must stop receiving pointer input while settings are open.");
+
+            var applyButton = FindSceneTransformOrDefault(scene, "설정 적용")?.GetComponent<Button>();
+            var backButton = FindSceneTransformOrDefault(scene, "돌아가기")?.GetComponent<Button>();
+            Assert.That(applyButton, Is.Not.Null, "The settings confirmation action needs an explicit label.");
+            Assert.That(backButton, Is.Not.Null, "The settings close action needs an explicit label.");
+            backButton.onClick.Invoke();
+            yield return null;
+            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("TitleScene"),
+                "Closing settings must not start or continue the tutorial.");
+            Assert.That(host.IsLoading, Is.False,
+                "The right settings button must only close the modal, never start loading.");
+            Assert.That(host.SettingsVisible, Is.False);
+            Assert.That(host.MainMenuVisible, Is.True);
+
+            foreach (var buttonName in new[]
+                     {
+                         "새 게임 시작", "이어하기", "보스전", "설정", "나가기", "설정 적용", "돌아가기"
+                     })
+            {
+                var buttonTransform = FindSceneTransformOrDefault(scene, buttonName);
+                Assert.That(buttonTransform, Is.Not.Null, $"Title button '{buttonName}' is missing.");
+                var labelImage = buttonTransform.Find("Label")?.GetComponent<Image>();
+                Assert.That(labelImage?.sprite, Is.Not.Null,
+                    $"Title button '{buttonName}' must use a generated label sprite instead of runtime text.");
+                Assert.That(buttonTransform.Find("LabelFallback"), Is.Null,
+                    $"Title button '{buttonName}' unexpectedly fell back to runtime text.");
+            }
+
+            var titleTexts = Resources.FindObjectsOfTypeAll<Text>()
+                .Where(text => text != null && text.gameObject.scene == scene && HasAncestor(text.transform, "TitleCanvas"));
+            foreach (var text in titleTexts)
+            {
+                Assert.That(text.horizontalOverflow, Is.EqualTo(HorizontalWrapMode.Wrap),
+                    $"Title text '{GetTransformPath(text.transform)}' must wrap inside its panel.");
+                Assert.That(text.verticalOverflow, Is.EqualTo(VerticalWrapMode.Truncate),
+                    $"Title text '{GetTransformPath(text.transform)}' must not draw outside its panel.");
+                Assert.That(text.resizeTextForBestFit, Is.True,
+                    $"Title text '{GetTransformPath(text.transform)}' must scale down at smaller resolutions.");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TutorialObjectiveBeacon_PointsAtEveryQuestTargetAndHidesAtArrival()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                ImportedTutorialScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The tutorial objective-beacon smoke test runs in the Unity Editor.");
+            yield break;
+#endif
+            yield return new WaitForSecondsRealtime(0.25f);
+            var scene = SceneManager.GetActiveScene();
+            var beacon = FindSceneComponent<TutorialObjectiveBeaconHost>(scene);
+            var playerBody = FindSceneComponent<PlayerMotorHost>(scene).GetComponent<Rigidbody2D>();
+            var visual = FindSceneTransform(scene, "TutorialObjectiveBeacon").Find("Visual").gameObject;
+            var questIds = new[]
+            {
+                "QST-TUTO-001", "QST-TUTO-002", "QST-TUTO-003", "QST-TUTO-004",
+                "QST-TUTO-005", "QST-TUTO-006", "QST-TUTO-007", "QST-TUTO-007-A",
+                "QST-TUTO-007-B", "QST-TUTO-008"
+            };
+
+            foreach (var questId in questIds)
+            {
+                var target = beacon.GetTarget(questId);
+                Assert.That(target, Is.Not.Null, $"{questId} must retain an authored guidance target.");
+                MovePlayer(playerBody, (Vector2)target.position + new Vector2(-5f, -3f));
+                beacon.SetExternalTarget(target);
+
+                var expectedDirection = ((Vector2)(target.position - playerBody.transform.position)).normalized;
+                Assert.That(visual.activeSelf, Is.True, $"{questId} arrow must be visible while the target is distant.");
+                Assert.That(Vector2.Dot(visual.transform.right, expectedDirection), Is.GreaterThan(0.98f),
+                    $"{questId} arrow must point toward its current target in both axes.");
+
+                MovePlayer(playerBody, target.position);
+                beacon.SetExternalTarget(target);
+                Assert.That(visual.activeSelf, Is.False, $"{questId} arrow must hide after reaching the target.");
+            }
+            beacon.ClearExternalTarget();
+        }
+
+        [UnityTest]
+        public IEnumerator TutorialScene_InstallsPauseMenuWithoutAuthoredLevelMutation()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                ImportedTutorialScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The tutorial pause-menu smoke test runs in the Unity Editor.");
+            yield break;
+#endif
+            yield return null;
+            var scene = SceneManager.GetActiveScene();
+            var pauseMenu = FindSceneComponent<TutorialPauseMenuHost>(scene);
+            Assert.That(pauseMenu, Is.Not.Null);
+            Assert.That(FindSceneTransformOrDefault(scene, "PauseCanvas"), Is.Not.Null);
+            InvokePrivateMethod(pauseMenu, "Pause");
+            foreach (var buttonName in new[] { "계속하기", "설정", "저장 및 나가기", "적용", "취소" })
+            {
+                var matches = Resources.FindObjectsOfTypeAll<Button>()
+                    .Where(button => button != null && button.gameObject.scene == scene && button.name == buttonName)
+                    .ToArray();
+                Assert.That(matches, Is.Not.Empty, $"Pause button '{buttonName}' is missing.");
+                foreach (var button in matches)
+                {
+                    var labelImage = button.transform.Find("Label")?.GetComponent<Image>();
+                    Assert.That(labelImage?.sprite, Is.Not.Null,
+                        $"Pause button '{buttonName}' must use a generated label sprite.");
+                }
+            }
+            InvokePrivateMethod(pauseMenu, "Resume");
+            Time.timeScale = 1f;
+        }
+
+        [UnityTest]
+        public IEnumerator TutorialRangedEnemies_UseVisibleProjectileArt()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                ImportedTutorialScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The ranged-enemy projectile smoke test runs in the Unity Editor.");
+            yield break;
+#endif
+            yield return null;
+            var scene = SceneManager.GetActiveScene();
+            var projectiles = Resources.FindObjectsOfTypeAll<TutorialEnemyProjectileHost>()
+                .Where(projectile => projectile != null && projectile.gameObject.scene == scene)
+                .ToArray();
+            Assert.That(projectiles.Length, Is.EqualTo(9),
+                "F/G ranged guards must retain three pooled projectiles each.");
+
+            foreach (var projectile in projectiles)
+            {
+                var renderer = projectile.GetComponentInChildren<SpriteRenderer>(true);
+                Assert.That(projectile.HasVisibleSetup, Is.True,
+                    $"Projectile art is not visible-ready: {GetTransformPath(projectile.transform)}");
+                Assert.That(renderer.enabled, Is.True);
+                Assert.That(renderer.sprite, Is.Not.Null);
+                Assert.That(renderer.color.a, Is.GreaterThan(.99f));
+                Assert.That(renderer.sortingOrder, Is.GreaterThanOrEqualTo(180));
+                Assert.That(renderer.sharedMaterial, Is.Not.Null);
+                Assert.That(renderer.sharedMaterial.name, Does.Contain("Sprite-Unlit-Default"));
+            }
+
+            var launchedProjectile = projectiles[0];
+            CombatActorHost source = null;
+            for (var current = launchedProjectile.transform.parent; current != null && source == null;
+                 current = current.parent)
+                source = current.GetComponent<CombatActorHost>();
+            Assert.That(source, Is.Not.Null);
+            var sourceWasActive = source.gameObject.activeSelf;
+            source.gameObject.SetActive(true);
+            yield return null;
+            Assert.That(source.CombatSystem, Is.Not.Null);
+            launchedProjectile.Launch(
+                source,
+                source.transform.position + Vector3.up,
+                Vector2.right,
+                2f,
+                1f,
+                1,
+                "TEST-RANGED-PROJECTILE-VISUAL");
+            yield return new WaitForFixedUpdate();
+            var launchedRenderer = launchedProjectile.GetComponentInChildren<SpriteRenderer>(true);
+            Assert.That(launchedProjectile.gameObject.activeInHierarchy, Is.True);
+            Assert.That(launchedRenderer.enabled, Is.True);
+            Assert.That(launchedRenderer.bounds.size.sqrMagnitude, Is.GreaterThan(.01f));
+            launchedProjectile.gameObject.SetActive(false);
+            source.gameObject.SetActive(sourceWasActive);
+        }
 
         [UnityTest]
         public IEnumerator BossDevelopmentScene_BootstrapsDirectlyIntoHelte()
@@ -65,6 +310,7 @@ namespace Narthex.PlayModeTests
                 Is.EqualTo("나디르 선착장"));
             Assert.That(FindSceneTransform(scene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneTransform(scene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.True);
+            AssertUniformSkillIconLayout(scene);
             Assert.That(
                 FindSceneTransformOrDefault(scene, "BossArena_EntryGate_ART_SLOT"),
                 Is.Null,
@@ -100,8 +346,8 @@ namespace Narthex.PlayModeTests
             };
             Assert.That(
                 helteActor.Runtime.MaxHealth,
-                Is.EqualTo(5000),
-                "Helte health must support the five-minute encounter pacing target.");
+                Is.EqualTo(2500),
+                "Helte health must retain the approved half-health boss balance.");
             Assert.That(
                 heltePattern.PhaseTwoHealthRatio,
                 Is.EqualTo(0.55f).Within(0.001f),
@@ -184,7 +430,11 @@ namespace Narthex.PlayModeTests
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
-                    new DamagePacket(playerActor.ActorId, "TEST-PHASE-TWO", 2300)),
+                    new DamagePacket(
+                        playerActor.ActorId,
+                        "TEST-PHASE-TWO",
+                        helteActor.Runtime.CurrentHealth -
+                        Mathf.CeilToInt(helteActor.Runtime.MaxHealth * 0.5f))),
                 Is.True);
             yield return WaitForConditionRealtime(
                 () => heltePattern.CurrentState == HelteCombatState.PhaseTransition,
@@ -205,12 +455,16 @@ namespace Narthex.PlayModeTests
             Assert.That(
                 helteActor.CombatSystem.TryApplyDamage(
                     helteActor.ActorId,
-                    new DamagePacket(playerActor.ActorId, "TEST-FINAL-RUSH", 1800)),
+                    new DamagePacket(
+                        playerActor.ActorId,
+                        "TEST-FINAL-RUSH",
+                        helteActor.Runtime.CurrentHealth -
+                        Mathf.CeilToInt(helteActor.Runtime.MaxHealth * 0.16f))),
                 Is.True,
                 "The boss test could not lower Helte to the final-rush threshold after the counter window.");
             yield return WaitForConditionRealtime(
                 () => heltePattern.CurrentState == HelteCombatState.FinalRushTransition,
-                5f,
+                20f,
                 "Helte did not enter the protected final-rush transition.");
             yield return WaitForConditionRealtime(
                 () => heltePattern.CurrentState != HelteCombatState.FinalRushTransition &&
@@ -243,6 +497,7 @@ namespace Narthex.PlayModeTests
 
             var introFlow = FindSceneComponent<TutorialChapter0IntroFlowHost>(tutorialScene);
             var dialogue = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
+            var dialogueView = FindSceneComponent<DialogueViewModule>(tutorialScene);
             var playerInput = FindSceneComponent<PlayerInputHost>(tutorialScene);
             var resetManager = FindSceneComponent<DevelopmentProgressResetManager>(tutorialScene);
 
@@ -253,16 +508,17 @@ namespace Narthex.PlayModeTests
             Assert.That(introFlow.HasCoherentHiddenRoomLayout, Is.True);
             Assert.That(dialogue, Is.Not.Null);
             Assert.That(dialogue.enabled, Is.True);
+            Assert.That(dialogueView.HasPromeExpressions, Is.True,
+                "The tutorial dialogue window must contain Prome's expression sprite set.");
             Assert.That(playerInput, Is.Not.Null);
             Assert.That(playerInput.enabled, Is.True);
             Assert.That(playerInput.UsesCSharpEvents, Is.True);
             Assert.That(resetManager, Is.Not.Null);
             Assert.That(resetManager.HasValidSetup, Is.True);
 
-            var transparentHudBackgrounds = new[]
+            var themedHudBackgrounds = new[]
             {
                 "TutorialObjectivePanel",
-                "TutorialResultOverlay",
                 "ModuleTreePanel",
                 "TutorialDialoguePanel",
                 "DialogueSpeakerLeft",
@@ -276,13 +532,21 @@ namespace Narthex.PlayModeTests
                 "TutorialObjectiveDivider",
                 "AccentBar"
             };
-            foreach (var backgroundName in transparentHudBackgrounds)
+            foreach (var backgroundName in themedHudBackgrounds)
             {
                 var image = FindSceneTransform(tutorialScene, backgroundName).GetComponent<Image>();
                 Assert.That(image, Is.Not.Null, $"{backgroundName} must retain its UI Image contract.");
-                Assert.That(image.color.a, Is.Zero.Within(0.001f),
-                    $"{backgroundName} must not restore a hologram background at runtime.");
             }
+            var objectiveBackground = FindSceneTransform(tutorialScene, "TutorialObjectivePanel").GetComponent<Image>();
+            Assert.That(objectiveBackground.sprite, Is.Not.Null,
+                "The objective HUD must retain its authored themed sprite.");
+            Assert.That(objectiveBackground.color.a, Is.GreaterThan(0.9f),
+                "The objective HUD sprite must remain readable at runtime.");
+            var resultBackground = FindSceneTransform(tutorialScene, "TutorialResultOverlay").GetComponent<Image>();
+            Assert.That(resultBackground, Is.Not.Null);
+            Assert.That(resultBackground.color.a, Is.GreaterThanOrEqualTo(0.8f),
+                "The demo result requires an opaque-enough dark cinematic background.");
+            AssertUniformSkillIconLayout(tutorialScene);
 
             var transitions = Resources.FindObjectsOfTypeAll<TutorialZoneTransitionHost>()
                 .Where(candidate => candidate != null && candidate.gameObject.scene == tutorialScene)
@@ -454,6 +718,32 @@ namespace Narthex.PlayModeTests
             var gCollisionRoot = FindSceneTransform(tutorialScene, "G 스테이지 충돌체");
             var square21Collision = gCollisionRoot.GetComponentsInChildren<BoxCollider2D>(true)
                 .Single(collider => collider.name.EndsWith("_Square (21)", StringComparison.Ordinal));
+            var entryClearance = FindSceneTransform(tutorialScene, "G-H-ENTRY-TILEMAP-CLEARANCE");
+            var entryClearanceMarker = entryClearance.GetComponent<TutorialFunctionMarkerHost>();
+            var entryClearanceCollider = entryClearance.GetComponent<BoxCollider2D>();
+            Assert.That(entryClearanceMarker.Kind, Is.EqualTo(TutorialFunctionMarkerKind.TilemapClearance));
+            Assert.That(entryClearanceCollider, Is.Not.Null);
+            Assert.That(entryClearanceCollider.isTrigger, Is.True,
+                "The G-H object/traversal reservation must remain a non-blocking marker.");
+            var retiredEntryBlockers = gCollisionRoot.GetComponentsInChildren<BoxCollider2D>(true)
+                .Where(collider =>
+                    collider.name.EndsWith("_Square (30)", StringComparison.Ordinal) ||
+                    collider.name.EndsWith("_Square (31)", StringComparison.Ordinal) ||
+                    collider.name.EndsWith("_Square (32)", StringComparison.Ordinal))
+                .ToArray();
+            Assert.That(retiredEntryBlockers, Has.Length.EqualTo(3));
+            Assert.That(retiredEntryBlockers.All(collider => !collider.enabled), Is.True,
+                "The one-character-high U-shaped colliders at the G-H route must stay disabled.");
+            var rebuiltTilemapRoot = gRoot.Find("재구성_플랫폼타일맵");
+            Assert.That(rebuiltTilemapRoot, Is.Not.Null);
+            foreach (var tilemap in rebuiltTilemapRoot.GetComponentsInChildren<Tilemap>(true))
+            foreach (var cell in tilemap.cellBounds.allPositionsWithin)
+            {
+                if (!tilemap.HasTile(cell)) continue;
+                var cellCenter = tilemap.GetCellCenterWorld(cell);
+                Assert.That(entryClearanceCollider.bounds.Contains(cellCenter), Is.False,
+                    $"Tilemap '{tilemap.name}' placed cell {cell} inside the reserved object/traversal area.");
+            }
             Assert.That(
                 FindSceneTransformOrDefault(tutorialScene, "G01_보조출구잠금문_PROXY"),
                 Is.Null,
@@ -471,10 +761,9 @@ namespace Narthex.PlayModeTests
             Assert.That(authoredSquare46.gameObject.activeSelf, Is.False,
                 "Square (46) is an intentionally removed route blocker and must stay inactive.");
             Assert.That(authoredSquare21.gameObject.activeSelf, Is.True);
-            Assert.That(authoredSquare21.enabled, Is.True,
-                "Square (21) is the outer map boundary and must remain visible.");
             Assert.That(square21Collision.enabled, Is.True,
-                "Square (21) needs a permanent collision proxy so Prome cannot leave the map.");
+                "Square (21) needs a permanent collision proxy so Prome cannot leave the map. " +
+                "Its legacy SpriteRenderer may stay hidden because the rebuilt tilemap owns the visual surface.");
             Assert.That(
                 gCollisionRoot.GetComponentsInChildren<BoxCollider2D>(true)
                     .Any(collider =>
@@ -534,8 +823,6 @@ namespace Narthex.PlayModeTests
                 "Square (43) must open after wave 2 is defeated.");
             Assert.That(secondGateRenderer.enabled, Is.False,
                 "Square (43) visual must disappear after wave 2 is defeated.");
-            Assert.That(authoredSquare21.enabled, Is.True,
-                "Clearing G must not hide the Square (21) outer boundary.");
             Assert.That(square21Collision.enabled, Is.True,
                 "Clearing G must not disable the Square (21) outer boundary collision.");
             var gExitTransition = FindSceneTransform(tutorialScene, "G01_Exit_ToH")
@@ -570,6 +857,19 @@ namespace Narthex.PlayModeTests
                 $"Prome was blocked by a collider rebuilt from disabled Square (40)/(46). " +
                 $"Reached X={playerBody.position.x:F2}, required X>{openRouteTargetX:F2}. " +
                 $"Nearby colliders: {string.Join("; ", nearbyBlockers)}");
+
+            MovePlayer(playerBody, new Vector2(entryClearanceCollider.bounds.min.x - 0.8f, -3.5f));
+            playerMotor.SetMovementInput(Vector2.right);
+            var passedEntryClearance = false;
+            for (var frame = 0; frame < 240 && !passedEntryClearance; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+                passedEntryClearance = playerBody.position.x > entryClearanceCollider.bounds.max.x + 0.4f;
+            }
+            playerMotor.SetMovementInput(Vector2.zero);
+            Assert.That(passedEntryClearance, Is.True,
+                $"Prome still cannot cross the former Square (30)~(32) U-shaped obstruction. " +
+                $"Reached X={playerBody.position.x:F2}, required X>{entryClearanceCollider.bounds.max.x + 0.4f:F2}.");
 
             var playerCollider = playerBody.GetComponent<Collider2D>();
             var originalGravityScale = playerBody.gravityScale;
@@ -794,6 +1094,7 @@ namespace Narthex.PlayModeTests
             var tutorialScene = SceneManager.GetActiveScene();
             var serviceRoot = FindSceneComponent<ServiceRoot>(tutorialScene);
             var dialogue = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
+            var dialogueView = FindSceneComponent<DialogueViewModule>(tutorialScene);
             var introductionCard = FindSceneComponent<DialogueIntroductionCardModule>(tutorialScene);
             var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
             var questManager = FindSceneComponent<QuestManagerHost>(tutorialScene);
@@ -817,10 +1118,28 @@ namespace Narthex.PlayModeTests
             Assert.That(actionScopes.HasValidSetup, Is.True);
             Assert.That(meleeAttack.HasValidSetup, Is.True);
             Assert.That(rangedAttack.HasValidSetup, Is.True);
+            var rangedTargets = GetPrivateField<GameObject[]>(trainingFlow, "rangedTargets");
+            var authoredRangedRoot = FindSceneTransform(tutorialScene, "원거리공격훈련");
+            Assert.That(rangedTargets, Has.Length.EqualTo(3));
+            Assert.That(rangedTargets.All(target => target.transform.IsChildOf(authoredRangedRoot)), Is.True,
+                "Ranged training must use the three level-authored dummies instead of spawning duplicate targets.");
+            Assert.That(rangedTargets.All(target => target.name.StartsWith("Enemy", StringComparison.Ordinal)), Is.True);
+            Assert.That(rangedTargets.All(target => target.GetComponent<CombatActorHost>() != null &&
+                                                   target.GetComponent<Collider2D>() != null), Is.True,
+                "Every authored ranged dummy must own its hit actor and collider.");
+            Assert.That(FindSceneTransformOrDefault(tutorialScene, "RangedTarget_01"), Is.Null);
+            Assert.That(FindSceneTransformOrDefault(tutorialScene, "RangedTarget_02"), Is.Null);
+            Assert.That(FindSceneTransformOrDefault(tutorialScene, "RangedTarget_03"), Is.Null);
             Assert.That(playerAnimation, Is.Not.Null,
                 "Prome must retain the PNG animation bridge used by the single-attack presentation.");
             Assert.That(playerAnimation.HasAttack01Clip, Is.True,
                 "Prome's PNG animator must contain the generated Attack01 sequence.");
+            Assert.That(playerAnimation.HasDashClip, Is.True,
+                "Prome's PNG animator must contain the new dash sequence.");
+            Assert.That(playerAnimation.HasJumpClip, Is.True,
+                "Prome's PNG animator must contain the new jump sequence.");
+            Assert.That(dialogueView.HasPromeExpressions, Is.True,
+                "The tutorial dialogue window must contain Prome's expression sprite set.");
             Assert.That(meleeAttack.EffectiveCooldownSeconds, Is.EqualTo(0.5f).Within(0.02f),
                 "Prome's melee cooldown must let the 15-frame Attack01 motion finish before another attack.");
             Assert.That(introductionCard.PromptDelay, Is.EqualTo(1f).Within(0.01f));
@@ -1168,12 +1487,17 @@ namespace Narthex.PlayModeTests
             var helteDialogue = FindSceneTransform(tutorialScene, "H01_헬테조우대화_TRIGGER")
                 .GetComponent<TutorialHelteEncounterDialogueHost>();
             var bossHealth = FindSceneComponent<BossHealthBarPresenter>(tutorialScene);
+            var musicDirector = FindSceneComponent<TutorialMusicDirector>(tutorialScene);
             var completionFlow = FindSceneComponent<TutorialCompletionFlowHost>(tutorialScene);
             var saveSystem = FindSceneComponent<SaveSystemHost>(tutorialScene);
             var stageCaption = FindSceneTransform(tutorialScene, "TutorialStageCaptionText")
                 .GetComponent<Text>();
             var cameraFollow = FindSceneComponent<CameraFollowHost>(tutorialScene);
             var statusPresenter = FindSceneComponent<TutorialStatusPresenter>(tutorialScene);
+            var theusSupport = FindSceneComponent<TutorialTheusRangedSupportHost>(tutorialScene);
+            var rangedSkillPanel = FindSceneTransform(tutorialScene, "RangedAttackCooldownHUD").gameObject;
+            var focusedVolleyPanel = FindSceneTransform(tutorialScene, "TheusFocusedVolleyPanel").gameObject;
+            var bossSkillPanel = FindSceneTransform(tutorialScene, "PromeBossSkillPanel").gameObject;
             var c03ExteriorTransition = FindSceneTransform(tutorialScene, "C03_Exit_ExteriorSide")
                 .GetComponent<TutorialZoneTransitionHost>();
             var exteriorToFTransition = FindSceneTransform(tutorialScene, "E01_Exit_ToF")
@@ -1194,6 +1518,10 @@ namespace Narthex.PlayModeTests
             Assert.That(encounterBPhaseTrigger.HasValidSetup, Is.True);
             Assert.That(bossEncounter.HasValidSetup, Is.True);
             Assert.That(bossArena.HasValidSetup, Is.True);
+            Assert.That(musicDirector.HasValidSetup, Is.True);
+            Assert.That(musicDirector.VictoryClip, Is.Not.Null,
+                "Helte defeat must have a dedicated victory BGM clip assigned.");
+            Assert.That(theusSupport, Is.Not.Null);
             Assert.That(
                 FindSceneTransformOrDefault(tutorialScene, "BossArena_EntryGate_ART_SLOT"),
                 Is.Null,
@@ -1363,6 +1691,11 @@ namespace Narthex.PlayModeTests
             Assert.That(stageCaption.text, Is.EqualTo("본부 외곽 통로"));
             yield return WaitForQuest(questSequence, "QST-TUTO-007-A");
             Assert.That(statusPresenter.CurrentProgressId, Is.EqualTo("TUTO_F_01"));
+            yield return null;
+            Assert.That(theusSupport.IsFocusedVolleyUnlocked, Is.True,
+                "Skill 2 must unlock when the F-stage quest begins.");
+            Assert.That(IsVisuallyVisible(focusedVolleyPanel), Is.True,
+                "The Skill 2 icon must become visible immediately after its unlock.");
             Assert.That(cameraFollow.TracksVertical, Is.True,
                 "The F camera must follow Prome while rising through the opening wind.");
             var fOpeningWind = FindSceneTransform(tutorialScene, "F01_시작활공바람_MARKER")
@@ -1475,19 +1808,83 @@ namespace Narthex.PlayModeTests
                 "Helte encounter did not enter active combat after the arena warning.");
             yield return null;
             Assert.That(bossHealth.IsVisible, Is.True, "The boss health bar must be visible during Helte combat.");
+            Assert.That(IsVisuallyVisible(bossSkillPanel), Is.True,
+                "Skill 3 must become visible when the Helte fight begins.");
 
             var helte = GetPrivateField<CombatActorHost>(bossArena, "bossActor");
+            var boardingStartY = playerBody.position.y;
             KillActor(combatSystem, helte);
+            yield return null;
+            Assert.That(FindSceneTransform(tutorialScene, "TutorialObjectivePanel").gameObject.activeSelf, Is.False,
+                "Helte defeat must hide the tutorial progress HUD on the defeat frame.");
+            Assert.That(FindSceneTransform(tutorialScene, "TutorialStageCaptionText").gameObject.activeSelf, Is.False,
+                "Helte defeat must hide the tutorial location/status HUD before the epilogue starts.");
             var resultOverlay = FindSceneTransform(tutorialScene, "TutorialResultOverlay").gameObject;
+            var demoEnding = FindSceneComponent<TutorialDemoEndingSequenceHost>(tutorialScene);
+            yield return WaitForConditionRealtime(
+                () => demoEnding != null && demoEnding.IsPlaying,
+                2f,
+                "Helte defeat did not start the airship demo ending sequence.");
             yield return WaitForConditionRealtime(
                 () => resultOverlay.activeSelf && saveSystem.System.Current.Permanent.TutorialCompleted,
-                2f,
-                "Helte defeat did not enter the tutorial result state.");
-            yield return null;
+                18f,
+                "The airship voyage did not finish at the demo result state.");
+            var titleButton = FindSceneTransform(tutorialScene, "EnterChapter01Button").gameObject;
+            yield return WaitForConditionRealtime(
+                () => demoEnding.ReturnToTitleButtonVisible,
+                3f,
+                "The title-screen button did not appear after the demo ending text rise.");
+            Assert.That(
+                demoEnding.ReturnToTitleButtonVisible,
+                Is.True,
+                $"The title-screen button did not appear after the demo ending text rise. " +
+                $"activeSelf={titleButton.activeSelf}, activeInHierarchy={titleButton.activeInHierarchy}, " +
+                $"parentActive={titleButton.transform.parent.gameObject.activeInHierarchy}, " +
+                $"sequenceEnabled={demoEnding.isActiveAndEnabled}.");
 
             Assert.That(bossArena.FightCompleted, Is.True);
+            Assert.That(demoEnding.Finished, Is.True);
+            Assert.That(demoEnding.ReachedBoardingPoint, Is.True,
+                "Prome must reach the marker-authored dock point before the flight shot.");
+            Assert.That(Mathf.Abs(playerBody.position.y - boardingStartY), Is.LessThan(0.75f),
+                "Prome must walk along the dock instead of floating diagonally into the airship.");
+            Assert.That(demoEnding.WorldPresentationHidden, Is.True,
+                "The H-region platforms must be hidden after Prome boards the airship.");
+            Assert.That(demoEnding.AreAllWorldRootsHidden, Is.True,
+                "Every configured world root must be inactive during the Zenith voyage.");
+            Assert.That(FindSceneTransformOrDefault(tutorialScene, "DemoEndingZenith_ART"), Is.Null,
+                "The ending must reuse the background Zenith instead of showing a duplicate UI Zenith.");
+            var worldZenith = FindSceneTransform(tutorialScene, "Zenith_Continuous");
+            var zenithCenter = FindSceneTransform(tutorialScene, "DemoEndingZenithCenter_MARKER");
+            Assert.That(worldZenith.GetComponent<SpriteRenderer>().enabled, Is.True,
+                "The existing background Zenith must remain visible during the voyage.");
+            Assert.That(Vector3.Distance(worldZenith.localPosition, zenithCenter.localPosition), Is.LessThan(0.05f),
+                "The existing background Zenith must finish at the authored screen-center marker.");
+            Assert.That(FindSceneTransform(tutorialScene, "AI_TutorialBackgroundRoot").gameObject.activeInHierarchy, Is.True,
+                "The background root must remain active while the gameplay world is hidden.");
+            Assert.That(FindSceneTransform(tutorialScene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.False,
+                "The complete H-region hierarchy must be inactive after boarding.");
+            Assert.That(FindSceneTransform(tutorialScene, "DemoEndingCaptionText").gameObject.activeInHierarchy, Is.False,
+                "The voyage shot must hide its caption UI so only the background, Zenith, and airship remain.");
+            Assert.That(FindSceneTransform(tutorialScene, "TutorialResultText").GetComponent<Text>().text,
+                Does.Not.Contain("제니스로의 항해는 계속됩니다"));
+            Assert.That(demoEnding.ReturnToTitleButtonVisible, Is.True,
+                "The title-screen button must appear after the demo ending text rises.");
+            var titleButtonRect = titleButton.GetComponent<RectTransform>();
+            Assert.That(titleButtonRect.sizeDelta.x, Is.EqualTo(560f).Within(0.01f));
+            Assert.That(titleButtonRect.sizeDelta.y, Is.EqualTo(116f).Within(0.01f));
+            Assert.That(titleButtonRect.anchorMin.y, Is.Zero.Within(0.001f),
+                "The return-to-title button must stay at the bottom of the result screen.");
+            Assert.That(musicDirector.VictoryMusicPlaying, Is.True,
+                "Helte victory BGM must be playing during the demo result presentation.");
             Assert.That(bossHealth.gameObject.activeInHierarchy && bossHealth.IsVisible, Is.False,
                 "The boss health bar must not remain visible over the result overlay.");
+            Assert.That(IsVisuallyVisible(rangedSkillPanel), Is.False,
+                "Skill 1 must be hidden after Helte is defeated.");
+            Assert.That(IsVisuallyVisible(focusedVolleyPanel), Is.False,
+                "Skill 2 must be hidden after Helte is defeated.");
+            Assert.That(IsVisuallyVisible(bossSkillPanel), Is.False,
+                "Skill 3 must be hidden after Helte is defeated.");
             AssertResultHudIsClean(tutorialScene);
             Assert.That(saveSystem.System.Current.Run.CurrentStageId, Is.EqualTo("CHAPTER_01"));
             Assert.That(saveSystem.System.Current.Permanent.BossKillRecords, Contains.Item("BOSS-TUTO-HELTE"));
@@ -1754,6 +2151,26 @@ namespace Narthex.PlayModeTests
             method.Invoke(target, arguments);
         }
 
+        private static void AssertUniformSkillIconLayout(Scene scene)
+        {
+            var names = new[] { "RangedAttackCooldownHUD", "TheusFocusedVolleyPanel", "PromeBossSkillPanel" };
+            foreach (var name in names)
+            {
+                var root = FindSceneTransform(scene, name) as RectTransform;
+                Assert.That(root, Is.Not.Null, $"{name} must use a RectTransform.");
+                Assert.That(root.sizeDelta.x, Is.EqualTo(112f).Within(0.01f),
+                    $"{name} width must match the other skill icons.");
+                Assert.That(root.sizeDelta.y, Is.EqualTo(112f).Within(0.01f),
+                    $"{name} height must match the other skill icons.");
+                var image = name == "RangedAttackCooldownHUD"
+                    ? root.GetComponent<Image>()
+                    : root.Find("SkillIcon")?.GetComponent<Image>();
+                Assert.That(image, Is.Not.Null, $"{name} must retain its authored skill icon.");
+                Assert.That(image.preserveAspect, Is.True,
+                    $"{name} must preserve the square icon artwork.");
+            }
+        }
+
         private static Transform FindSceneTransform(Scene scene, string objectName)
         {
             return Resources.FindObjectsOfTypeAll<Transform>()
@@ -1789,7 +2206,8 @@ namespace Narthex.PlayModeTests
                 "TutorialKeyPromptText", "TutorialInteractionPromptPanel", "PlayerHealthText",
                 "EnemyHealthText", "InventoryOpenButton", "TutorialStageCaptionText",
                 "TutorialDialoguePanel", "TutorialIntroductionCard", "InventoryPanel",
-                "ModuleTreePanel", "TutorialLoreSubtitlePanel", "BossHealthBarPanel"
+                "ModuleTreePanel", "TutorialLoreSubtitlePanel", "BossHealthBarPanel",
+                "RangedAttackCooldownHUD", "TheusFocusedVolleyPanel", "PromeBossSkillPanel"
             };
 
             foreach (var objectName in suppressedHudNames)

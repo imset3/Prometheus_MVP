@@ -1,0 +1,767 @@
+fileFormatVersion: 2
+guid: 26cf409fe75b140fbaf89dd48f8007fd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8486160621394634549
+    second: HELTE_BlinkVanish_003_0
+  - first:
+      213: 5417368809741964442
+    second: HELTE_BlinkVanish_003_1
+  - first:
+      213: -8821007904052248670
+    second: HELTE_BlinkVanish_003_2
+  - first:
+      213: -1095265411246850943
+    second: HELTE_BlinkVanish_003_3
+  - first:
+      213: 4632853455875178878
+    second: HELTE_BlinkVanish_003_4
+  - first:
+      213: 1907390016233837974
+    second: HELTE_BlinkVanish_003_5
+  - first:
+      213: 1686276830442291437
+    second: HELTE_BlinkVanish_003_6
+  - first:
+      213: 5278435452617530118
+    second: HELTE_BlinkVanish_003_7
+  - first:
+      213: 6353089755270626014
+    second: HELTE_BlinkVanish_003_8
+  - first:
+      213: -8826036404210248999
+    second: HELTE_BlinkVanish_003_9
+  - first:
+      213: 8294026172602324409
+    second: HELTE_BlinkVanish_003_10
+  - first:
+      213: -6397299661599255484
+    second: HELTE_BlinkVanish_003_11
+  - first:
+      213: 1227224680487603960
+    second: HELTE_BlinkVanish_003_12
+  - first:
+      213: -677407081254841918
+    second: HELTE_BlinkVanish_003_13
+  - first:
+      213: 1829196760035383847
+    second: HELTE_BlinkVanish_003_14
+  - first:
+      213: -6991012636461767422
+    second: HELTE_BlinkVanish_003_15
+  - first:
+      213: 5850627668129492592
+    second: HELTE_BlinkVanish_003_16
+  - first:
+      213: 3617054560214598605
+    second: HELTE_BlinkVanish_003_17
+  - first:
+      213: -5006841478770743473
+    second: HELTE_BlinkVanish_003_18
+  - first:
+      213: -1222320617631766366
+    second: HELTE_BlinkVanish_003_19
+  - first:
+      213: 5883132807757649597
+    second: HELTE_BlinkVanish_003_20
+  - first:
+      213: 3167046909106804080
+    second: HELTE_BlinkVanish_003_21
+  - first:
+      213: 4506279069838497075
+    second: HELTE_BlinkVanish_003_22
+  - first:
+      213: -2884660435686687633
+    second: HELTE_BlinkVanish_003_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_0
+      rect:
+        serializedVersion: 2
+        x: 187
+        y: 367
+        width: 113
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 537a221af16e4c570800000000000000
+      internalID: 8486160621394634549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_1
+      rect:
+        serializedVersion: 2
+        x: 314
+        y: 379
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9453f1ea3c5e2b40800000000000000
+      internalID: 5417368809741964442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_2
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 357
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2af7d060c0c759580800000000000000
+      internalID: -8821007904052248670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_3
+      rect:
+        serializedVersion: 2
+        x: 261
+        y: 353
+        width: 58
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18cfbd359e5dcc0f0800000000000000
+      internalID: -1095265411246850943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_4
+      rect:
+        serializedVersion: 2
+        x: 332
+        y: 352
+        width: 28
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7181e51ca33b4040800000000000000
+      internalID: 4632853455875178878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_5
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 304
+        width: 166
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6959ebd2d19687a10800000000000000
+      internalID: 1907390016233837974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_6
+      rect:
+        serializedVersion: 2
+        x: 178
+        y: 280
+        width: 111
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de00c7fc7dbd66710800000000000000
+      internalID: 1686276830442291437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_7
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 280
+        width: 53
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60b981be315c04940800000000000000
+      internalID: 5278435452617530118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_8
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 264
+        width: 81
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eda3419e875ba2850800000000000000
+      internalID: 6353089755270626014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_9
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 209
+        width: 157
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d2d16817ae938580800000000000000
+      internalID: -8826036404210248999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_10
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 245
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b511cf3cdc4a1370800000000000000
+      internalID: 8294026172602324409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_11
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 195
+        width: 38
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44456a42ad93837a0800000000000000
+      internalID: -6397299661599255484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_12
+      rect:
+        serializedVersion: 2
+        x: 204
+        y: 193
+        width: 41
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fe4e04485af70110800000000000000
+      internalID: 1227224680487603960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_13
+      rect:
+        serializedVersion: 2
+        x: 223
+        y: 199
+        width: 109
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c1987149dd5996f0800000000000000
+      internalID: -677407081254841918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_14
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 150
+        width: 170
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72a543203cc926910800000000000000
+      internalID: 1829196760035383847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_15
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 184
+        width: 14
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 205ed6f0c0feafe90800000000000000
+      internalID: -6991012636461767422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_16
+      rect:
+        serializedVersion: 2
+        x: 335
+        y: 183
+        width: 22
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07e2eefbdda913150800000000000000
+      internalID: 5850627668129492592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_17
+      rect:
+        serializedVersion: 2
+        x: 179
+        y: 130
+        width: 158
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc34cc265fb523230800000000000000
+      internalID: 3617054560214598605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_18
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 121
+        width: 61
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f47ad23d330248ab0800000000000000
+      internalID: -5006841478770743473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_19
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 69
+        width: 146
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a82c68dfd1790fe0800000000000000
+      internalID: -1222320617631766366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_20
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 97
+        width: 178
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db657d45e1615a150800000000000000
+      internalID: 5883132807757649597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_21
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 37
+        width: 200
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0755f44526c93fb20800000000000000
+      internalID: 3167046909106804080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_22
+      rect:
+        serializedVersion: 2
+        x: 306
+        y: 81
+        width: 24
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 335508050f4898e30800000000000000
+      internalID: 4506279069838497075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HELTE_BlinkVanish_003_23
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 69
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6c75490e90a7f7d0800000000000000
+      internalID: -2884660435686687633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      HELTE_BlinkVanish_003_0: 8486160621394634549
+      HELTE_BlinkVanish_003_1: 5417368809741964442
+      HELTE_BlinkVanish_003_10: 8294026172602324409
+      HELTE_BlinkVanish_003_11: -6397299661599255484
+      HELTE_BlinkVanish_003_12: 1227224680487603960
+      HELTE_BlinkVanish_003_13: -677407081254841918
+      HELTE_BlinkVanish_003_14: 1829196760035383847
+      HELTE_BlinkVanish_003_15: -6991012636461767422
+      HELTE_BlinkVanish_003_16: 5850627668129492592
+      HELTE_BlinkVanish_003_17: 3617054560214598605
+      HELTE_BlinkVanish_003_18: -5006841478770743473
+      HELTE_BlinkVanish_003_19: -1222320617631766366
+      HELTE_BlinkVanish_003_2: -8821007904052248670
+      HELTE_BlinkVanish_003_20: 5883132807757649597
+      HELTE_BlinkVanish_003_21: 3167046909106804080
+      HELTE_BlinkVanish_003_22: 4506279069838497075
+      HELTE_BlinkVanish_003_23: -2884660435686687633
+      HELTE_BlinkVanish_003_3: -1095265411246850943
+      HELTE_BlinkVanish_003_4: 4632853455875178878
+      HELTE_BlinkVanish_003_5: 1907390016233837974
+      HELTE_BlinkVanish_003_6: 1686276830442291437
+      HELTE_BlinkVanish_003_7: 5278435452617530118
+      HELTE_BlinkVanish_003_8: 6353089755270626014
+      HELTE_BlinkVanish_003_9: -8826036404210248999
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

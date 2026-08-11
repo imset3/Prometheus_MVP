@@ -11,6 +11,7 @@ namespace Narthex.SceneFlow
         [SerializeField] private SaveSystemHost saveSystemHost;
         [SerializeField] private GameObject resultOverlay;
         [SerializeField] private GameObject[] gameplayHudObjects = System.Array.Empty<GameObject>();
+        [SerializeField] private TutorialDemoEndingSequenceHost demoEndingSequence;
 
         public bool HasValidSetup => serviceRoot != null && saveSystemHost != null && resultOverlay != null &&
                                      gameplayHudObjects != null && gameplayHudObjects.Length > 0 &&
@@ -38,6 +39,7 @@ namespace Narthex.SceneFlow
             {
                 EnterResultState();
                 SetResultPresentation(true);
+                demoEndingSequence?.PrepareImmediateResult();
                 return;
             }
 
@@ -49,11 +51,21 @@ namespace Narthex.SceneFlow
             if (serviceRoot == null) return;
             serviceRoot.Initialize();
             serviceRoot.Events?.Subscribe<TutorialCompleted>(HandleTutorialCompleted);
+            serviceRoot.Events?.Subscribe<BossKilled>(HandleBossKilled);
         }
 
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialCompleted>(HandleTutorialCompleted);
+            serviceRoot?.Events?.Unsubscribe<BossKilled>(HandleBossKilled);
+        }
+
+        private void HandleBossKilled(BossKilled message)
+        {
+            // TutorialCompleted can be published after quest/reward processing. Hide the
+            // live tutorial HUD on the actual defeat frame so the epilogue never starts
+            // with a stale objective, prompt, or boss bar still visible.
+            SetGameplayHudVisible(false);
         }
 
         private void EnterTutorialState()
@@ -66,8 +78,20 @@ namespace Narthex.SceneFlow
 
         private void HandleTutorialCompleted(TutorialCompleted message)
         {
+            if (demoEndingSequence != null && demoEndingSequence.TryBeginEnding()) return;
+            PresentResultNow();
+        }
+
+        public void PresentResultNow()
+        {
             EnterResultState();
             SetResultPresentation(true);
+        }
+
+        public void SetGameplayHudVisible(bool visible)
+        {
+            foreach (var gameplayHudObject in gameplayHudObjects)
+                gameplayHudObject.SetActive(visible);
         }
 
         private bool HasCompleteGameplayHudReferences()
@@ -83,8 +107,7 @@ namespace Narthex.SceneFlow
         private void SetResultPresentation(bool showingResult)
         {
             resultOverlay.SetActive(showingResult);
-            foreach (var gameplayHudObject in gameplayHudObjects)
-                gameplayHudObject.SetActive(!showingResult);
+            SetGameplayHudVisible(!showingResult);
         }
 
         private void EnterResultState()

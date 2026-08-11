@@ -1,7 +1,7 @@
 # Helte boss art — review batch v1
 
 Status: approved. The static art and subsequent animation set are connected to
-`Assets/Scenes/AIReview/TutorialScene_ArtCandidate.unity`.
+`Assets/Scenes/TutorialScene.unity`.
 
 ## Canonical source
 

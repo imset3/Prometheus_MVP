@@ -89,12 +89,14 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0f)] private float basicWindupSeconds = 0.28f;
         [SerializeField, Min(0f)] private float basicSecondHitDelaySeconds = 0.18f;
         [SerializeField, Min(0.01f)] private float basicAdvanceSeconds = 0.12f;
+        [SerializeField, Min(0f)] private float basicFinalFollowThroughSeconds = 0.4f;
         [SerializeField, Min(0f)] private float normalAttackCooldownSeconds = 2f;
         [SerializeField, Min(0f)] private float blinkVanishSeconds = 0.22f;
         [SerializeField, Min(0f)] private float blinkTelegraphSeconds = 0.25f;
         [SerializeField, Min(0f)] private float dashTelegraphSeconds = 0.3f;
         [SerializeField, Min(0.01f)] private float dashDurationSeconds = 0.3f;
         [SerializeField, Min(0f)] private float crossSlashWarningSeconds = 0.18f;
+        [SerializeField, Min(0f)] private float crossSlashFollowThroughSeconds = 0.4f;
         [SerializeField, Min(0f)] private float phaseTransitionSeconds = 1f;
         [SerializeField, Min(0f)] private float finalRushTransitionSeconds = 0.65f;
         [SerializeField, Min(0f)] private float swordFocusSeconds = 0.55f;
@@ -265,6 +267,8 @@ namespace Narthex.Gameplay
             PositionBasicHitbox(facing);
             SetState(HelteCombatState.BasicRightSlash);
             yield return PulseHitbox(basicHitbox, "PAT-HELTE-BASIC-RIGHT", ScaleDamage(basicDamage));
+            if (basicFinalFollowThroughSeconds > 0f)
+                yield return new WaitForSeconds(basicFinalFollowThroughSeconds);
 
             SetState(HelteCombatState.Recover);
             var recovery = ScaleRecovery(normalAttackCooldownSeconds);
@@ -323,6 +327,8 @@ namespace Narthex.Gameplay
 
             SetState(HelteCombatState.CrossSlash);
             yield return PulseHitbox(blinkCrossHitbox, "PAT-HELTE-BLINK-CROSS", ScaleDamage(blinkDamage));
+            if (crossSlashFollowThroughSeconds > 0f)
+                yield return new WaitForSeconds(crossSlashFollowThroughSeconds);
 
             SetState(HelteCombatState.Recover);
             var recovery = ScaleRecovery(specialRecoverySeconds);

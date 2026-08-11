@@ -3,7 +3,30 @@
 `Prometheus`는 공중 도시 제니스와 하층 세계 나디르를 배경으로 하는 2D 액션 게임 프로토타입입니다.  
 현재 저장소에는 새로 배치된 챕터 0 튜토리얼 레벨과 대화, 훈련, 습격, 외부 전투, 헬테 보스전까지 이어지는 1회 플레이 흐름이 구현되어 있습니다.
 
-게임플레이 기준 씬은 판정과 진행 로직을 안정적으로 유지하고, AI 생성 배경·타일·소품·적·헬테 애니메이션은 별도 리뷰 씬에 통합되어 있습니다. 비주얼과 판정 오브젝트는 분리되어 있으므로 승인된 아트를 기준 씬으로 승격해도 Rigidbody, Collider, 진행 Trigger를 그대로 유지할 수 있습니다.
+게임플레이 기준 씬에는 판정과 진행 로직뿐 아니라 승인된 배경·타일·소품·적·헬테 애니메이션, BGM, SFX와 보스전 폴리싱까지 통합되어 있습니다. 비주얼과 판정 오브젝트는 계속 분리되어 있어 이후 아트 교체도 Rigidbody, Collider, 진행 Trigger를 유지한 채 진행할 수 있습니다.
+
+## DEMO_V1 다운로드 및 실행
+
+GitHub Releases의 `DEMO_V1`에서 운영체제에 맞는 압축 파일을 받습니다.
+
+- Windows: `Prometheus_MVP_DEMO_V1_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
+- macOS: `Prometheus_MVP_DEMO_V1_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
+- macOS가 처음 실행을 차단하면 Finder에서 앱을 Control-클릭한 뒤 `열기`를 선택합니다. 공식 릴리스에서 받은 파일인지 먼저 확인하세요.
+- 실행 파일만 따로 옮기지 말고 압축이 풀린 폴더 구조를 유지해야 합니다.
+
+첫 화면에서 아무 키나 누르면 메뉴가 열립니다.
+
+| 메뉴 | 기능 |
+| --- | --- |
+| 새 게임 시작 | 기존 진행을 초기화하고 챕터 0 튜토리얼 시작 |
+| 이어하기 | 일시정지 메뉴에서 저장한 지점부터 재개. 저장이 없거나 데모를 완료하면 비활성화 |
+| 보스전 | 헬테 보스전을 바로 확인하는 `BossDevelopmentScene` 진입 |
+| 설정 | 해상도, 화면 모드, 마스터·BGM·SFX 음량 변경 및 저장 |
+| 나가기 | 게임 종료 |
+
+기본 해상도는 `1920×1080`입니다. 해상도 드롭다운은 현재 컴퓨터와 모니터가 보고하는 지원 모드만 표시하며, 화면 모드는 `창 모드 / 전체 화면 / 창 없는 전체 화면`을 지원합니다. 튜토리얼 중 `Esc`를 누르면 게임이 일시정지되고 설정 변경, 계속하기, 저장 후 타이틀 복귀를 선택할 수 있습니다.
+
+데모는 회의장과 훈련장, 외부 전투, 헬테 보스전, 비행정 엔딩까지 포함합니다. 엔딩 뒤 타이틀로 돌아오면 해당 플레이 기록은 완료 처리되어 `이어하기`를 사용할 수 없습니다.
 
 ## 개발 환경
 
@@ -16,21 +39,35 @@
 
 ## 현재 기준 씬
 
+- 타이틀·메뉴·로딩: `Assets/Scenes/TitleScene.unity`
 - 메인 튜토리얼: `Assets/Scenes/TutorialScene.unity`
-- 빌드 시작 씬: `Assets/_Project/Scenes/Boot.unity`
+- 호환용 부트 씬: `Assets/_Project/Scenes/Boot.unity`
 - 튜토리얼 이후 연결 씬: `Assets/Scenes/Chapter01.unity`
 - 보스 격리 개발씬: `Assets/Scenes/BossDevelopmentScene.unity`
-- AI 아트 통합 후보씬: `Assets/Scenes/AIReview/TutorialScene_ArtCandidate.unity`
-- F 구역 초기 파일럿 리뷰씬: `Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity`
-- AI 적용 전 보존본: `Assets/Scenes/AIReview/TutorialScene_Backup_PreAIPilot_20260801.unity`
+
+빌드는 `TitleScene → Boot → TutorialScene → BossDevelopmentScene → Chapter01` 순서로 등록되어 있으며, 실제 사용자 시작점은 `TitleScene`입니다.
+
+## 타이틀·저장·로딩 흐름
+
+타이틀 화면은 한 장의 영상 대신 교체 가능한 레이어 애니메이션으로 구성되어 있습니다. 생성 배경 위에 기존 프로메 Idle PNG 시퀀스, 화면 중앙의 대형 제니스 스프라이트, 구름 레이어를 분리해 배치하고 각각 반복 애니메이션과 이징을 적용했습니다. 로고는 `PROME&THEUS` 표기를 사용하며, 캐릭터·제니스·구름·UI 프레임을 나중에 최종 아트로 독립 교체할 수 있습니다.
+
+- 아무 키나 누르면 `새 게임 시작 / 이어하기 / 보스전 / 설정 / 나가기` 메뉴 표시
+- 새 게임과 이어하기는 회전·호흡 애니메이션이 적용된 전용 로딩 스프라이트와 진행률을 거쳐 `TutorialScene`으로 이동
+- 보스전은 확장 가능한 선택 진입점으로 현재 `BossDevelopmentScene`에 연결
+- 기본 해상도는 `1920×1080`이며, 설정 드롭다운에는 실행 PC의 디스플레이가 실제 지원하는 해상도만 중복 없이 표시
+- 화면 모드(`창 모드 / 전체 화면 / 창 없는 전체 화면`)를 선택하고 마스터·BGM·SFX 음량 저장
+- 튜토리얼에서 `Esc`를 누르면 테마 스프라이트 패널의 일시정지 창이 열리며 설정, 저장 및 타이틀 복귀 가능
+- 타이틀·로딩·설정·일시정지 버튼과 패널은 황동·남색·아에테르 시안 계열의 공통 스프라이트 테마 사용
+- 타이틀 전용 프로토타입 BGM `MUS_TITLE_Prometheus_Prototype_Loop.wav` 재생
+- 데모 엔딩으로 타이틀에 복귀한 저장은 완료 처리되어 `이어하기` 비활성화
 
 기존 튜토리얼 씬은 팀원이 새로 배치한 레벨과 최신 기능이 통합된 `TutorialScene`으로 대체되었습니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
 
-`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. `TutorialScene_ArtCandidate`에는 현재 생성된 아트와 헬테 연출이 통합되어 있으며, `AIReview` 아래 씬은 플레이어 빌드에 포함하지 않습니다. 사람 검수와 승격이 끝날 때까지 최종 게임플레이 기준은 계속 `TutorialScene`입니다.
+`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. 과거 아트 후보·파일럿·백업·타일맵 통합 씬의 유효한 기능은 모두 `TutorialScene`으로 승격되었으며, 중복 씬은 제거했습니다.
 
 ## AI 아트 통합 상태
 
-`TutorialScene_ArtCandidate`는 현재 시각 검수 기준본입니다.
+`TutorialScene`이 현재 유일한 시각·게임플레이 통합 기준본입니다.
 
 - 회의장·숨겨진 방·복도·훈련장 배경과 구역별 플랫폼 타일 적용
 - 외부 E~H 구간에 밝은 연속 하늘과 플레이어의 월드 X에 따라 점진적으로 가까워지는 제니스 v6 적용
@@ -59,7 +96,7 @@
 | 9 | 외부 | 침공 상황 공개, 테우스의 세계관 자막 |
 | 10 | 외부 전투 구역 1 | 구역 진입 시 적 동시 활성화, 전멸 후 다음 구역 개방 |
 | 11 | 외부 전투 구역 2 | 두 그룹이 순차 활성화되는 전투, 전멸 후 진행 |
-| 12 | 선착장·보스전 | 화염·바람·용암 기믹 통과, 헬테 조우와 보스전, 결과 흐름 |
+| 12 | 선착장·보스전·데모 엔딩 | 화염·바람·용암 기믹 통과, 헬테 조우와 보스전, 비행정 탑승 후 제니스 항해 |
 
 플레이어가 빠르게 이동해도 필수 대화와 안내가 건너뛰어지지 않도록 이동 잠금, 구역 게이트, 진행 조건을 함께 사용합니다. 좌측 상단에는 현재 구역 이름이 표시됩니다.
 
@@ -73,7 +110,7 @@
 | 2 | 더블 점프 | 활성화된 발판을 이용해 가장 높은 발판의 도착 마커에 접촉 |
 | 3 | 점프 | 오른쪽 벽에서 1초 간격으로 발사되는 낮은 투사체 회피. 피격 시 해당 훈련을 재시작 |
 | 4 | 기본 공격 | 훈련 적에게 유효 근접 공격을 3회 적중 |
-| 5 | 원거리 공격 | `2` 키로 관통 도형을 발사해 훈련 표적 3개 적중 |
+| 5 | 원거리 공격 | `1` 키로 관통 도형을 발사해 훈련 표적 3개 적중 |
 
 모든 훈련을 완료하기 전에는 훈련장 출구가 열리지 않습니다.
 
@@ -85,14 +122,18 @@
 | 점프·더블 점프 | `Space` | 지상 점프 후 공중에서 한 번 추가 점프 |
 | 활공 | 공중에서 `Space` 유지 | 버튼을 누르고 있을 때만 활공 |
 | 대시 | `Left Shift` | 대시 중 무적, 종료 후 재사용 대기시간 `0.5초` |
-| 기본 공격 | 마우스 왼쪽 | `0.5초` 안에 연속 입력하면 1 → 2 → 3타 |
-| 원거리 공격 | `2` | 현재 바라보는 방향으로 발사, 재사용 대기시간 `1.5초` |
+| 기본 공격 | 마우스 왼쪽 | 클릭 1회당 공격 모션과 판정 1회 |
+| 원거리 공격 | `1` | 현재 바라보는 방향으로 발사, 재사용 대기시간 `1.5초` |
+| 테우스 집중포화 | `2` | 첫 외부 전투에서 해금, 가까운 적에게 5발 자동 조준, 재사용 대기시간 `8초` |
+| 프로메 4연속 참격 | `3` | 헬테 보스전 진입 시 해금, 근접 4연속 집중 공격 |
 | 상호작용 | `F` | 사다리, 패스키 등 |
 | 대화 진행 | `Space` | 필수 대화 한 줄씩 진행 |
 | 인벤토리 | `Tab` | 보유 장비와 시스템 상태 확인 |
 | 모듈 트리 | `I` | 모듈 시스템 확인 |
+| 일시정지 | `Esc` | 계속하기, 음량 설정, 저장 및 타이틀 복귀 |
+| 개발 구간 스킵 | `F8` / `F9` | 다음 / 이전 구간. 개발용 화면 UI는 표시하지 않음 |
 
-튜토리얼의 `2`번 공격은 **나르텍스 펄스 모듈이 아니라 프로메의 기본 원거리 공격**입니다. 모듈 시스템 자체는 유지하지만, 퀘스트와 펄스 모듈은 현재 튜토리얼 진행에서 사용하지 않습니다.
+튜토리얼의 `1`번 공격은 **나르텍스 펄스 모듈이 아니라 프로메의 기본 원거리 공격**입니다. 스킬 HUD는 진행에 맞춰 `1 원거리 공격 → 2 테우스 집중포화 → 3 프로메 4연속 참격` 순서로 해금됩니다. 모듈 시스템 자체는 유지하지만, 퀘스트와 펄스 모듈은 현재 튜토리얼 진행에서 사용하지 않습니다.
 
 ## 주요 시스템
 
@@ -132,7 +173,9 @@
 - 체력 `55%`에서 2페이즈, `20%`에서 최종 시험 진입
 - 전환 중 무적 처리와 패턴별 VFX 연결 슬롯
 - 목표 전투 시간 `300초`와 패턴 횟수를 기록하는 개발 계측 HUD
-- 보스전 진입·완료 대화와 결과 흐름
+- 헬테 처치 후 측면 비행정 탑승 → 후면 3/4 항해 → 제니스를 향해 축소되는 데모 엔딩
+- 비행 시작·종료 위치는 `DEMO-END-FLIGHT-START`, `DEMO-END-FLIGHT-END` 마커로 조정
+- 항해 완료 후 `DEMO VERSION · TO BE CONTINUED` 결과 화면 표시
 
 ### 대화와 HUD
 
@@ -154,7 +197,10 @@
 - 부모 도형의 크기를 넘지 않도록 자동 맞춤
 - 스프라이트 발 위치를 기존 바닥 기준선에 정렬
 - 이동 방향에 따른 좌우 반전
-- Idle, Run, Jump, Fall, Attack 1·2·3 등 FSM 확장 가능
+- Idle, Run, Dash, Jump, Fall, Attack 등 FSM 확장 가능
+- 현재 프로메는 `Dash` 30프레임/120fps와 `Jump` 30프레임/30fps를 공용 컨트롤러로 사용
+- `Face` 폴더의 프로메 표정 7종은 대화 초상화의 기본·정색·한숨과 말하는 입 모양에 자동 연결
+- `Face`, `Portrait` 폴더는 동작 시퀀스 검사에서 제외되어 번호 없는 초상화도 같은 캐릭터 폴더에 보관 가능
 - 적용 초기화 시 생성된 비주얼을 제거하고 기존 도형 상태 복원
 
 원본 PNG는 `Assets/_Project/Art/Motions/`, 도구가 생성한 Animation·Controller는 `Assets/_Project/Art/Generated/`에 저장합니다. Rigidbody와 충돌 판정은 캐릭터 부모에 유지하고, 자식 스프라이트는 시각 표현만 담당합니다.
@@ -166,7 +212,6 @@ Assets/
   Scenes/
     TutorialScene.unity              # 새 레벨이 통합된 현재 기준 씬
     BossDevelopmentScene.unity       # 헬테 FSM·밸런스 격리 개발씬
-    AIReview/                        # AI 아트 적용 전후 검토용 씬
     Chapter01.unity
   TileMap/                           # 팀원이 공유한 구역별 TileMap 프리팹
   _Project/
@@ -214,6 +259,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 ## 문서
 
+- [DEMO_V1 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V1.md) — 배포 구성, 실행 방법과 검증 범위
 - [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
 - [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
 - [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
@@ -225,10 +271,10 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 1. Unity Hub에서 저장소 폴더를 프로젝트로 추가합니다.
 2. Unity `6000.3.14f1`로 열고 에셋 임포트와 스크립트 컴파일이 끝날 때까지 기다립니다.
-3. `Assets/Scenes/TutorialScene.unity`를 엽니다.
-4. Play를 눌러 회의장부터 헬테 보스전까지 확인합니다.
+3. `Assets/Scenes/TitleScene.unity`를 엽니다.
+4. Play를 눌러 타이틀, 로딩, 회의장부터 헬테 보스전과 데모 엔딩까지 확인합니다.
 
-빌드 전체 흐름을 확인할 때는 `Assets/_Project/Scenes/Boot.unity`에서 시작합니다.
+레벨 개발만 빠르게 확인할 때는 `TutorialScene`, 보스 FSM만 확인할 때는 `BossDevelopmentScene`을 직접 실행할 수 있습니다.
 
 ## 검증 도구
 
@@ -240,22 +286,24 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - 전체 도구 모음: `sragon000 > Prometheus Scene Toolkit > 기존 도구`
 - EditMode 테스트 어셈블리: `Narthex.Tests`
 - PlayMode 테스트 어셈블리: `Narthex.PlayModeTests`
+- EditMode 전체 실행: `sragon000 > Validation > Run All EditMode Tests`
+- PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
+- 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-최근 공식 MCP 검증 결과는 EditMode `53/53`, PlayMode `7/7`, Console 오류 `0`입니다. 보스 개발씬 테스트에는 전투 진입, 2페이즈·최종 시험 전환, 전환 무적 해제와 처치 후 계측 종료가 포함됩니다.
+DEMO_V1 릴리스 직전 Unity 검증 결과는 EditMode `116/116`, PlayMode 전체 `11/11` 통과, Console 컴파일 오류 `0`입니다. PlayMode에는 타이틀·로딩, 회의장부터 훈련장 진입, 순차 훈련, G 상승기류→H 이동, 전체 훈련→헬테 완료, 목표 화살표, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 메인·보스 개발씬의 스킬 1·2·3 아이콘은 동일한 `112×112` 규격이며, 상세 실플로우 기록은 [전체 플레이 검증 보고서](Assets/_Project/Docs/FULL_PLAYTEST_REPORT_2026-08-11.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 
 ## 아트 연결 원칙과 남은 작업
 
-현재 게임플레이 기준 씬은 기능 검증이 끝난 블록아웃이며, 생성 아트가 통합된 `TutorialScene_ArtCandidate`는 사람 검수와 기준 씬 승격을 기다리는 단계입니다.
+현재 게임플레이 기준 씬은 기능과 생성 아트가 합쳐진 `TutorialScene`입니다. 배경, 플랫폼 타일맵, 캐릭터·적 애니메이션, 바람·조명 연출, BGM, SFX와 헬테 보스전 지원 기능이 연결되어 있습니다.
 
-`Assets/_Project/Art/AIConcepts`와 `Assets/_Project/Art/PlatformTiles/AI`의 결과물은 최종 아트가 아니라 팀 검토용 후보입니다. `TutorialScene_ArtCandidate`에서 전체 흐름을 확인한 뒤 승인된 에셋만 `TutorialScene`에 승격합니다.
+`Assets/_Project/Art/AIConcepts`와 `Assets/_Project/Art/PlatformTiles/AI`의 결과물은 여전히 최종 납품 아트가 아니라 팀 검토용 후보입니다. 이후 교체는 현재 `TutorialScene`의 기능 마커와 판정을 유지한 채 시각 에셋 단위로 진행합니다.
 
-- 구역 최고 부모의 위치는 유지하면서 내부 도형을 최종 배경·플랫폼 스프라이트로 교체
-- 플레이어, 동료, 적, 헬테의 최종 PNG 시퀀스 연결
-- 임시 도형 적을 실제 Enemy 프리팹과 FSM으로 교체
-- 화염·바람·용암 VFX와 피격 피드백 연결
-- 대화창 초상화, SFX, BGM과 환경음 연결
+- 최종 승인 아트가 도착하면 현재 후보 스프라이트와 PNG 시퀀스를 같은 바인딩 슬롯에서 교체
+- 임시 적 외형과 VFX를 최종 Enemy 프리팹·이펙트로 교체
+- 화염·용암과 일부 피격 피드백 최종 폴리싱
+- BGM·SFX 믹싱과 환경음 볼륨 최종 조정
 - 전체 플레이 난이도, 이동 거리, 자막 노출 시간 최종 조정
 - 지원 해상도와 실제 게임패드 QA
 

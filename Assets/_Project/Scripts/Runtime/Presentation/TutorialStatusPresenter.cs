@@ -9,13 +9,15 @@ namespace Narthex.Presentation
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private Text statusText;
+        [SerializeField] private Text progressText;
+        [SerializeField] private Text amountText;
         [SerializeField] private Text keyPromptText;
         [SerializeField] private Text stageCaptionText;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
         [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private string initialMessage = "훈련용 적을 처치하세요.";
         [SerializeField] private string completedMessage = "튜토리얼 완료";
-        [SerializeField] private string progressFormat = "튜토리얼 {0}/{1}";
+        [SerializeField] private string progressFormat = "튜토리얼 {0} / {1}";
         [SerializeField, Min(1)] private int questCount = 8;
 
         private string currentLocationName = "회의장";
@@ -25,6 +27,8 @@ namespace Narthex.Presentation
 
         public string CurrentLocationName => currentLocationName;
         public string CurrentProgressId => ResolveNotionProgressId(currentObjective.QuestId);
+        public bool HasReadableProgressHud => statusText != null && progressText != null && amountText != null &&
+                                              keyPromptText != null && stageCaptionText != null;
 
         private void Awake()
         {
@@ -37,6 +41,8 @@ namespace Narthex.Presentation
 
             serviceRoot.Initialize();
             statusText.text = initialMessage;
+            if (progressText != null) progressText.text = "튜토리얼";
+            if (amountText != null) amountText.text = string.Empty;
             UpdateLocationCaption(currentLocationName);
         }
 
@@ -75,7 +81,7 @@ namespace Narthex.Presentation
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
         {
             currentObjective = message;
-            statusText.text = FormatObjective(message);
+            UpdateObjectiveDisplay(message);
             UpdateKeyPrompt(message.QuestId);
             if (string.IsNullOrWhiteSpace(currentLocationName))
                 UpdateLocationCaption(ResolveFallbackLocation(message.QuestId));
@@ -96,18 +102,23 @@ namespace Narthex.Presentation
         private void HandleQuestProgressChanged(QuestProgressChanged message)
         {
             if (message.QuestId != currentObjective.QuestId) return;
-            statusText.text =
-                $"{FormatObjective(currentObjective)}\n진행  {message.CurrentAmount}/{message.RequiredAmount}";
+            statusText.text = ResolveContextualObjective(currentObjective.QuestId, currentObjective.ObjectiveText);
+            if (amountText != null)
+                amountText.text = $"목표 {message.CurrentAmount} / {message.RequiredAmount}";
+            else
+                statusText.text += $"\n목표 {message.CurrentAmount} / {message.RequiredAmount}";
         }
 
         private void HandleTutorialCompleted(TutorialCompleted message)
         {
             statusText.text = completedMessage;
+            if (progressText != null) progressText.text = "튜토리얼 완료";
+            if (amountText != null) amountText.text = string.Empty;
             ClearKeyPrompt();
             if (stageCaptionText != null) stageCaptionText.text = "탐사 준비 완료";
         }
 
-        private string FormatObjective(TutorialObjectiveChanged message)
+        private void UpdateObjectiveDisplay(TutorialObjectiveChanged message)
         {
             var totalSteps = questSequenceHost != null && questSequenceHost.TotalStepCount > 0
                 ? questSequenceHost.TotalStepCount
@@ -115,24 +126,27 @@ namespace Narthex.Presentation
             var progress = string.IsNullOrWhiteSpace(progressFormat)
                 ? string.Empty
                 : string.Format(progressFormat, message.StepIndex + 1, totalSteps);
-            var notionId = ResolveNotionProgressId(message.QuestId);
             var objective = ResolveContextualObjective(message.QuestId, message.ObjectiveText);
-            var heading = string.IsNullOrWhiteSpace(notionId)
-                ? progress
-                : string.IsNullOrWhiteSpace(progress)
-                    ? notionId
-                    : $"{progress} · {notionId}";
-            return string.IsNullOrWhiteSpace(objective)
-                ? heading
-                : string.IsNullOrWhiteSpace(heading)
-                    ? objective
-                    : $"{heading}\n{objective}";
+            if (progressText != null)
+            {
+                progressText.text = progress;
+                statusText.text = objective;
+            }
+            else
+            {
+                statusText.text = string.IsNullOrWhiteSpace(objective)
+                    ? progress
+                    : string.IsNullOrWhiteSpace(progress)
+                        ? objective
+                        : $"{progress}\n{objective}";
+            }
+            if (amountText != null) amountText.text = string.Empty;
         }
 
         private void RefreshCurrentStatus()
         {
             if (statusText == null || string.IsNullOrWhiteSpace(currentObjective.QuestId)) return;
-            statusText.text = FormatObjective(currentObjective);
+            UpdateObjectiveDisplay(currentObjective);
             UpdateKeyPrompt(currentObjective.QuestId);
         }
 
@@ -146,7 +160,7 @@ namespace Narthex.Presentation
                 questSequenceHost.CurrentQuestId,
                 questSequenceHost.CurrentObjectiveText,
                 questSequenceHost.CurrentStepIndex);
-            statusText.text = FormatObjective(currentObjective);
+            UpdateObjectiveDisplay(currentObjective);
             UpdateKeyPrompt(currentObjective.QuestId);
             var fallbackLocation = ResolveFallbackLocation(currentObjective.QuestId);
             if (string.IsNullOrWhiteSpace(currentLocationName) ||
@@ -164,11 +178,11 @@ namespace Narthex.Presentation
                 "QST-TUTO-002" => $"점프 · 활공  [ {Binding("Jump", "SPACE")} ]",
                 "QST-TUTO-003" => $"기본 공격  [ {Binding("Attack", "LMB")} ]",
                 "QST-TUTO-004" => $"대시  [ {Binding("Sprint", "LEFT SHIFT")} ]",
-                "QST-TUTO-005" => $"원거리 공격  [ {Binding("Next", "2")} ]",
+                "QST-TUTO-005" => $"원거리 공격  [ {Binding("Next", "1")} ]",
                 "QST-TUTO-006" => $"더블 점프  [ {Binding("Jump", "SPACE")} ×2 ]",
                 "QST-TUTO-007" => $"상호작용  [ {Binding("Interact", "F")} ]",
-                "QST-TUTO-007-A" or "QST-TUTO-007-B" => $"기본 공격 [ {Binding("Attack", "LMB")} ]  ·  원거리 공격 [ {Binding("Next", "2")} ]",
-                "QST-TUTO-008" => $"기본 공격 [ {Binding("Attack", "LMB")} ]  ·  원거리 공격 [ {Binding("Next", "2")} ]",
+                "QST-TUTO-007-A" or "QST-TUTO-007-B" => $"기본 공격 [ {Binding("Attack", "LMB")} ]  ·  원거리 공격 [ {Binding("Next", "1")} ]  ·  테우스 집중포화 [ {Binding("Previous", "2")} ]",
+                "QST-TUTO-008" => $"원거리 공격 [ {Binding("Next", "1")} ]  ·  테우스 집중포화 [ {Binding("Previous", "2")} ]  ·  4연속 참격 [ 3 ]",
                 _ => string.Empty
             };
         }

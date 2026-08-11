@@ -120,7 +120,11 @@ namespace Narthex.Presentation
                     GetDesiredY(true));
                 if (controlledCamera != null && controlledCamera.orthographic)
                     controlledCamera.orthographicSize = normalOrthographicSize;
-                transform.position = new Vector3(currentCenter.x, currentCenter.y, fixedZ);
+                var staticShakeOffset = ResolveShakeOffset();
+                transform.position = new Vector3(
+                    currentCenter.x + staticShakeOffset.x,
+                    currentCenter.y + staticShakeOffset.y,
+                    fixedZ);
                 return;
             }
 

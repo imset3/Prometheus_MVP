@@ -33,8 +33,8 @@ namespace Narthex.Presentation
         [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private DialogueViewModule dialogueView;
         [SerializeField] private DialogueIntroductionCardModule introductionCard;
-        [SerializeField] private string continuePrompt = "SPACE: 다음";
-        [SerializeField] private string closePrompt = "SPACE: 닫기";
+        [SerializeField] private string continuePrompt = "SPACE · 대화 진행";
+        [SerializeField] private string closePrompt = "SPACE · 대화 닫기";
         [SerializeField] private TutorialIntroductionDefinition[] introductionDefinitions = Array.Empty<TutorialIntroductionDefinition>();
 
         private string[] lines;
@@ -263,7 +263,13 @@ namespace Narthex.Presentation
             var fallback = closing ? closePrompt : continuePrompt;
             if (playerInputHost == null) return fallback;
             var binding = playerInputHost.GetBindingDisplayName("Jump", "SPACE");
-            return $"{binding}: {(closing ? "닫기" : "다음")}";
+            return FormatContinuePrompt(binding, closing);
+        }
+
+        public static string FormatContinuePrompt(string binding, bool closing)
+        {
+            var resolvedBinding = string.IsNullOrWhiteSpace(binding) ? "SPACE" : binding.Trim();
+            return $"{resolvedBinding} · {(closing ? "대화 닫기" : "대화 진행")}";
         }
 
         private bool TryGetIntroduction(string questId, out TutorialIntroductionDefinition introduction)

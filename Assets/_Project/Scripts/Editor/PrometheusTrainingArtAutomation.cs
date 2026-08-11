@@ -14,7 +14,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusTrainingArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string BackgroundPath = "Assets/_Project/Art/AIConcepts/TutorialBackgrounds/TUTO_D_Training_Backplate_v2.png";
         private const string TileRoot = "Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1/D_Training";
         private const string PropRoot = "Assets/_Project/Art/AIConcepts/TutorialTrainingProps/Generated";

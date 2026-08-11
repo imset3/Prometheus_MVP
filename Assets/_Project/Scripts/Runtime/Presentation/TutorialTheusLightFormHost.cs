@@ -49,8 +49,12 @@ namespace Narthex.Presentation
         {
             if (!HasValidSetup) return;
             lightFormActive = true;
-            normalVisualRoot.SetActive(false);
+            // Theus remains visible while projecting light; the light form augments
+            // the companion sprite rather than replacing it with an anonymous orb.
+            normalVisualRoot.SetActive(true);
             lightFormRoot.SetActive(true);
+            lightCoreVisual.gameObject.SetActive(true);
+            lightBeamVisual.gameObject.SetActive(true);
             AimAtPasskey();
         }
 

@@ -13,7 +13,8 @@ namespace Narthex.Gameplay
         TrainingStart,
         TrainingFinish,
         Interaction,
-        FallRecovery
+        FallRecovery,
+        TilemapClearance
     }
 
     /// <summary>
@@ -70,6 +71,7 @@ namespace Narthex.Gameplay
                 TutorialFunctionMarkerKind.TrainingFinish => new Color(1f, 0.55f, 0.1f, 0.9f),
                 TutorialFunctionMarkerKind.Interaction => Color.white,
                 TutorialFunctionMarkerKind.FallRecovery => new Color(1f, 0.15f, 0.75f, 0.9f),
+                TutorialFunctionMarkerKind.TilemapClearance => new Color(1f, 0.35f, 0.8f, 0.9f),
                 _ => new Color(0.7f, 0.7f, 0.7f, 0.9f)
             };
         }

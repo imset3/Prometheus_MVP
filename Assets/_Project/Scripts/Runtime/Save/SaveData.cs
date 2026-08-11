@@ -52,6 +52,11 @@ namespace Narthex.Save
         public float MasterVolume = 1f;
         public float MusicVolume = 1f;
         public float SfxVolume = 1f;
+        public int ResolutionWidth = 1920;
+        public int ResolutionHeight = 1080;
+        public bool Fullscreen = true;
+        public int DisplayMode = 1;
+        public bool HasDisplayModeSelection;
         public string InputBindingJson;
     }
 }

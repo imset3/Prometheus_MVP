@@ -161,7 +161,9 @@ namespace Narthex.Gameplay
 
         private void SetPresentationVisible(bool visible)
         {
-            bossWarningSlot.SetActive(visible);
+            // The authored Helte warning-frame art is now the fixed HUD health-bar frame.
+            // Do not show a second world-space copy over Helte during the intro.
+            bossWarningSlot.SetActive(false);
             foreach (var laneSlot in patternLaneSlots) laneSlot.SetActive(visible);
         }
     }

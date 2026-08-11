@@ -27,6 +27,21 @@ namespace Narthex.Gameplay
                                         objectiveTexts != null && questSequence.Length > 0 &&
                                         questSequence.Length == objectiveTexts.Length;
 
+        public int FindStepIndex(string questId)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || questSequence == null) return -1;
+            for (var index = 0; index < questSequence.Length; index++)
+                if (questSequence[index] != null && questSequence[index].StableId == questId)
+                    return index;
+            return -1;
+        }
+
+        public bool HasReachedQuest(string questId)
+        {
+            var stepIndex = FindStepIndex(questId);
+            return stepIndex >= 0 && currentStep >= stepIndex;
+        }
+
         private void Awake()
         {
             if (!HasValidSequence)

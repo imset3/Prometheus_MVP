@@ -12,7 +12,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusDockArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string ArtRoot = "Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1/H_NadirDock";
         private const string PlatformPath = ArtRoot + "/Generated/TUTO_H_Dock_Platform_Middle_v1.png";
         private const string SupportPath = ArtRoot + "/Generated/TUTO_H_Dock_Support_Pillar_v1.png";

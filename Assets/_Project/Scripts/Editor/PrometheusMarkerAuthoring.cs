@@ -101,6 +101,7 @@ namespace Narthex.Tools
             kind == TutorialFunctionMarkerKind.Transition ||
             kind == TutorialFunctionMarkerKind.Interaction ||
             kind == TutorialFunctionMarkerKind.FallRecovery ||
-            kind == TutorialFunctionMarkerKind.TrainingFinish;
+            kind == TutorialFunctionMarkerKind.TrainingFinish ||
+            kind == TutorialFunctionMarkerKind.TilemapClearance;
     }
 }

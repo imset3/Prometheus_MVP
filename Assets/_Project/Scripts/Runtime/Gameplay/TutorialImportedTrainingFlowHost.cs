@@ -24,6 +24,7 @@ namespace Narthex.Gameplay
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && playerMotor != null &&
                                      player != null && trainingArea != null && trainingArea.isTrigger &&
                                      rangedTargets != null && rangedTargets.Length == 3 &&
+                                     HasCompleteTargets(rangedTargets) &&
                                      rangedTargetRenderers != null &&
                                      rangedTargetRenderers.Length == rangedTargets.Length &&
                                      HasCompleteRenderers(rangedTargetRenderers) &&
@@ -94,8 +95,10 @@ namespace Narthex.Gameplay
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
         {
-            RefreshTargets(message.QuestId);
+            RefreshForQuest(message.QuestId);
         }
+
+        public void RefreshForQuest(string questId) => RefreshTargets(questId);
 
         private void RefreshTargets(string questId)
         {
@@ -126,6 +129,15 @@ namespace Narthex.Gameplay
         {
             foreach (var renderer in renderers)
                 if (renderer == null)
+                    return false;
+            return true;
+        }
+
+        private static bool HasCompleteTargets(GameObject[] targets)
+        {
+            foreach (var target in targets)
+                if (target == null || target.GetComponent<CombatActorHost>() == null ||
+                    target.GetComponent<Collider2D>() == null)
                     return false;
             return true;
         }

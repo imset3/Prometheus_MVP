@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Narthex.Presentation
@@ -14,29 +15,41 @@ namespace Narthex.Presentation
         }
     }
 
+    public static class TutorialSubtitleDismissPolicy
+    {
+        public static bool CanDismiss(float elapsed, float minimumDelay, bool spacePressed) =>
+            spacePressed && elapsed >= Mathf.Max(0f, minimumDelay);
+    }
+
     public sealed class TutorialLoreSubtitlePresenter : MonoBehaviour
     {
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Text subtitleText;
+        [SerializeField] private Text dismissPromptText;
         [SerializeField] private TutorialDialoguePresenter dialoguePresenter;
         [SerializeField, Min(0f)] private float fadeDuration = 0.2f;
         [SerializeField, Min(0.1f)] private float visibleDuration = 4.2f;
         [SerializeField, Min(0.1f)] private float minimumBacklogVisibleDuration = 2.8f;
+        [SerializeField, Min(0f)] private float minimumDismissDelay = 1f;
+        [SerializeField] private string dismissPrompt = "SPACE  ·  눌러서 닫기";
 
         private Coroutine presentationRoutine;
         private readonly Queue<string> pendingSubtitles = new Queue<string>();
 
-        public bool HasValidSetup => canvasGroup != null && subtitleText != null && dialoguePresenter != null;
+        public bool HasValidSetup => canvasGroup != null && subtitleText != null && dismissPromptText != null &&
+                                     dialoguePresenter != null;
+        public float MinimumDismissDelay => minimumDismissDelay;
 
         private void Awake()
         {
             if (!HasValidSetup)
             {
-                Debug.LogError("TutorialLoreSubtitlePresenter requires a CanvasGroup, subtitle Text, and dialogue presenter.", this);
+                Debug.LogError("TutorialLoreSubtitlePresenter requires a CanvasGroup, subtitle Text, dismiss prompt Text, and dialogue presenter.", this);
                 enabled = false;
                 return;
             }
 
+            SetDismissPromptVisible(false);
             SetAlpha(0f);
         }
 
@@ -69,7 +82,11 @@ namespace Narthex.Presentation
         {
             presentationRoutine = null;
             pendingSubtitles.Clear();
-            if (HasValidSetup) SetAlpha(0f);
+            if (HasValidSetup)
+            {
+                SetDismissPromptVisible(false);
+                SetAlpha(0f);
+            }
         }
 
         private IEnumerator Fade(float from, float to)
@@ -105,14 +122,22 @@ namespace Narthex.Presentation
                 if (DialogueIsShowing)
                 {
                     SetAlpha(0f);
+                    SetDismissPromptVisible(false);
                     yield return null;
                     continue;
                 }
 
                 SetAlpha(1f);
                 elapsed += Time.unscaledDeltaTime;
+                var canDismiss = elapsed >= minimumDismissDelay;
+                SetDismissPromptVisible(canDismiss);
+                if (TutorialSubtitleDismissPolicy.CanDismiss(
+                        elapsed,
+                        minimumDismissDelay,
+                        Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)) break;
                 yield return null;
             }
+            SetDismissPromptVisible(false);
         }
 
         private IEnumerator WaitForDialogueToClose()
@@ -131,6 +156,13 @@ namespace Narthex.Presentation
             canvasGroup.alpha = alpha;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
+        }
+
+        private void SetDismissPromptVisible(bool visible)
+        {
+            if (dismissPromptText == null) return;
+            dismissPromptText.text = dismissPrompt;
+            dismissPromptText.enabled = visible;
         }
     }
 }

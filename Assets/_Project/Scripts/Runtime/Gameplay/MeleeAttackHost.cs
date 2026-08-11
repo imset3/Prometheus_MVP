@@ -24,6 +24,7 @@ namespace Narthex.Gameplay
         private Vector3 attackAnchorLocalPosition;
         private Vector3 attackAnchorLocalScale;
         private uint attackSequence;
+        private float externalAttackLockUntil;
 
         public bool HasValidSetup => inputHost != null && sourceActor != null && attackHitbox != null && attackAnchor != null;
         public bool UsesSingleHitAttacks => true;
@@ -33,6 +34,13 @@ namespace Narthex.Gameplay
         public float EffectiveDirectionLockSeconds => Mathf.Max(directionLockSeconds, presentationLockSeconds);
         public bool IsAttackDirectionLocked => Time.time < attackDirectionLockedUntil;
         public event System.Action AttackStarted;
+
+        public void LockExternalAttack(float durationSeconds)
+        {
+            externalAttackLockUntil = Mathf.Max(
+                externalAttackLockUntil,
+                Time.time + Mathf.Max(0f, durationSeconds));
+        }
 
         public void SetPresentationLockDuration(float duration)
         {
@@ -78,7 +86,8 @@ namespace Narthex.Gameplay
 
         private void TryAttack()
         {
-            if (Time.time < cooldownEndsAt || sourceActor.Runtime == null || sourceActor.CombatSystem == null) return;
+            if (Time.time < cooldownEndsAt || Time.time < externalAttackLockUntil ||
+                sourceActor.Runtime == null || sourceActor.CombatSystem == null) return;
             if (!sourceActor.Runtime.IsAlive || sourceActor.Runtime.State is CombatState.Hit or CombatState.Stun) return;
 
             ApplyAimDirection(inputHost.AimDirectionX);

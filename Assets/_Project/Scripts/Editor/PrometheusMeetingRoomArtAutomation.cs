@@ -11,7 +11,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusMeetingRoomArtAutomation
     {
-        private const string ReviewScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ReviewScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string ArtRoot = "Assets/_Project/Art/AIConcepts/TutorialMeetingRoomProps/Generated";
         private const string TablePath = ArtRoot + "/TUTO_A_CommandTable_v1.png";
         private const string MapPath = ArtRoot + "/TUTO_A_TacticalMap_v1.png";

@@ -23,6 +23,9 @@
 *.opendb
 *.VC.db
 .DS_Store
+__pycache__/
+*.py[cod]
+/opencode.json
 
 # Local validation captures
 Assets/Screenshots/

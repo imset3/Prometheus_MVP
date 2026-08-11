@@ -21,6 +21,8 @@ namespace Narthex.Tools
             "Assets/_Project/Art/Generated/Characters/PlayerVisual/Animations/Attack01.anim";
         private const string PromeControllerPath =
             "Assets/_Project/Art/Generated/Characters/PlayerVisual/Controllers/PlayerVisual.controller";
+        private static readonly HashSet<string> NonSequenceFolders =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Face", "Faces", "Portrait", "Portraits" };
         private static readonly Regex TrailingNumber =
             new Regex(@"(?<number>\d+)(?=\.png$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -100,6 +102,53 @@ namespace Narthex.Tools
                 Debug.Log(
                     $"[sragon000][Prome] Attack01 적용 완료: {sprites.Count} frames / 30fps / " +
                     $"{clip.length:0.###}s. 누락 번호는 시간 공백 없이 압축 재생합니다.");
+            }
+            finally
+            {
+                DestroyImmediate(builder);
+            }
+        }
+
+        [MenuItem(PrometheusToolMenuPaths.Root + "Art/Build Prome Dash and Jump Clips")]
+        public static void BuildPromeDashAndJumpClips()
+        {
+            var folder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(PromeSequenceFolder);
+            var scan = ScanSequenceFolder(folder, CharacterPngAnimationPreset.Prome);
+            var requested = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Dash"] = 120f,
+                ["Jump"] = 30f
+            };
+            var builder = CreateInstance<CharacterPngSequenceSetupWindow>();
+            try
+            {
+                builder.pixelsPerUnit = 100f;
+                builder.pivot = new Vector2(0.5f, 0f);
+                builder.filterMode = FilterMode.Bilinear;
+                builder.compression = TextureImporterCompression.Uncompressed;
+                var clips = new Dictionary<string, AnimationClip>(StringComparer.OrdinalIgnoreCase);
+                foreach (var pair in requested)
+                {
+                    var motion = scan.Motions.FirstOrDefault(candidate =>
+                        candidate.Name.Equals(pair.Key, StringComparison.OrdinalIgnoreCase));
+                    if (motion == null || motion.Frames.Count == 0)
+                        throw new InvalidOperationException($"{PromeSequenceFolder}/{pair.Key}에 PNG 프레임이 없습니다.");
+                    if (motion.Errors.Count > 0)
+                        throw new InvalidOperationException(string.Join("\n", motion.Errors));
+
+                    builder.framesPerSecond = pair.Value;
+                    var sprites = builder.ImportFrames(motion);
+                    clips[pair.Key] = builder.CreateOrUpdateClip(
+                        sprites,
+                        $"Assets/_Project/Art/Generated/Characters/PlayerVisual/Animations/{pair.Key}.anim",
+                        pair.Key,
+                        false);
+                }
+
+                CreateOrUpdateController(PromeControllerPath, clips);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log("[sragon000][Prome] Dash 30 frames/120fps, Jump 30 frames/30fps 적용 완료.");
             }
             finally
             {
@@ -764,6 +813,7 @@ namespace Narthex.Tools
             foreach (var absoluteMotionFolder in Directory.GetDirectories(absoluteRoot))
             {
                 var motionName = Path.GetFileName(absoluteMotionFolder);
+                if (NonSequenceFolders.Contains(motionName)) continue;
                 var motionAssetPath = AbsoluteToAssetPath(absoluteMotionFolder);
                 var motion = new MotionSequence(motionName);
                 var pngPaths = AssetDatabase.FindAssets("t:Texture2D", new[] { motionAssetPath })

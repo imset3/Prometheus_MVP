@@ -23,7 +23,7 @@ namespace Narthex.Tools
             var systems = RequireObject("StageSystems", issues);
             var levelRoot = RequireObject("TutorialLevelRoot", issues);
             var tutorialHudRoot = RequireObject("TutorialHUD", issues);
-            RequireTransparentHudBackgrounds(tutorialHudRoot, issues);
+            RequireReadableSpriteHudBackgrounds(tutorialHudRoot, issues);
             var obsoleteBackgrounds = Resources.FindObjectsOfTypeAll<GameObject>()
                 .Where(candidate => candidate != null &&
                                     candidate.scene.IsValid() &&
@@ -287,10 +287,15 @@ namespace Narthex.Tools
             var beaconHost = objectiveBeacon != null ? objectiveBeacon.GetComponent<TutorialObjectiveBeaconHost>() : null;
             if (beaconHost != null && !beaconHost.HasValidSetup)
                 issues.Add("TutorialObjectiveBeaconHost has invalid quest, player, or visual references.");
-            if (beaconHost != null && !beaconHost.HasTarget("QST-TUTO-006"))
-                issues.Add("TutorialObjectiveBeaconHost must guide the player to the double-jump practice platform.");
-            if (beaconHost != null && !beaconHost.HasTarget("QST-TUTO-007"))
-                issues.Add("TutorialObjectiveBeaconHost must guide the player to the emergency training-room exit.");
+            if (beaconHost != null)
+                foreach (var questId in new[]
+                         {
+                             "QST-TUTO-001", "QST-TUTO-002", "QST-TUTO-003", "QST-TUTO-004",
+                             "QST-TUTO-005", "QST-TUTO-006", "QST-TUTO-007", "QST-TUTO-007-A",
+                             "QST-TUTO-007-B", "QST-TUTO-008"
+                         })
+                    if (!beaconHost.HasTarget(questId))
+                        issues.Add($"TutorialObjectiveBeaconHost has no guidance target for {questId}.");
 
             var emergencyExit = RequireObject("D02_EmergencyExit_To_C02", issues);
             RequireComponent<BoxCollider2D>(emergencyExit, issues);
@@ -472,6 +477,18 @@ namespace Narthex.Tools
             if (importedTrainingHost != null &&
                 (!importedTrainingHost.HasValidSetup || importedTrainingHost.RangedTargetCount != 3))
                 issues.Add("Imported training flow requires room bounds, automatic boots, and exactly three ranged targets.");
+            var rangedStartMarker = RequireObject("훈련_원거리_시작", issues);
+            var rangedTargets = new[]
+            {
+                RequireObject("RangedTarget_01", issues),
+                RequireObject("RangedTarget_02", issues),
+                RequireObject("RangedTarget_03", issues)
+            };
+            if (rangedStartMarker != null && rangedTargets.All(target => target != null) &&
+                (!(rangedStartMarker.transform.position.x < rangedTargets[0].transform.position.x) ||
+                 !(rangedTargets[0].transform.position.x < rangedTargets[1].transform.position.x) ||
+                 !(rangedTargets[1].transform.position.x < rangedTargets[2].transform.position.x)))
+                issues.Add("Ranged training targets must be ordered ahead of the right-facing player start marker.");
             var phaseController = importedTrainingFlow != null
                 ? importedTrainingFlow.GetComponent<TutorialTrainingPhaseControllerHost>()
                 : null;
@@ -484,6 +501,28 @@ namespace Narthex.Tools
                          "01_대시", "02_더블점프", "03_점프", "04_근접공격", "05_원거리공격"
                      })
                 RequireChild(phaseContents, phaseName, issues);
+            var doubleJumpPhase = phaseContents != null ? phaseContents.transform.Find("02_더블점프") : null;
+            if (doubleJumpPhase != null)
+            {
+                var visuals = doubleJumpPhase.GetComponentsInChildren<SpriteRenderer>(true)
+                    .Where(item => item.name.StartsWith("DoubleJumpPadVisual_", StringComparison.Ordinal))
+                    .OrderBy(item => item.transform.position.x)
+                    .ToArray();
+                var platformColliders = doubleJumpPhase.GetComponentsInChildren<BoxCollider2D>(true)
+                    .Where(item => item.GetComponent<TutorialTrainingArrivalMarkerHost>() == null)
+                    .OrderBy(item => item.transform.position.x)
+                    .ToArray();
+                if (visuals.Length != 3 || platformColliders.Length != 3)
+                    issues.Add("Double-jump phase requires exactly three visible platforms and solid colliders.");
+                else
+                    for (var index = 0; index < visuals.Length; index++)
+                    {
+                        var landingSurface = PrometheusTutorialUiPolishAutomation
+                            .ResolveDoubleJumpLandingSurfaceWorldY(visuals[index]);
+                        if (Mathf.Abs(GetColliderTop(platformColliders[index]) - landingSurface) > 0.05f)
+                            issues.Add($"Double-jump platform {index + 1} collision surface does not match its visible deck.");
+                    }
+            }
             var dashFinishMarker = RequireObject("훈련_대시_끝", issues);
             RequireComponent<TutorialFunctionMarkerHost>(dashFinishMarker, issues);
             RequireComponent<TutorialTrainingArrivalMarkerHost>(dashFinishMarker, issues);
@@ -675,10 +714,30 @@ namespace Narthex.Tools
             var hud = RequireObject("TutorialHUD", issues);
             var zoneFadeOverlay = RequireChild(hud, "TutorialZoneFadeOverlay", issues);
             RequireComponent<CanvasGroup>(zoneFadeOverlay, issues);
-            RequireChild(hud, "TutorialStatusText", issues);
+            var tutorialStatus = RequireChild(hud, "TutorialStatusText", issues);
             var objectivePanel = RequireChild(hud, "TutorialObjectivePanel", issues);
-            RequireChild(hud, "TutorialKeyPromptText", issues);
+            var tutorialProgress = RequireChild(hud, "TutorialProgressText", issues);
+            var tutorialAmount = RequireChild(hud, "TutorialAmountText", issues);
+            var tutorialKeyPrompt = RequireChild(hud, "TutorialKeyPromptText", issues);
             var stageCaption = RequireChild(hud, "TutorialStageCaptionText", issues);
+            var statusPresenter = hud != null ? hud.GetComponentInChildren<TutorialStatusPresenter>(true) : null;
+            if (statusPresenter == null || !statusPresenter.HasReadableProgressHud)
+                issues.Add("Tutorial progress HUD requires separate progress, amount, objective, key prompt, and location references.");
+            var objectiveRect = objectivePanel != null ? objectivePanel.transform as RectTransform : null;
+            if (objectiveRect == null || objectiveRect.sizeDelta.x < 1000f || objectiveRect.sizeDelta.y < 220f)
+                issues.Add("Tutorial progress HUD panel must reserve enough width and height for Korean objective text.");
+            var statusTextComponent = tutorialStatus != null ? tutorialStatus.GetComponent<Text>() : null;
+            var statusRect = tutorialStatus != null ? tutorialStatus.transform as RectTransform : null;
+            if (statusTextComponent == null || statusTextComponent.resizeTextForBestFit ||
+                statusTextComponent.horizontalOverflow != HorizontalWrapMode.Wrap ||
+                statusRect == null || statusRect.sizeDelta.y < 76f)
+                issues.Add("Tutorial objective text requires a fixed, wrapped two-line safe area.");
+            foreach (var row in new[] { tutorialProgress, tutorialAmount, tutorialKeyPrompt })
+            {
+                var rowText = row != null ? row.GetComponent<Text>() : null;
+                if (rowText != null && rowText.resizeTextForBestFit)
+                    issues.Add($"Tutorial progress row '{row.name}' must not shrink text to fit.");
+            }
             var interactionPromptPanel = RequireChild(hud, "TutorialInteractionPromptPanel", issues);
             RequireChild(interactionPromptPanel, "PromptText", issues);
             var playerHealth = RequireChild(hud, "PlayerHealthText", issues);
@@ -723,19 +782,29 @@ namespace Narthex.Tools
             var dialoguePanel = RequireChild(hud, "TutorialDialoguePanel", issues);
             var lorePanel = RequireChild(hud, "TutorialLoreSubtitlePanel", issues);
             var loreText = RequireChild(lorePanel, "SubtitleText", issues);
+            var loreDismissPrompt = RequireChild(lorePanel, "LoreDismissPromptText", issues);
             RequireComponent<CanvasGroup>(lorePanel, issues);
             RequireComponent<UnityEngine.UI.Text>(loreText, issues);
+            RequireComponent<UnityEngine.UI.Text>(loreDismissPrompt, issues);
             RequireComponent<TutorialLoreSubtitlePresenter>(lorePanel, issues);
             var lorePresenter = lorePanel != null ? lorePanel.GetComponent<TutorialLoreSubtitlePresenter>() : null;
             if (lorePresenter != null && !lorePresenter.HasValidSetup)
-                issues.Add("Tutorial lore subtitle panel has invalid CanvasGroup or Text references.");
+                issues.Add("Tutorial lore subtitle panel has invalid CanvasGroup, subtitle, dismiss prompt, or dialogue references.");
+            if (lorePresenter != null && Mathf.Abs(lorePresenter.MinimumDismissDelay - 1f) > 0.01f)
+                issues.Add("Tutorial lore subtitle SPACE dismiss prompt must unlock after one second.");
             RequireComponent<DialogueViewModule>(dialoguePanel, issues);
             var dialogueView = dialoguePanel != null ? dialoguePanel.GetComponent<DialogueViewModule>() : null;
             if (dialogueView != null && (!dialogueView.HasDialogueLabel || !dialogueView.HasSpeakerPresentation))
                 issues.Add("DialogueViewModule requires left and right speaker portrait presentation references.");
             var dialogueStageText = RequireChild(dialoguePanel, "StageText", issues);
             RequireChild(dialoguePanel, "DialogueText", issues);
-            RequireChild(dialoguePanel, "ContinueText", issues);
+            var dialogueContinueText = RequireChild(dialoguePanel, "ContinueText", issues);
+            var dialogueContinueLabel = dialogueContinueText != null ? dialogueContinueText.GetComponent<Text>() : null;
+            var dialogueContinueRect = dialogueContinueText != null ? dialogueContinueText.transform as RectTransform : null;
+            if (dialogueContinueLabel == null || dialogueContinueLabel.fontSize < 28 ||
+                dialogueContinueLabel.resizeTextForBestFit || dialogueContinueRect == null ||
+                dialogueContinueRect.anchoredPosition.y < 40f || dialogueContinueRect.sizeDelta.y < 38f)
+                issues.Add("Dialogue SPACE progress prompt must remain readable above the bottom frame border.");
             var dialogueSpeakerLeft = RequireChild(dialoguePanel, "DialogueSpeakerLeft", issues);
             var dialogueSpeakerRight = RequireChild(dialoguePanel, "DialogueSpeakerRight", issues);
             RequireChild(dialogueSpeakerLeft, "Portrait_ART_SLOT", issues);
@@ -1064,28 +1133,28 @@ namespace Narthex.Tools
                 issues.Add(issue);
         }
 
-        private static void RequireTransparentHudBackgrounds(GameObject hud, List<string> issues)
+        private static void RequireReadableSpriteHudBackgrounds(GameObject hud, List<string> issues)
         {
             if (hud == null) return;
-            var requiredTransparentImages = new[]
+            var compactPanelImages = new[]
             {
                 "TutorialObjectivePanel",
-                "TutorialResultOverlay",
-                "ModuleTreePanel",
-                "TutorialDialoguePanel",
-                "DialogueSpeakerLeft",
-                "DialogueSpeakerRight",
-                "InventoryPanel",
-                "TutorialIntroductionCard",
                 "TutorialInteractionPromptPanel",
                 "TutorialLoreSubtitlePanel",
                 "BossHealthBarPanel",
                 "HiddenRoomGlideInstruction",
-                "TutorialObjectiveDivider",
-                "AccentBar"
+                "InventoryOpenButton"
+            };
+            var cardPanelImages = new[]
+            {
+                "ModuleTreePanel",
+                "DialogueSpeakerLeft",
+                "DialogueSpeakerRight",
+                "InventoryPanel",
+                "TutorialIntroductionCard"
             };
             var images = hud.GetComponentsInChildren<Image>(true);
-            foreach (var imageName in requiredTransparentImages)
+            foreach (var imageName in compactPanelImages)
             {
                 var image = images.FirstOrDefault(candidate => candidate != null &&
                                                                candidate.name == imageName);
@@ -1094,8 +1163,73 @@ namespace Narthex.Tools
                     issues.Add($"Tutorial HUD background '{imageName}' is missing.");
                     continue;
                 }
-                if (!Mathf.Approximately(image.color.a, 0f))
-                    issues.Add($"Tutorial HUD background '{imageName}' must remain transparent.");
+                if (image.sprite == null || image.sprite.name != "TUTO_UI_CompactStrip_v4")
+                    issues.Add($"Tutorial HUD background '{imageName}' requires the compact text-strip sprite.");
+                if (image.color.a < 0.5f)
+                    issues.Add($"Tutorial HUD background '{imageName}' is too transparent for readable text.");
+            }
+            foreach (var imageName in cardPanelImages)
+            {
+                var image = images.FirstOrDefault(candidate => candidate != null && candidate.name == imageName);
+                if (image == null || image.sprite == null || image.sprite.name != "TUTO_UI_InformationCard_v4")
+                    issues.Add($"Tutorial HUD background '{imageName}' requires the information-card sprite.");
+            }
+
+            var resultOverlay = images.FirstOrDefault(image => image != null && image.name == "TutorialResultOverlay");
+            if (resultOverlay == null || resultOverlay.sprite != null || resultOverlay.color.a < 0.8f)
+                issues.Add("Tutorial result overlay must use a quiet, sprite-free dark backdrop.");
+
+            var bossTrack = images.FirstOrDefault(image => image != null && image.name == "BossHealthBarTrack");
+            if (bossTrack == null || bossTrack.sprite == null || bossTrack.sprite.name != "TUTO_UI_BarTrack_v4")
+                issues.Add("Boss health track must use the dedicated slim bar sprite.");
+
+            var obsoleteFrameUsers = images
+                .Where(image => image != null && image.sprite != null &&
+                                (image.sprite.name.StartsWith("TUTO_UI_PanelFrame_v2", StringComparison.Ordinal) ||
+                                 image.sprite.name.StartsWith("TUTO_UI_ButtonPlate_v2", StringComparison.Ordinal)))
+                .Select(image => image.name)
+                .Distinct()
+                .OrderBy(name => name)
+                .ToArray();
+            if (obsoleteFrameUsers.Length > 0)
+                issues.Add($"Tutorial HUD still contains ornate shared v2 frames: {string.Join(", ", obsoleteFrameUsers)}.");
+
+            var cooldownHud = hud.transform.Find("RangedAttackCooldownHUD")?.gameObject;
+            if (cooldownHud == null)
+            {
+                issues.Add("Tutorial HUD requires a bottom-left ranged attack cooldown icon.");
+                return;
+            }
+            RequireComponent<RangedAttackCooldownPresenter>(cooldownHud, issues);
+            var cooldownPresenter = cooldownHud.GetComponent<RangedAttackCooldownPresenter>();
+            if (cooldownPresenter != null && !cooldownPresenter.HasValidSetup)
+                issues.Add("Ranged attack cooldown HUD has incomplete runtime references.");
+
+            var dialoguePanel = images.FirstOrDefault(image => image != null && image.name == "TutorialDialoguePanel");
+            var dialogueText = hud.GetComponentsInChildren<Text>(true)
+                .FirstOrDefault(text => text != null && text.name == "DialogueText");
+            if (dialoguePanel != null &&
+                (dialoguePanel.GetComponent<ContentSizeFitter>()?.enabled == true ||
+                 dialoguePanel.rectTransform.rect.size != new Vector2(1760f, 660f)))
+                issues.Add("Dialogue must use the fixed 1760x660 window instead of resizing to text length.");
+            var dialogueImage = dialoguePanel != null ? dialoguePanel.GetComponent<Image>() : null;
+            if (dialogueImage == null || dialogueImage.sprite == null ||
+                dialogueImage.sprite.name != "TUTO_UI_DialogueFrame_WideTall_v4" ||
+                dialogueImage.type != Image.Type.Simple)
+                issues.Add("Dialogue must use the dedicated wide frame without 9-slice distortion.");
+            if (dialogueText != null &&
+                (dialogueText.resizeTextForBestFit || dialogueText.horizontalOverflow != HorizontalWrapMode.Wrap))
+                issues.Add("Dialogue text must wrap inside the fixed dialogue window.");
+            if (dialogueText != null && dialogueText.font != null && dialogueText.font.name != "GowunDodum-Regular")
+                issues.Add("Dialogue body text must use the readable Gowun Dodum Korean font.");
+            foreach (var speakerName in new[] { "DialogueSpeakerLeft", "DialogueSpeakerRight" })
+            {
+                var speaker = images.FirstOrDefault(image => image != null && image.name == speakerName);
+                var portrait = speaker != null
+                    ? speaker.GetComponentsInChildren<Image>(true).FirstOrDefault(image => image.name == "Portrait_ART_SLOT")
+                    : null;
+                if (speaker == null || portrait == null || portrait.rectTransform.rect.width < 270f)
+                    issues.Add($"Dialogue speaker profile '{speakerName}' must reserve a large portrait area.");
             }
         }
 

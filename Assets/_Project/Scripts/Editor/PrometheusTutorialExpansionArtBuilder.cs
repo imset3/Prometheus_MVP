@@ -15,7 +15,7 @@ namespace Narthex.Tools
 {
     public static class PrometheusTutorialExpansionArtBuilder
     {
-        private const string ScenePath = "Assets/Scenes/AIReview/TutorialScene_FPilot_Review.unity";
+        private const string ScenePath = "Assets/Scenes/TutorialScene.unity";
         private const string TileBase = "Assets/_Project/Art/AIConcepts/TutorialTileSets/ReviewBatch_v1";
         private const string BackgroundBase = "Assets/_Project/Art/AIConcepts/TutorialBackgrounds";
         private const string EnemyOut = "Assets/_Project/Art/AIConcepts/TutorialEnemies/ReviewBatch_v1/TutorialGuard/UnityGenerated";

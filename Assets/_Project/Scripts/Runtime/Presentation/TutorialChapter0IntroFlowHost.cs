@@ -136,6 +136,7 @@ namespace Narthex.Presentation
         [SerializeField] private GameObject passkeyVisual;
         [SerializeField] private GameObject theusFlashlightVisual;
         [SerializeField] private TutorialTheusLightFormHost theusLightForm;
+        [SerializeField] private TutorialHiddenRoomLightingHost hiddenRoomLighting;
         [SerializeField] private GameObject wrongWayAlarmVisual;
         [SerializeField] private GameObject glideInstructionRoot;
         [SerializeField] private RectTransform glideKeyVisual;
@@ -506,6 +507,8 @@ namespace Narthex.Presentation
             passkeyVisual.SetActive(false);
             glideInstructionRoot.SetActive(false);
             hiddenRoomExitAvailabilityRoot.SetActive(true);
+            SetTheusLightForm(false);
+            if (hiddenRoomLighting != null) hiddenRoomLighting.SetDark(false);
             state = TutorialChapter0IntroState.ReturnToMeeting;
             objectiveBeacon.SetExternalTarget(hiddenRoomReturnTarget);
             auxiliaryDialogue = true;
@@ -647,6 +650,7 @@ namespace Narthex.Presentation
 
         private void SetTheusLightForm(bool active)
         {
+            if (hiddenRoomLighting != null) hiddenRoomLighting.SetDark(active);
             if (theusLightForm != null)
             {
                 if (active) theusLightForm.EnterLightForm();

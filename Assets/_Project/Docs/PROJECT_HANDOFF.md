@@ -11,6 +11,8 @@
 
 `Narthex` remains in namespaces, assembly names, and several save identifiers because the project was renamed from an earlier sample. Treat `Prometheus` as the product name; do not bulk-rename namespaces unless a deliberate migration task is scheduled.
 
+As of 2026-08-10, the main tutorial scene contains the validated tilemaps, backgrounds, character and enemy animation bindings, adaptive BGM, SFX, wind presentation, hidden-room lighting, Theus support, and the latest Prome/Helte boss features. Superseded candidate, pilot, backup, and tilemap-integration scenes were removed after confirming they contained no unique gameplay component absent from the main scene.
+
 ## 2. Working Principles
 
 1. All visible UI, gameplay anchors, triggers, hitboxes, narrative roots, and buttons must be pre-placed in the Unity scene hierarchy.
@@ -28,13 +30,13 @@
 | `QST-TUTO-006` | Double jump | Marker-authored summit objective |
 | `QST-TUTO-002` | Jump / projectile avoidance | Right-wall projectile launcher and scoped action counting |
 | `QST-TUTO-003` | Basic attack | Stationary training dummy and single-press melee attack |
-| `QST-TUTO-005` | Ranged attack | Facing-direction projectile on key `2`, 1.5-second cooldown |
+| `QST-TUTO-005` | Ranged attack | Facing-direction projectile on key `1`, 1.5-second cooldown |
 | `QST-TUTO-007` | Exterior departure | Emergency route, ladder ascent and exterior enemies |
-| `QST-TUTO-007-A` | Encounter F | Enemy-clear gate and marker-authored wind route |
+| `QST-TUTO-007-A` | Encounter F | Enemy-clear gate, marker-authored wind route, and Theus focused-volley unlock on key `2` |
 | `QST-TUTO-007-B` | Encounter G | Two enemy groups, hazards and H transition |
-| `QST-TUTO-008` | Helte fight | Helte introduction, boss combat, tutorial completion |
+| `QST-TUTO-008` | Helte fight / demo ending | Helte introduction, boss combat, side-view boarding shot, rear-view voyage toward Zenith, demo completion |
 
-Dialogue advances with `Space`. The module system remains available for future expansion, but the pulse-module tutorial quest and pulse hitbox are disabled. Key `2` now fires Prome's ranged attack.
+Dialogue advances with `Space`. The module system remains available for future expansion, but the pulse-module tutorial quest and pulse hitbox are disabled. Skills unlock in order: key `1` Prome ranged attack at `QST-TUTO-005`, key `2` Theus focused volley at `QST-TUTO-007-A`, and key `3` Prome four-slash at the Helte encounter.
 
 `TUTO_A_01`, `TUTO_B_01`, and `TUTO_A_RETURN` are internal checkpoints of `QST-TUTO-001`, not replacement quest IDs. The passkey is stored as `ITEM-ZENITH-AIRSHIP-PASSKEY`; keep these identifiers stable for save compatibility.
 
@@ -47,6 +49,7 @@ Dialogue advances with `Space`. The module system remains available for future e
   - `SaveSystemHost`
   - `DevelopmentProgressResetManager`
   - Quest, combat, module, boss, tutorial completion, and chapter-transition hosts
+  - `TutorialDemoEndingSequenceHost`: delays the result overlay until the airship voyage finishes
 - `PlayerRoot`
   - Input, motor, combat actor, melee attack, module use, collision and attack anchors
 - `TerrainLayoutRoot`
@@ -64,6 +67,11 @@ Dialogue advances with `Space`. The module system remains available for future e
   - `InventoryPanel`
   - `InventoryOpenButton`
   - `TutorialResultOverlay`
+  - `DemoEndingCinematicRoot`
+    - `DemoEndingBoardingAirship_ART`
+    - `DemoEndingRearFlightAirship_ART`
+    - `DEMO-END-FLIGHT-START` / `DEMO-END-FLIGHT-END` marker-backed route
+  - `DemoEndingFadeOverlay`
 - `TutorialLevelRoot/Z01B_HiddenGlideRoom`
   - Pre-placed geometry, ledge briefing trigger, updraft recovery visuals, passkey and A-return anchors
 
@@ -82,7 +90,9 @@ Dialogue advances with `Space`. The module system remains available for future e
 | `Space` | Advance dialogue; jump; hold in air to glide |
 | `Mouse Left / Enter` | Basic attack |
 | `Left Shift` | Dash |
-| `2` | Ranged attack (1.5-second cooldown) |
+| `1` | Ranged attack (1.5-second cooldown) |
+| `2` | Theus focused volley (5 auto-targeted shots, 8-second cooldown) |
+| `3` | Prome four-slash (Helte encounter unlock) |
 | `I` | Open/close module tree |
 | `Tab` | Open/close inventory |
 | `F` | Interact with pickups and relays |
@@ -148,7 +158,7 @@ For production persistence, disable the component or uncheck `Reset Progress On 
 - Unity EditMode suite covers progression, save, combat, high-speed trigger crossing, and updraft policies.
 - `TutorialSceneRuntimeSmokeTests` loads the real tutorial scene in PlayMode. The full-flow test drives the hidden room, passkey, meeting-room return, ladder, sequential training lessons, exterior departure, F/G enemy-clear gates, wind routes and Helte arrival through live scene systems.
 - Save reset has a focused test in `Assets/_Project/Scripts/Tests/CoreAndSaveTests.cs`.
-- Latest confirmed run: EditMode `34/34 passed`, PlayMode runtime/integration `3/3 passed`, and active tutorial scene validation passed.
+- Latest confirmed run: EditMode `110/110 passed`; PlayMode confirms the boss-development flow, chapter intro, debug skip, and the full Helte-to-demo-ending flow. The full PlayMode suite currently has three unrelated scene-regression failures (G `Square (21)` activation, objective-panel alpha expectation, and the isolated imported-training scenario). Active tutorial scene validation passed.
 
 ### Scene Validator
 

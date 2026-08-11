@@ -42,6 +42,7 @@ namespace Narthex.Gameplay
         private string runtimeCheckpointQuestId;
         private Transform runtimeCheckpointSpawnPoint;
         private bool restarting;
+        private Func<PlayerDead, bool> deathInterceptor;
 
         public bool HasConfiguredResetActors
         {
@@ -70,6 +71,13 @@ namespace Narthex.Gameplay
         public bool UsesInSceneRestart => !restartSceneOnDeath;
         public bool IsRestarting => restarting;
         public string ActiveSpawnPointName => activeSpawnPoint != null ? activeSpawnPoint.name : string.Empty;
+
+        public void SetDeathInterceptor(Func<PlayerDead, bool> interceptor) => deathInterceptor = interceptor;
+
+        public void ClearDeathInterceptor(Func<PlayerDead, bool> interceptor)
+        {
+            if (deathInterceptor == interceptor) deathInterceptor = null;
+        }
 
         public bool HasCheckpointForQuest(string questId)
         {
@@ -126,6 +134,7 @@ namespace Narthex.Gameplay
         private void HandlePlayerDead(PlayerDead message)
         {
             if (message.PlayerId != playerActor.ActorId) return;
+            if (deathInterceptor != null && deathInterceptor(message)) return;
             TryRestartAtCheckpoint();
         }
 

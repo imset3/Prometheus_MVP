@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: da68ca57964d1463ebd5d150bfc49f5e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7554717688254695340
+    second: TutorialRangedGuard_Attack_01_0
+  - first:
+      213: -8101345959840803620
+    second: TutorialRangedGuard_Attack_01_1
+  - first:
+      213: 7949984283560923930
+    second: TutorialRangedGuard_Attack_01_2
+  - first:
+      213: -8646081105215300028
+    second: TutorialRangedGuard_Attack_01_3
+  - first:
+      213: 1377228866096134042
+    second: TutorialRangedGuard_Attack_01_4
+  - first:
+      213: 6179318236834298016
+    second: TutorialRangedGuard_Attack_01_5
+  - first:
+      213: 8497131675656050335
+    second: TutorialRangedGuard_Attack_01_6
+  - first:
+      213: 1896782715894031207
+    second: TutorialRangedGuard_Attack_01_7
+  - first:
+      213: 7325230004195498619
+    second: TutorialRangedGuard_Attack_01_8
+  - first:
+      213: -5085139734583837189
+    second: TutorialRangedGuard_Attack_01_9
+  - first:
+      213: -9045226635457349649
+    second: TutorialRangedGuard_Attack_01_10
+  - first:
+      213: -456013426324656702
+    second: TutorialRangedGuard_Attack_01_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_0
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 441
+        width: 316
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca708caf5bfb7d860800000000000000
+      internalID: 7554717688254695340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_1
+      rect:
+        serializedVersion: 2
+        x: 350
+        y: 480
+        width: 19
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd49425b5cc329f80800000000000000
+      internalID: -8101345959840803620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_2
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 476
+        width: 16
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a135697c594045e60800000000000000
+      internalID: 7949984283560923930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_3
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 471
+        width: 72
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44edc603b03f20880800000000000000
+      internalID: -8646081105215300028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_4
+      rect:
+        serializedVersion: 2
+        x: 460
+        y: 476
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a97f21a5b56ec1310800000000000000
+      internalID: 1377228866096134042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_5
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 17
+        width: 425
+        height: 447
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a8f99c623951c550800000000000000
+      internalID: 6179318236834298016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_6
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 439
+        width: 21
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f96d2314d30ebe570800000000000000
+      internalID: 8497131675656050335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_7
+      rect:
+        serializedVersion: 2
+        x: 366
+        y: 441
+        width: 27
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 763e6fc94d9b25a10800000000000000
+      internalID: 1896782715894031207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_8
+      rect:
+        serializedVersion: 2
+        x: 399
+        y: 445
+        width: 33
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7a1b1ac0e178a560800000000000000
+      internalID: 7325230004195498619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_9
+      rect:
+        serializedVersion: 2
+        x: 431
+        y: 450
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfdf7e68a54fd69b0800000000000000
+      internalID: -5085139734583837189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_10
+      rect:
+        serializedVersion: 2
+        x: 435
+        y: 464
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe7b9a87c46e87280800000000000000
+      internalID: -9045226635457349649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TutorialRangedGuard_Attack_01_11
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 437
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cd2c1f643aeba9f0800000000000000
+      internalID: -456013426324656702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TutorialRangedGuard_Attack_01_0: 7554717688254695340
+      TutorialRangedGuard_Attack_01_1: -8101345959840803620
+      TutorialRangedGuard_Attack_01_10: -9045226635457349649
+      TutorialRangedGuard_Attack_01_11: -456013426324656702
+      TutorialRangedGuard_Attack_01_2: 7949984283560923930
+      TutorialRangedGuard_Attack_01_3: -8646081105215300028
+      TutorialRangedGuard_Attack_01_4: 1377228866096134042
+      TutorialRangedGuard_Attack_01_5: 6179318236834298016
+      TutorialRangedGuard_Attack_01_6: 8497131675656050335
+      TutorialRangedGuard_Attack_01_7: 1896782715894031207
+      TutorialRangedGuard_Attack_01_8: 7325230004195498619
+      TutorialRangedGuard_Attack_01_9: -5085139734583837189
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

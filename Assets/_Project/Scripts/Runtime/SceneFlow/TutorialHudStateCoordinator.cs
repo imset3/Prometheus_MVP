@@ -12,14 +12,17 @@ namespace Narthex.SceneFlow
         Normal,
         Dialogue,
         BossCombat,
+        Epilogue,
         Result
     }
 
     public static class TutorialHudModeResolver
     {
-        public static TutorialHudMode Resolve(bool result, bool dialogue, bool introduction, bool bossCombat)
+        public static TutorialHudMode Resolve(bool result, bool dialogue, bool introduction, bool bossCombat,
+            bool epilogue = false)
         {
             if (result) return TutorialHudMode.Result;
+            if (epilogue) return TutorialHudMode.Epilogue;
             if (dialogue || introduction) return TutorialHudMode.Dialogue;
             if (bossCombat) return TutorialHudMode.BossCombat;
             return TutorialHudMode.Normal;
@@ -102,7 +105,8 @@ namespace Narthex.SceneFlow
                 result,
                 dialoguePanel.activeInHierarchy,
                 introductionCard.activeInHierarchy,
-                bossArenaHost.EncounterPresentationActive);
+                bossArenaHost.EncounterPresentationActive,
+                bossArenaHost.FightCompleted);
 
             if (nextMode != currentMode) ChangeMode(nextMode);
             EnforceCurrentMode();
@@ -171,6 +175,7 @@ namespace Narthex.SceneFlow
             {
                 TutorialHudMode.Dialogue => suppressDuringDialogue,
                 TutorialHudMode.BossCombat => suppressDuringBossCombat,
+                TutorialHudMode.Epilogue => suppressDuringResult,
                 TutorialHudMode.Result => suppressDuringResult,
                 _ => Array.Empty<GameObject>()
             };

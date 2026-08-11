@@ -1,6 +1,6 @@
 # Helte boss animation — production batch v1
 
-Status: generated, imported, and connected to `TutorialScene_ArtCandidate.unity`.
+Status: generated, imported, and promoted to `TutorialScene.unity`.
 
 ## Animation set
 
@@ -59,7 +59,7 @@ authority; the Animator is presentation-only.
 
 Applied only to:
 
-`Assets/Scenes/AIReview/TutorialScene_ArtCandidate.unity`
+`Assets/Scenes/TutorialScene.unity`
 
 The original scene remains untouched. One animated body child and eight
 SpriteRenderer-only effect children were added. Snapshot comparison:

@@ -40,6 +40,7 @@ namespace Narthex.Presentation
             Debug.Log("[sragon000][Helte FSM Dev] 헬테 보스 개발 구간으로 바로 이동했습니다.", this);
 #else
             enabled = false;
+            yield break;
 #endif
         }
     }

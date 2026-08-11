@@ -30,12 +30,15 @@ namespace Narthex.Gameplay
         [SerializeField] private string attackActionName = "Attack";
         [SerializeField] private string interactActionName = "Interact";
         [SerializeField] private string moduleActionName = "Next";
+        [SerializeField] private string theusSkillActionName = "Previous";
         [SerializeField] private string moduleTreeActionName = "OpenModuleTree";
         [SerializeField] private string inventoryActionName = "OpenInventory";
 
         public event System.Action AttackRequested;
         public event System.Action InteractRequested;
         public event System.Action ModuleRequested;
+        public event System.Action TheusSkillRequested;
+        public event System.Action BossSkillRequested;
         public event System.Action ModuleTreeRequested;
         public event System.Action InventoryRequested;
         public event System.Action DialogueAdvanceRequested;
@@ -136,12 +139,17 @@ namespace Narthex.Gameplay
                     AimDirectionX));
                 ModuleRequested?.Invoke();
             }
+            else if (context.action.name == theusSkillActionName && context.performed)
+                TheusSkillRequested?.Invoke();
             else if (context.action.name == moduleTreeActionName && context.performed) ModuleTreeRequested?.Invoke();
             else if (context.action.name == inventoryActionName && context.performed) InventoryRequested?.Invoke();
         }
 
         private void Update()
         {
+            if (!dialogueInputClaimed && playerInput != null && playerInput.inputIsActive && Keyboard.current != null &&
+                (Keyboard.current.digit3Key.wasPressedThisFrame || Keyboard.current.numpad3Key.wasPressedThisFrame))
+                BossSkillRequested?.Invoke();
             if (!dialogueInputClaimed || !AnyDialogueInputPressed()) return;
             AnyDialogueInputRequested?.Invoke();
         }

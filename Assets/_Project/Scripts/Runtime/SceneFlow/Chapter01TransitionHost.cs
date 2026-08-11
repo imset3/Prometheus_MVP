@@ -14,6 +14,7 @@ namespace Narthex.SceneFlow
         [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private GameObject resultOverlay;
         [SerializeField] private Button nextStageButton;
+        [SerializeField] private bool allowChapterTransition = true;
         [SerializeField] private string requiredStageId = "CHAPTER_01";
         [SerializeField] private string chapterSceneName = "Chapter01";
 
@@ -55,7 +56,7 @@ namespace Narthex.SceneFlow
 
         public void TryEnterChapter01()
         {
-            if (loading || !CanEnterChapter01()) return;
+            if (!allowChapterTransition || loading || !CanEnterChapter01()) return;
 
             loading = true;
             serviceRoot.StateMachine.TryTransition(GameState.Loading);
