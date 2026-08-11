@@ -29,6 +29,8 @@ namespace Narthex.Tools
             ["TITLE_LABEL_Quit_v1"] = "나가기",
             ["TITLE_LABEL_Apply_v1"] = "설정 적용",
             ["TITLE_LABEL_Back_v1"] = "돌아가기",
+            ["TITLE_LABEL_Reset_v1"] = "초기화",
+            ["TITLE_LABEL_ResetConfirm_v1"] = "한 번 더 눌러 초기화",
             ["PAUSE_LABEL_Resume_v1"] = "계속하기",
             ["PAUSE_LABEL_SaveAndExit_v1"] = "저장 및 나가기",
             ["PAUSE_LABEL_Apply_v1"] = "적용",

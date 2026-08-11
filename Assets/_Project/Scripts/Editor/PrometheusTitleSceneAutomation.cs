@@ -117,6 +117,8 @@ namespace Narthex.Tools
             AssignLabelSprite(serialized, "quitLabelSprite", "TITLE_LABEL_Quit_v1");
             AssignLabelSprite(serialized, "applyLabelSprite", "TITLE_LABEL_Apply_v1");
             AssignLabelSprite(serialized, "backLabelSprite", "TITLE_LABEL_Back_v1");
+            AssignLabelSprite(serialized, "resetLabelSprite", "TITLE_LABEL_Reset_v1");
+            AssignLabelSprite(serialized, "resetConfirmLabelSprite", "TITLE_LABEL_ResetConfirm_v1");
             serialized.FindProperty("titleFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>(TitleFontPath);
             serialized.FindProperty("bodyFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>(BodyFontPath);
             serialized.FindProperty("titleMusic").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);

@@ -88,6 +88,19 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void DemoReset_RemovesSaveAndInterruptedTemporaryWrite()
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"narthex-demo-reset-{Guid.NewGuid():N}.json");
+            File.WriteAllText(path, "save");
+            File.WriteAllText(path + ".tmp", "temporary");
+
+            GameLaunchSession.ResetSaveStore(path);
+
+            Assert.That(File.Exists(path), Is.False);
+            Assert.That(File.Exists(path + ".tmp"), Is.False);
+        }
+
+        [Test]
         public void MigrationRunner_AdvancesSaveVersion()
         {
             var save = new SaveData();

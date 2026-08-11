@@ -31,6 +31,8 @@ namespace Narthex.SceneFlow
         [SerializeField] private Sprite quitLabelSprite;
         [SerializeField] private Sprite applyLabelSprite;
         [SerializeField] private Sprite backLabelSprite;
+        [SerializeField] private Sprite resetLabelSprite;
+        [SerializeField] private Sprite resetConfirmLabelSprite;
         [SerializeField] private Font titleFont;
         [SerializeField] private Font bodyFont;
         [SerializeField] private AudioClip titleMusic;
@@ -78,6 +80,8 @@ namespace Narthex.SceneFlow
         private Image loadingCompassGlow;
         private RectTransform[] cloudRects;
         private Button continueButton;
+        private Button resetButton;
+        private Image resetButtonLabel;
         private Dropdown resolutionDropdown;
         private Dropdown displayModeDropdown;
         private Slider masterSlider;
@@ -90,6 +94,7 @@ namespace Narthex.SceneFlow
         private bool menuShown;
         private bool loading;
         private bool usesAuthoredPresentation;
+        private float resetConfirmationExpiresAt;
 
         public bool HasValidSetup => backgroundSprite != null && zenithSprite != null &&
                                      promeIdleFrames != null && promeIdleFrames.Length > 0;
@@ -98,7 +103,8 @@ namespace Narthex.SceneFlow
         public bool HasButtonLabelSpriteSetup => newGameLabelSprite != null && continueLabelSprite != null &&
                                                  bossLabelSprite != null && settingsLabelSprite != null &&
                                                  quitLabelSprite != null && applyLabelSprite != null &&
-                                                 backLabelSprite != null;
+                                                 backLabelSprite != null && resetLabelSprite != null &&
+                                                 resetConfirmLabelSprite != null;
         public bool MainMenuVisible => IsGroupVisible(menuGroup);
         public bool SettingsVisible => IsGroupVisible(settingsGroup);
         public bool IsLoading => loading;
@@ -144,6 +150,8 @@ namespace Narthex.SceneFlow
         {
             elapsed += Time.unscaledDeltaTime;
             AnimateArtLayers();
+            if (resetConfirmationExpiresAt > 0f && Time.unscaledTime > resetConfirmationExpiresAt)
+                CancelResetConfirmation();
             if (!menuShown && !loading && AnyInputPressed()) ShowMenu();
             else if (menuShown && !loading) HandleManualUiInput();
         }
@@ -301,7 +309,10 @@ namespace Narthex.SceneFlow
             RegisterAuthoredButton(canvasObject.transform, "나가기", QuitGame);
             RegisterAuthoredButton(canvasObject.transform, "설정 적용", ApplyAndCloseSettings);
             RegisterAuthoredButton(canvasObject.transform, "돌아가기", HideSettings);
-            if (buttonActions.Count != 7 || continueButton == null) return false;
+            resetButton = RegisterAuthoredButton(canvasObject.transform, "초기화", RequestResetAllData);
+            resetButtonLabel = resetButton != null ? resetButton.transform.Find("Label")?.GetComponent<Image>() : null;
+            if (buttonActions.Count != 8 || continueButton == null || resetButton == null || resetButtonLabel == null)
+                return false;
 
             continueButton.interactable = GameLaunchSession.CanContinue(saveData);
             menuShown = false;
@@ -348,30 +359,33 @@ namespace Narthex.SceneFlow
             Stretch(blocker.rectTransform);
             var panel = CreateImage("SettingsPanel", group.transform, modalPanelSprite,
                 modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 0.98f));
-            SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980f, 780f));
+            SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980f, 900f));
             settingsPanelRect = panel.rectTransform;
             var contentBackdrop = CreatePanel("ContentBackdrop", panel.transform, new Color(0.01f, 0.025f, 0.045f, 0.7f));
-            SetRect(contentBackdrop.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(850f, 610f));
-            CreateLabel(panel.transform, "환경 설정", new Vector2(0f, 318f), 46, 700f, TextAnchor.MiddleCenter);
-            CreateLabel(panel.transform, "화면 설정", new Vector2(-350f, 235f), 24, 220f, TextAnchor.MiddleLeft,
+            SetRect(contentBackdrop.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(850f, 730f));
+            CreateLabel(panel.transform, "환경 설정", new Vector2(0f, 378f), 46, 700f, TextAnchor.MiddleCenter);
+            CreateLabel(panel.transform, "화면 설정", new Vector2(-350f, 295f), 24, 220f, TextAnchor.MiddleLeft,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
-            CreateLabel(panel.transform, "해상도", new Vector2(-285f, 170f), 27, 250f);
-            resolutionDropdown = CreateDropdown(panel.transform, new Vector2(145f, 170f));
-            CreateLabel(panel.transform, "화면 모드", new Vector2(-285f, 90f), 27, 250f);
+            CreateLabel(panel.transform, "해상도", new Vector2(-285f, 230f), 27, 250f);
+            resolutionDropdown = CreateDropdown(panel.transform, new Vector2(145f, 230f));
+            CreateLabel(panel.transform, "화면 모드", new Vector2(-285f, 150f), 27, 250f);
             displayModeDropdown = CreateDropdown(
                 panel.transform,
-                new Vector2(145f, 90f),
+                new Vector2(145f, 150f),
                 DisplayModeLabels,
                 "DisplayModeDropdown");
-            CreateLabel(panel.transform, "오디오", new Vector2(-350f, 22f), 24, 220f, TextAnchor.MiddleLeft,
+            CreateLabel(panel.transform, "오디오", new Vector2(-350f, 82f), 24, 220f, TextAnchor.MiddleLeft,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
-            masterSlider = CreateVolumeRow(panel.transform, "전체 음량", -40f);
-            musicSlider = CreateVolumeRow(panel.transform, "배경 음악", -120f);
-            sfxSlider = CreateVolumeRow(panel.transform, "효과음", -200f);
+            masterSlider = CreateVolumeRow(panel.transform, "전체 음량", 20f);
+            musicSlider = CreateVolumeRow(panel.transform, "배경 음악", -60f);
+            sfxSlider = CreateVolumeRow(panel.transform, "효과음", -140f);
             var apply = CreateMenuButton(panel.transform, "설정 적용", applyLabelSprite, ApplyAndCloseSettings);
-            SetRect(apply.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-145f, -310f), new Vector2(260f, 72f));
+            SetRect(apply.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-145f, -245f), new Vector2(260f, 72f));
             var close = CreateMenuButton(panel.transform, "돌아가기", backLabelSprite, HideSettings);
-            SetRect(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(145f, -310f), new Vector2(260f, 72f));
+            SetRect(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(145f, -245f), new Vector2(260f, 72f));
+            resetButton = CreateMenuButton(panel.transform, "초기화", resetLabelSprite, RequestResetAllData);
+            SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0f, -345f), new Vector2(360f, 72f));
+            resetButtonLabel = resetButton.transform.Find("Label")?.GetComponent<Image>();
             return group;
         }
 
@@ -493,9 +507,46 @@ namespace Narthex.SceneFlow
 
         private void HideSettings()
         {
+            CancelResetConfirmation();
             SetGroup(settingsGroup, false);
             if (menuShown && !loading) SetGroup(menuGroup, true);
             SelectFirstVisibleButton();
+        }
+
+        private void RequestResetAllData()
+        {
+            if (resetConfirmationExpiresAt > 0f && Time.unscaledTime <= resetConfirmationExpiresAt)
+            {
+                GameLaunchSession.ResetAllLocalData();
+                saveData = GameLaunchSession.LoadSave();
+                ApplySavedSettings();
+                if (continueButton != null) continueButton.interactable = false;
+                resetConfirmationExpiresAt = 0f;
+                RestoreResetButtonLabel();
+                menuShown = false;
+                loading = false;
+                SetGroup(settingsGroup, false);
+                SetGroup(menuGroup, false);
+                SetGroup(loadingGroup, false);
+                SetGroup(introGroup, true);
+                return;
+            }
+
+            resetConfirmationExpiresAt = Time.unscaledTime + 3f;
+            if (resetButtonLabel != null && resetConfirmLabelSprite != null)
+                resetButtonLabel.sprite = resetConfirmLabelSprite;
+        }
+
+        private void CancelResetConfirmation()
+        {
+            resetConfirmationExpiresAt = 0f;
+            RestoreResetButtonLabel();
+        }
+
+        private void RestoreResetButtonLabel()
+        {
+            if (resetButtonLabel != null && resetLabelSprite != null)
+                resetButtonLabel.sprite = resetLabelSprite;
         }
 
         private void ApplyAndCloseSettings()
@@ -996,6 +1047,8 @@ namespace Narthex.SceneFlow
             quitLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Quit_v1");
             applyLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Apply_v1");
             backLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Back_v1");
+            resetLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Reset_v1");
+            resetConfirmLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_ResetConfirm_v1");
         }
 
         public static FullScreenMode ResolveDisplayMode(SettingsSaveData settings)

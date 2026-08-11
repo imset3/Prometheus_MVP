@@ -94,6 +94,24 @@ namespace Narthex.Save
             new SaveFileStore(SavePath).Save(data);
         }
 
+        public static void ResetAllLocalData()
+        {
+            ResetSaveStore(SavePath);
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+            Caching.ClearCache();
+            mode = GameLaunchMode.DirectDevelopment;
+            pendingTutorialMode = GameLaunchMode.DirectDevelopment;
+        }
+
+        public static void ResetSaveStore(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+            if (File.Exists(path)) File.Delete(path);
+            var temporaryPath = path + ".tmp";
+            if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+        }
+
         public static void SaveTutorialContinuePoint(SaveData data, string questId, Vector2 position)
         {
             data ??= LoadSave();

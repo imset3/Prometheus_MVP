@@ -81,8 +81,8 @@ namespace Narthex.PlayModeTests
                 "창 모드", "전체 화면", "창 없는 전체 화면"
             }));
 
-            Assert.That(host.RegisteredButtonCount, Is.EqualTo(7),
-                "The title must register the five main-menu and two settings buttons exactly once.");
+            Assert.That(host.RegisteredButtonCount, Is.EqualTo(8),
+                "The title must register the five main-menu and three settings buttons exactly once.");
             Assert.That(host.HasUniqueButtonBindings, Is.True,
                 "A title button must never receive duplicate manual/action bindings.");
             Assert.That(host.TutorialSceneName, Is.EqualTo("TutorialScene"));
@@ -110,7 +110,7 @@ namespace Narthex.PlayModeTests
 
             foreach (var buttonName in new[]
                      {
-                         "새 게임 시작", "이어하기", "보스전", "설정", "나가기", "설정 적용", "돌아가기"
+                         "새 게임 시작", "이어하기", "보스전", "설정", "나가기", "설정 적용", "돌아가기", "초기화"
                      })
             {
                 var buttonTransform = FindSceneTransformOrDefault(scene, buttonName);
@@ -160,6 +160,58 @@ namespace Narthex.PlayModeTests
                 5f,
                 "The title Boss button did not load the dedicated boss-development scene.");
             Assert.That(FindSceneComponent<HelteBossFsmDevBootstrapHost>(SceneManager.GetActiveScene()), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator TitleResetButton_RequiresConfirmationAndClearsContinueData()
+        {
+            var savePath = GameLaunchSession.SavePath;
+            var hadSave = File.Exists(savePath);
+            var previousSave = hadSave ? File.ReadAllBytes(savePath) : null;
+            try
+            {
+                var demoSave = new SaveData();
+                demoSave.Run.SavedQuestId = "QST-TUTO-006";
+                demoSave.Run.HasSavedPlayerPosition = true;
+                new SaveFileStore(savePath).Save(demoSave);
+#if UNITY_EDITOR
+                var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                    TitleScenePath,
+                    new LoadSceneParameters(LoadSceneMode.Single));
+                Assert.That(loadOperation, Is.Not.Null);
+                while (!loadOperation.isDone) yield return null;
+#else
+                Assert.Ignore("The title reset test runs in the Unity Editor.");
+                yield break;
+#endif
+                yield return null;
+                var scene = SceneManager.GetActiveScene();
+                var host = FindSceneComponent<TitleScreenHost>(scene);
+                InvokePrivateMethod(host, "ShowMenu");
+                InvokePrivateMethod(host, "ShowSettings");
+                var resetButton = FindSceneTransform(scene, "초기화").GetComponent<Button>();
+                var label = resetButton.transform.Find("Label").GetComponent<Image>();
+                var initialLabel = label.sprite;
+
+                resetButton.onClick.Invoke();
+                Assert.That(File.Exists(savePath), Is.True,
+                    "The first reset click must only arm confirmation.");
+                Assert.That(label.sprite, Is.Not.EqualTo(initialLabel),
+                    "The armed reset button must show its confirmation sprite.");
+
+                resetButton.onClick.Invoke();
+                yield return null;
+                Assert.That(File.Exists(savePath), Is.False);
+                Assert.That(GameLaunchSession.CanContinue(GameLaunchSession.LoadSave()), Is.False);
+                Assert.That(host.SettingsVisible, Is.False);
+                Assert.That(host.MainMenuVisible, Is.False,
+                    "A successful reset must return the title to its initial any-key state.");
+            }
+            finally
+            {
+                if (hadSave) File.WriteAllBytes(savePath, previousSave);
+                else if (File.Exists(savePath)) File.Delete(savePath);
+            }
         }
 
         [UnityTest]
