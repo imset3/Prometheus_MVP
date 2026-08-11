@@ -68,6 +68,7 @@ namespace Narthex.SceneFlow
         private CanvasGroup menuGroup;
         private CanvasGroup settingsGroup;
         private CanvasGroup loadingGroup;
+        private RectTransform settingsPanelRect;
         private Text loadingText;
         private Image loadingBar;
         private Image backgroundImage;
@@ -102,6 +103,8 @@ namespace Narthex.SceneFlow
         public bool SettingsVisible => IsGroupVisible(settingsGroup);
         public bool IsLoading => loading;
         public bool UsesAuthoredPresentation => usesAuthoredPresentation;
+        public string TutorialSceneName => tutorialSceneName;
+        public string BossSceneName => bossSceneName;
         public int RegisteredButtonCount => buttonActions.Count;
         public bool HasUniqueButtonBindings
         {
@@ -123,6 +126,7 @@ namespace Narthex.SceneFlow
             EnsureInputEventSystem();
             if (!TryBindAuthoredPresentation()) BuildPresentation();
             ApplySavedSettings();
+            RefreshSettingsLayout();
         }
 
         private void Start()
@@ -256,6 +260,7 @@ namespace Narthex.SceneFlow
             introGroup = FindNamedComponent<CanvasGroup>(canvasObject.transform, "IntroPrompt");
             menuGroup = FindNamedComponent<CanvasGroup>(canvasObject.transform, "MainMenu");
             settingsGroup = FindNamedComponent<CanvasGroup>(canvasObject.transform, "Settings");
+            settingsPanelRect = FindNamedComponent<Image>(canvasObject.transform, "SettingsPanel")?.rectTransform;
             loadingGroup = FindNamedComponent<CanvasGroup>(canvasObject.transform, "LoadingScreen");
             resolutionDropdown = FindNamedComponent<Dropdown>(canvasObject.transform, "ResolutionDropdown");
             displayModeDropdown = FindNamedComponent<Dropdown>(canvasObject.transform, "DisplayModeDropdown");
@@ -344,6 +349,7 @@ namespace Narthex.SceneFlow
             var panel = CreateImage("SettingsPanel", group.transform, modalPanelSprite,
                 modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 0.98f));
             SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980f, 780f));
+            settingsPanelRect = panel.rectTransform;
             var contentBackdrop = CreatePanel("ContentBackdrop", panel.transform, new Color(0.01f, 0.025f, 0.045f, 0.7f));
             SetRect(contentBackdrop.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(850f, 610f));
             CreateLabel(panel.transform, "환경 설정", new Vector2(0f, 318f), 46, 700f, TextAnchor.MiddleCenter);
@@ -462,7 +468,27 @@ namespace Narthex.SceneFlow
             PopulateSettingsUi();
             SetGroup(menuGroup, false);
             SetGroup(settingsGroup, true);
+            RefreshSettingsLayout();
             SelectFirstVisibleButton();
+        }
+
+        private void OnRectTransformDimensionsChange() => RefreshSettingsLayout();
+
+        private void RefreshSettingsLayout()
+        {
+            if (settingsPanelRect == null ||
+                settingsPanelRect.GetComponentInParent<Canvas>()?.transform is not RectTransform canvasRect) return;
+            var scale = ResolvePanelScale(canvasRect.rect.size, settingsPanelRect.sizeDelta, 40f);
+            settingsPanelRect.localScale = new Vector3(scale, scale, 1f);
+            settingsPanelRect.anchoredPosition = Vector2.zero;
+        }
+
+        public static float ResolvePanelScale(Vector2 canvasSize, Vector2 panelSize, float margin)
+        {
+            if (canvasSize.x <= 0f || canvasSize.y <= 0f || panelSize.x <= 0f || panelSize.y <= 0f) return 1f;
+            var availableWidth = Mathf.Max(1f, canvasSize.x - margin * 2f);
+            var availableHeight = Mathf.Max(1f, canvasSize.y - margin * 2f);
+            return Mathf.Clamp(Mathf.Min(availableWidth / panelSize.x, availableHeight / panelSize.y), 0.45f, 1f);
         }
 
         private void HideSettings()

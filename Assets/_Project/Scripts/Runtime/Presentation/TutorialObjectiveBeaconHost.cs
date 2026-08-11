@@ -58,6 +58,8 @@ namespace Narthex.Presentation
         public Transform GetTarget(string questId)
         {
             if (string.IsNullOrWhiteSpace(questId) || targets == null) return null;
+            if (TutorialRuntimeObjectiveTargetRegistry.TryGet(questId, out var runtimeTarget))
+                return runtimeTarget;
             foreach (var target in targets)
                 if (target != null && target.QuestId == questId && target.Target != null)
                     return target.Target;

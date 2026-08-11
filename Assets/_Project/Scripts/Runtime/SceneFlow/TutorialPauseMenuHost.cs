@@ -19,6 +19,9 @@ namespace Narthex.SceneFlow
         private Slider sfxSlider;
         private SaveSystemHost saveSystemHost;
         private PlayerInputHost playerInputHost;
+        private TutorialQuestSequenceHost questSequenceHost;
+        private RectTransform pausePanelRect;
+        private RectTransform settingsPanelRect;
         private Sprite buttonFrameSprite;
         private Sprite modalPanelSprite;
         private bool wasPlayerInputEnabled;
@@ -49,9 +52,11 @@ namespace Narthex.SceneFlow
         {
             saveSystemHost = FindFirstObjectByType<SaveSystemHost>();
             playerInputHost = FindFirstObjectByType<PlayerInputHost>();
+            questSequenceHost = FindFirstObjectByType<TutorialQuestSequenceHost>();
             buttonFrameSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ButtonPlate_v1");
             modalPanelSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ModalPanel_v1");
             BuildUi();
+            RefreshPanelLayout();
             SetVisible(root, false);
             SetVisible(settingsPanel, false);
         }
@@ -103,6 +108,7 @@ namespace Narthex.SceneFlow
             sfxSlider.value = settings.SfxVolume;
             SetVisible(root, false);
             SetVisible(settingsPanel, true);
+            RefreshPanelLayout();
             SelectFirstVisibleButton();
         }
 
@@ -139,7 +145,14 @@ namespace Narthex.SceneFlow
         private void SaveAndExit()
         {
             if (saveSystemHost != null && saveSystemHost.Initialize())
+            {
+                var position = playerInputHost != null ? (Vector2)playerInputHost.transform.position : Vector2.zero;
+                GameLaunchSession.SaveTutorialContinuePoint(
+                    saveSystemHost.System.Current,
+                    questSequenceHost != null ? questSequenceHost.CurrentQuestId : string.Empty,
+                    position);
                 saveSystemHost.System.Save("PauseMenuSaveAndExit");
+            }
             paused = false;
             Time.timeScale = 1f;
             StartCoroutine(ReturnToTitle());
@@ -168,6 +181,7 @@ namespace Narthex.SceneFlow
                 modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 0.98f),
                 modalPanelSprite);
             SetRect(panel.rectTransform, Vector2.zero, new Vector2(560f, 560f));
+            pausePanelRect = panel.rectTransform;
             AddText(panel.transform, "일시 정지", 42, new Vector2(0f, 205f), new Vector2(460f, 70f));
             AddButton(panel.transform, "계속하기", new Vector2(0f, 90f), Resume);
             AddButton(panel.transform, "설정", new Vector2(0f, 5f), ShowSettings);
@@ -181,12 +195,29 @@ namespace Narthex.SceneFlow
                 modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 1f),
                 modalPanelSprite);
             SetRect(settings.rectTransform, Vector2.zero, new Vector2(700f, 600f));
+            settingsPanelRect = settings.rectTransform;
             AddText(settings.transform, "음량 설정", 40, new Vector2(0f, 235f), new Vector2(500f, 65f));
             masterSlider = AddSlider(settings.transform, "전체 음량", 105f);
             musicSlider = AddSlider(settings.transform, "음악", 15f);
             sfxSlider = AddSlider(settings.transform, "효과음", -75f);
             AddButton(settings.transform, "적용", new Vector2(-115f, -205f), ApplySettings, new Vector2(200f, 58f));
             AddButton(settings.transform, "취소", new Vector2(115f, -205f), HideSettings, new Vector2(200f, 58f));
+        }
+
+        private void OnRectTransformDimensionsChange() => RefreshPanelLayout();
+
+        private void RefreshPanelLayout()
+        {
+            FitPanelToCanvas(pausePanelRect, 32f);
+            FitPanelToCanvas(settingsPanelRect, 32f);
+        }
+
+        private static void FitPanelToCanvas(RectTransform panel, float margin)
+        {
+            if (panel == null || panel.GetComponentInParent<Canvas>()?.transform is not RectTransform canvasRect) return;
+            var scale = TitleScreenHost.ResolvePanelScale(canvasRect.rect.size, panel.sizeDelta, margin);
+            panel.localScale = new Vector3(scale, scale, 1f);
+            panel.anchoredPosition = Vector2.zero;
         }
 
         private static Slider AddSlider(Transform parent, string label, float y)

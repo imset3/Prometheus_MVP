@@ -19,6 +19,7 @@ namespace Narthex.Save
     {
         private const string SaveFileName = "narthex_save.json";
         private static GameLaunchMode mode = GameLaunchMode.DirectDevelopment;
+        private static GameLaunchMode pendingTutorialMode = GameLaunchMode.DirectDevelopment;
 
         public static GameLaunchMode Mode => mode;
         public static string SavePath => Path.Combine(Application.persistentDataPath, SaveFileName);
@@ -32,16 +33,16 @@ namespace Narthex.Save
 
             return !string.IsNullOrWhiteSpace(data.Run.CurrentStageId) ||
                    !string.IsNullOrWhiteSpace(data.Run.TutorialIntroStageId) ||
+                   !string.IsNullOrWhiteSpace(data.Run.SavedQuestId) ||
+                   data.Run.HasSavedPlayerPosition ||
                    (data.Run.QuestIds != null && data.Run.QuestIds.Count > 0);
         }
 
         public static void PrepareNewGame()
         {
             var current = LoadSave();
-            new SaveFileStore(SavePath).Save(new SaveData
-            {
-                Settings = current?.Settings ?? new SettingsSaveData()
-            });
+            new SaveFileStore(SavePath).Save(CreateFreshSavePreservingSettings(current));
+            pendingTutorialMode = GameLaunchMode.DirectDevelopment;
             mode = GameLaunchMode.NewGame;
         }
 
@@ -57,14 +58,53 @@ namespace Narthex.Save
         public static bool ConsumeTutorialLaunchOverride()
         {
             var skipDevelopmentReset = mode == GameLaunchMode.NewGame || mode == GameLaunchMode.Continue;
+            pendingTutorialMode = skipDevelopmentReset ? mode : GameLaunchMode.DirectDevelopment;
             mode = GameLaunchMode.DirectDevelopment;
             return skipDevelopmentReset;
         }
+
+        public static bool TryConsumeContinuePosition(RunSaveData run, out Vector2 position)
+        {
+            position = default;
+            var isContinue = pendingTutorialMode == GameLaunchMode.Continue;
+            pendingTutorialMode = GameLaunchMode.DirectDevelopment;
+            return isContinue && TryResolveSavedPlayerPosition(run, out position);
+        }
+
+        public static bool TryResolveSavedPlayerPosition(RunSaveData run, out Vector2 position)
+        {
+            position = default;
+            if (run == null || !run.HasSavedPlayerPosition) return false;
+            if (!float.IsFinite(run.SavedPlayerPositionX) || !float.IsFinite(run.SavedPlayerPositionY)) return false;
+            position = new Vector2(run.SavedPlayerPositionX, run.SavedPlayerPositionY);
+            return true;
+        }
+
+        public static SaveData CreateFreshSavePreservingSettings(SaveData current) => new()
+        {
+            Settings = current?.Settings ?? new SettingsSaveData()
+        };
+
+        public static void CompleteTutorialLaunch() => pendingTutorialMode = GameLaunchMode.DirectDevelopment;
 
         public static void SaveSettings(SettingsSaveData settings)
         {
             var data = LoadSave();
             data.Settings = settings ?? new SettingsSaveData();
+            new SaveFileStore(SavePath).Save(data);
+        }
+
+        public static void SaveTutorialContinuePoint(SaveData data, string questId, Vector2 position)
+        {
+            data ??= LoadSave();
+            data.Run ??= new RunSaveData();
+            data.Permanent ??= new PermanentSaveData();
+            data.Run.SavedQuestId = questId ?? string.Empty;
+            data.Run.HasSavedPlayerPosition = true;
+            data.Run.SavedPlayerPositionX = position.x;
+            data.Run.SavedPlayerPositionY = position.y;
+            // Title and tutorial must share this canonical path even if an editor test or
+            // scene-local SaveSystemHost is configured with a different file name.
             new SaveFileStore(SavePath).Save(data);
         }
 
@@ -75,6 +115,7 @@ namespace Narthex.Save
             data.Run = new RunSaveData();
             new SaveFileStore(SavePath).Save(data);
             mode = GameLaunchMode.DirectDevelopment;
+            pendingTutorialMode = GameLaunchMode.DirectDevelopment;
         }
     }
 }

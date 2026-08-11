@@ -121,6 +121,19 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void SettingsPanelPolicy_FitsInsideSmallAndWideCanvases()
+        {
+            Assert.That(
+                TitleScreenHost.ResolvePanelScale(new Vector2(1920f, 1080f), new Vector2(980f, 780f), 40f),
+                Is.EqualTo(1f));
+            var compactScale = TitleScreenHost.ResolvePanelScale(
+                new Vector2(800f, 600f), new Vector2(980f, 780f), 40f);
+            Assert.That(compactScale, Is.LessThan(1f));
+            Assert.That(980f * compactScale, Is.LessThanOrEqualTo(720.01f));
+            Assert.That(780f * compactScale, Is.LessThanOrEqualTo(520.01f));
+        }
+
+        [Test]
         public void TheusFocusedVolleyPolicy_RequiresUnlockAndUsesLargerFinalShot()
         {
             Assert.That(TutorialTheusRangedSupportHost.CanStartFocusedVolley(true, false, 0f, true, false), Is.True);

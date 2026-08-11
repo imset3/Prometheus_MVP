@@ -37,6 +37,10 @@ namespace Narthex.Save
         public List<string> ActivatedTowerIds = new List<string>();
         public List<string> CollectedItemIds = new List<string>();
         public string TutorialIntroStageId;
+        public string SavedQuestId;
+        public bool HasSavedPlayerPosition;
+        public float SavedPlayerPositionX;
+        public float SavedPlayerPositionY;
     }
 
     [Serializable]

@@ -41,6 +41,10 @@ namespace Narthex.Tests
             save.Run.CurrentStageId = "STG-001";
             save.Run.ModulePoints = 3;
             save.Run.TutorialIntroStageId = "TUTO_B_01";
+            save.Run.SavedQuestId = "QST-TUTO-006";
+            save.Run.HasSavedPlayerPosition = true;
+            save.Run.SavedPlayerPositionX = 123.5f;
+            save.Run.SavedPlayerPositionY = -7.25f;
             save.Run.CollectedItemIds.Add("ITEM-ZENITH-AIRSHIP-PASSKEY");
 
             var restored = SaveSerializer.FromJson(SaveSerializer.ToJson(save));
@@ -50,7 +54,37 @@ namespace Narthex.Tests
             Assert.That(restored.Run.CurrentStageId, Is.EqualTo("STG-001"));
             Assert.That(restored.Run.ModulePoints, Is.EqualTo(3));
             Assert.That(restored.Run.TutorialIntroStageId, Is.EqualTo("TUTO_B_01"));
+            Assert.That(restored.Run.SavedQuestId, Is.EqualTo("QST-TUTO-006"));
+            Assert.That(restored.Run.HasSavedPlayerPosition, Is.True);
+            Assert.That(restored.Run.SavedPlayerPositionX, Is.EqualTo(123.5f));
+            Assert.That(restored.Run.SavedPlayerPositionY, Is.EqualTo(-7.25f));
             Assert.That(restored.Run.CollectedItemIds, Does.Contain("ITEM-ZENITH-AIRSHIP-PASSKEY"));
+        }
+
+        [Test]
+        public void TitleSavePolicy_StartsFreshAndContinuesFromExactTutorialPosition()
+        {
+            var previous = new SaveData();
+            previous.Permanent.TutorialCompleted = true;
+            previous.Run.QuestIds.Add("QST-TUTO-006");
+            previous.Run.SavedQuestId = "QST-TUTO-002";
+            previous.Run.HasSavedPlayerPosition = true;
+            previous.Run.SavedPlayerPositionX = 42.5f;
+            previous.Run.SavedPlayerPositionY = -3.25f;
+            previous.Settings.MasterVolume = 0.4f;
+
+            Assert.That(GameLaunchSession.CanContinue(previous), Is.False,
+                "A completed demo must never expose Continue.");
+            previous.Permanent.TutorialCompleted = false;
+            Assert.That(GameLaunchSession.CanContinue(previous), Is.True);
+            Assert.That(GameLaunchSession.TryResolveSavedPlayerPosition(previous.Run, out var position), Is.True);
+            Assert.That(position, Is.EqualTo(new UnityEngine.Vector2(42.5f, -3.25f)));
+
+            var fresh = GameLaunchSession.CreateFreshSavePreservingSettings(previous);
+            Assert.That(fresh.Permanent.TutorialCompleted, Is.False);
+            Assert.That(fresh.Run.QuestIds, Is.Empty);
+            Assert.That(fresh.Run.HasSavedPlayerPosition, Is.False);
+            Assert.That(fresh.Settings.MasterVolume, Is.EqualTo(0.4f));
         }
 
         [Test]

@@ -115,6 +115,10 @@ namespace Narthex.Gameplay
 
             activeSpawnPoint = ResolveCurrentCheckpoint();
             MovePlayerToActiveSpawn();
+            if (GameLaunchSession.TryConsumeContinuePosition(saveSystemHost.System.Current.Run, out var continuedPosition))
+                MovePlayerToPosition(continuedPosition);
+            else
+                GameLaunchSession.CompleteTutorialLaunch();
         }
 
         private void OnEnable()
@@ -210,9 +214,14 @@ namespace Narthex.Gameplay
 
         private void MovePlayerToActiveSpawn()
         {
+            MovePlayerToPosition(activeSpawnPoint.position);
+        }
+
+        private void MovePlayerToPosition(Vector2 position)
+        {
             playerBody.linearVelocity = Vector2.zero;
-            playerBody.position = activeSpawnPoint.position;
-            playerActor.transform.position = activeSpawnPoint.position;
+            playerBody.position = position;
+            playerActor.transform.position = position;
             Physics2D.SyncTransforms();
         }
 

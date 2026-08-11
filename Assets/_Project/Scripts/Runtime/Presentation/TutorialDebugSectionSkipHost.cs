@@ -46,7 +46,8 @@ namespace Narthex.Presentation
     }
 
     /// <summary>
-    /// Editor/development-build-only shortcut for jumping directly to the imported combat sections.
+    /// Keyboard shortcut for jumping directly to the imported combat sections.
+    /// F8/F9 intentionally remain available in release demo builds for QA and demonstrations.
     /// It deliberately changes runtime state only and never records skipped quests in the save file.
     /// </summary>
     public sealed class TutorialDebugSectionSkipHost : MonoBehaviour
@@ -86,10 +87,6 @@ namespace Narthex.Presentation
 
         private void Awake()
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            enabled = false;
-            return;
-#else
             if (!HasValidSetup)
             {
                 Debug.LogError("TutorialDebugSectionSkipHost requires F, G, and Helte debug section references.", this);
@@ -98,17 +95,14 @@ namespace Narthex.Presentation
             }
 
             serviceRoot.Initialize();
-#endif
         }
 
         private void Update()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             if (keyboard.f8Key.wasPressedThisFrame) JumpToFSection();
             else if (keyboard.f9Key.wasPressedThisFrame) JumpToNextSection();
-#endif
         }
 
         private void OnGUI()
@@ -120,19 +114,12 @@ namespace Narthex.Presentation
 
         public bool JumpToNextSection()
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            return false;
-#else
             var currentIndex = FindCurrentSectionIndex();
             return JumpToSection(currentIndex < 0 ? 0 : Mathf.Min(currentIndex + 1, sections.Length - 1));
-#endif
         }
 
         public bool JumpToSection(int sectionIndex)
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            return false;
-#else
             if (!HasValidSetup || sectionIndex < 0 || sectionIndex >= sections.Length) return false;
             var section = sections[sectionIndex];
 
@@ -182,7 +169,6 @@ namespace Narthex.Presentation
             activeSectionIndex = sectionIndex;
             Debug.Log($"[sragon000][구간 스킵] {section.DisplayName}부터 테스트를 시작합니다.", this);
             return true;
-#endif
         }
 
         private int FindCurrentSectionIndex()

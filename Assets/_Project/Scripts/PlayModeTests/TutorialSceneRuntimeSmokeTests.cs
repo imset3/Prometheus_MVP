@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Narthex.Content;
@@ -84,6 +85,10 @@ namespace Narthex.PlayModeTests
                 "The title must register the five main-menu and two settings buttons exactly once.");
             Assert.That(host.HasUniqueButtonBindings, Is.True,
                 "A title button must never receive duplicate manual/action bindings.");
+            Assert.That(host.TutorialSceneName, Is.EqualTo("TutorialScene"));
+            Assert.That(host.BossSceneName, Is.EqualTo("BossDevelopmentScene"));
+            Assert.That(Application.CanStreamedLevelBeLoaded(host.BossSceneName), Is.True,
+                "The title Boss button target must be enabled in Build Settings.");
             InvokePrivateMethod(host, "ShowMenu");
             InvokePrivateMethod(host, "ShowSettings");
             Assert.That(host.SettingsVisible, Is.True);
@@ -131,6 +136,119 @@ namespace Narthex.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TitleBossButton_LoadsDedicatedBossDevelopmentScene()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                TitleScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The title boss-route test runs in the Unity Editor.");
+            yield break;
+#endif
+            yield return null;
+            var titleScene = SceneManager.GetActiveScene();
+            var host = FindSceneComponent<TitleScreenHost>(titleScene);
+            InvokePrivateMethod(host, "ShowMenu");
+            var bossButton = FindSceneTransform(titleScene, "보스전").GetComponent<Button>();
+            Assert.That(bossButton, Is.Not.Null);
+            bossButton.onClick.Invoke();
+            yield return WaitForConditionRealtime(
+                () => SceneManager.GetActiveScene().name == "BossDevelopmentScene",
+                5f,
+                "The title Boss button did not load the dedicated boss-development scene.");
+            Assert.That(FindSceneComponent<HelteBossFsmDevBootstrapHost>(SceneManager.GetActiveScene()), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator TitleNewGameAndContinue_RestoreTheExpectedTutorialRun()
+        {
+            var savePath = GameLaunchSession.SavePath;
+            var hadSave = File.Exists(savePath);
+            var previousSave = hadSave ? File.ReadAllBytes(savePath) : null;
+            try
+            {
+#if UNITY_EDITOR
+                var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                    TitleScenePath,
+                    new LoadSceneParameters(LoadSceneMode.Single));
+                Assert.That(loadOperation, Is.Not.Null);
+                while (!loadOperation.isDone) yield return null;
+#else
+                Assert.Ignore("The title save-route test runs in the Unity Editor.");
+                yield break;
+#endif
+                yield return null;
+                var initialTitleScene = SceneManager.GetActiveScene();
+                var initialTitleHost = FindSceneComponent<TitleScreenHost>(initialTitleScene);
+                InvokePrivateMethod(initialTitleHost, "ShowMenu");
+                FindSceneTransform(initialTitleScene, "새 게임 시작").GetComponent<Button>().onClick.Invoke();
+                yield return WaitForConditionRealtime(
+                    () => SceneManager.GetActiveScene().name == "TutorialScene",
+                    6f,
+                    "New Game did not begin a fresh tutorial before the save test.");
+                yield return null;
+                var tutorialScene = SceneManager.GetActiveScene();
+                var playerBody = FindSceneComponent<PlayerMotorHost>(tutorialScene).GetComponent<Rigidbody2D>();
+                var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+                var pauseMenu = FindSceneComponent<TutorialPauseMenuHost>(tutorialScene);
+                var savedQuestId = questSequence.CurrentQuestId;
+                var savedPosition = playerBody.position + Vector2.right * 0.4f;
+                MovePlayer(playerBody, savedPosition);
+                InvokePrivateMethod(pauseMenu, "SaveAndExit");
+                yield return WaitForConditionRealtime(
+                    () => SceneManager.GetActiveScene().name == "TitleScene",
+                    5f,
+                    "Save and Exit did not return to the title.");
+
+                var saved = GameLaunchSession.LoadSave();
+                Assert.That(GameLaunchSession.CanContinue(saved), Is.True);
+                Assert.That(saved.Run.SavedQuestId, Is.EqualTo(savedQuestId));
+                Assert.That(saved.Run.HasSavedPlayerPosition, Is.True);
+
+                var titleScene = SceneManager.GetActiveScene();
+                var titleHost = FindSceneComponent<TitleScreenHost>(titleScene);
+                InvokePrivateMethod(titleHost, "ShowMenu");
+                FindSceneTransform(titleScene, "이어하기").GetComponent<Button>().onClick.Invoke();
+                yield return WaitForConditionRealtime(
+                    () => SceneManager.GetActiveScene().name == "TutorialScene",
+                    6f,
+                    "Continue did not load the tutorial.");
+                yield return null;
+                tutorialScene = SceneManager.GetActiveScene();
+                playerBody = FindSceneComponent<PlayerMotorHost>(tutorialScene).GetComponent<Rigidbody2D>();
+                questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+                Assert.That(questSequence.CurrentQuestId, Is.EqualTo(savedQuestId));
+                Assert.That(Vector2.Distance(playerBody.position, savedPosition), Is.LessThan(0.15f),
+                    "Continue must restore Prome's exact saved position.");
+
+                SceneManager.LoadScene("TitleScene", LoadSceneMode.Single);
+                yield return null;
+                titleScene = SceneManager.GetActiveScene();
+                titleHost = FindSceneComponent<TitleScreenHost>(titleScene);
+                InvokePrivateMethod(titleHost, "ShowMenu");
+                FindSceneTransform(titleScene, "새 게임 시작").GetComponent<Button>().onClick.Invoke();
+                yield return WaitForConditionRealtime(
+                    () => SceneManager.GetActiveScene().name == "TutorialScene",
+                    6f,
+                    "New Game did not load the tutorial.");
+                yield return null;
+                tutorialScene = SceneManager.GetActiveScene();
+                questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
+                Assert.That(questSequence.CurrentStepIndex, Is.EqualTo(0));
+                Assert.That(GameLaunchSession.LoadSave().Run.HasSavedPlayerPosition, Is.False,
+                    "New Game must clear the prior Continue position.");
+            }
+            finally
+            {
+                if (hadSave) File.WriteAllBytes(savePath, previousSave);
+                else if (File.Exists(savePath)) File.Delete(savePath);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator TutorialObjectiveBeacon_PointsAtEveryQuestTargetAndHidesAtArrival()
         {
 #if UNITY_EDITOR
@@ -172,6 +290,35 @@ namespace Narthex.PlayModeTests
                 Assert.That(visual.activeSelf, Is.False, $"{questId} arrow must hide after reaching the target.");
             }
             beacon.ClearExternalTarget();
+        }
+
+        [UnityTest]
+        public IEnumerator DoubleJumpSummit_IsRecreatedWhenEditorOnlyAuthoringMarkerIsMissing()
+        {
+#if UNITY_EDITOR
+            var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                ImportedTutorialScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.That(loadOperation, Is.Not.Null);
+            while (!loadOperation.isDone) yield return null;
+#else
+            Assert.Ignore("The build-marker fallback test runs in the Unity Editor.");
+            yield break;
+#endif
+            var scene = SceneManager.GetActiveScene();
+            var authored = FindSceneTransform(scene, "훈련_더블점프_끝");
+            UnityEngine.Object.Destroy(authored.gameObject);
+            yield return null;
+
+            var runtimeMarker = TutorialTrainingRuntimeMarkerInstaller.EnsureDoubleJumpSummit(scene);
+            Assert.That(runtimeMarker, Is.Not.Null);
+            Assert.That(runtimeMarker.name, Is.EqualTo("Runtime_훈련_더블점프_끝"));
+            Assert.That(runtimeMarker.CompareTag("EditorOnly"), Is.False);
+            Assert.That(runtimeMarker.GetComponent<TutorialTrainingArrivalMarkerHost>()?.HasValidSetup, Is.True);
+            Assert.That(runtimeMarker.GetComponent<Collider2D>()?.isTrigger, Is.True);
+            Assert.That(
+                FindSceneComponent<TutorialObjectiveBeaconHost>(scene).GetTarget("QST-TUTO-006"),
+                Is.EqualTo(runtimeMarker));
         }
 
         [UnityTest]
@@ -1244,11 +1391,15 @@ namespace Narthex.PlayModeTests
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-006"),
                 "Double jump outside its active full-room scope must not count.");
-            var doubleJumpFinish = FindSceneTransform(tutorialScene, "훈련_더블점프_끝");
+            var doubleJumpFinish = TutorialTrainingRuntimeMarkerInstaller.EnsureDoubleJumpSummit(tutorialScene);
+            Assert.That(doubleJumpFinish, Is.Not.Null,
+                "The runtime summit trigger must be available in both Editor and player builds.");
+            Assert.That(doubleJumpFinish.CompareTag("EditorOnly"), Is.False,
+                "The summit trigger must survive player builds.");
             MovePlayer(playerBody, doubleJumpFinish.position);
             var doubleJumpArrival = doubleJumpFinish.GetComponent<TutorialTrainingArrivalMarkerHost>();
             Assert.That(doubleJumpArrival, Is.Not.Null);
-            InvokePrivateMethod(doubleJumpArrival, "OnTriggerEnter2D", playerCollider);
+            yield return new WaitForFixedUpdate();
             yield return WaitForQuest(questSequence, "QST-TUTO-002");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
