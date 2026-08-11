@@ -166,14 +166,18 @@ namespace Narthex.PlayModeTests
         public IEnumerator TitleResetButton_ClearsContinueDataImmediately()
         {
             var savePath = GameLaunchSession.SavePath;
+            var legacySavePath = GameLaunchSession.LegacyTutorialSavePath;
             var hadSave = File.Exists(savePath);
             var previousSave = hadSave ? File.ReadAllBytes(savePath) : null;
+            var hadLegacySave = File.Exists(legacySavePath);
+            var previousLegacySave = hadLegacySave ? File.ReadAllBytes(legacySavePath) : null;
             try
             {
                 var demoSave = new SaveData();
                 demoSave.Run.SavedQuestId = "QST-TUTO-006";
                 demoSave.Run.HasSavedPlayerPosition = true;
                 new SaveFileStore(savePath).Save(demoSave);
+                new SaveFileStore(legacySavePath).Save(demoSave);
 #if UNITY_EDITOR
                 var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
                     TitleScenePath,
@@ -193,6 +197,8 @@ namespace Narthex.PlayModeTests
                 resetButton.onClick.Invoke();
                 yield return null;
                 Assert.That(File.Exists(savePath), Is.False);
+                Assert.That(File.Exists(legacySavePath), Is.False,
+                    "Reset must remove the legacy tutorial save that previously restored stale HUD progress.");
                 Assert.That(GameLaunchSession.CanContinue(GameLaunchSession.LoadSave()), Is.False);
                 Assert.That(host.SettingsVisible, Is.False);
                 Assert.That(host.MainMenuVisible, Is.False,
@@ -202,6 +208,8 @@ namespace Narthex.PlayModeTests
             {
                 if (hadSave) File.WriteAllBytes(savePath, previousSave);
                 else if (File.Exists(savePath)) File.Delete(savePath);
+                if (hadLegacySave) File.WriteAllBytes(legacySavePath, previousLegacySave);
+                else if (File.Exists(legacySavePath)) File.Delete(legacySavePath);
             }
         }
 
@@ -209,10 +217,20 @@ namespace Narthex.PlayModeTests
         public IEnumerator TitleNewGameAndContinue_RestoreTheExpectedTutorialRun()
         {
             var savePath = GameLaunchSession.SavePath;
+            var legacySavePath = GameLaunchSession.LegacyTutorialSavePath;
             var hadSave = File.Exists(savePath);
             var previousSave = hadSave ? File.ReadAllBytes(savePath) : null;
+            var hadLegacySave = File.Exists(legacySavePath);
+            var previousLegacySave = hadLegacySave ? File.ReadAllBytes(legacySavePath) : null;
             try
             {
+                var staleLegacySave = new SaveData();
+                staleLegacySave.Run.QuestIds.AddRange(new[]
+                {
+                    "QST-TUTO-001", "QST-TUTO-004", "QST-TUTO-006"
+                });
+                staleLegacySave.Run.SavedQuestId = "QST-TUTO-002";
+                new SaveFileStore(legacySavePath).Save(staleLegacySave);
 #if UNITY_EDITOR
                 var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
                     TitleScenePath,
@@ -237,6 +255,10 @@ namespace Narthex.PlayModeTests
                 var playerBody = FindSceneComponent<PlayerMotorHost>(tutorialScene).GetComponent<Rigidbody2D>();
                 var questSequence = FindSceneComponent<TutorialQuestSequenceHost>(tutorialScene);
                 var pauseMenu = FindSceneComponent<TutorialPauseMenuHost>(tutorialScene);
+                Assert.That(questSequence.CurrentStepIndex, Is.EqualTo(0));
+                Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-001"),
+                    "New Game must ignore and remove the legacy tutorial save instead of restoring HUD step 4.");
+                Assert.That(File.Exists(legacySavePath), Is.False);
                 var savedQuestId = questSequence.CurrentQuestId;
                 var savedPosition = playerBody.position + Vector2.right * 0.4f;
                 MovePlayer(playerBody, savedPosition);
@@ -288,6 +310,8 @@ namespace Narthex.PlayModeTests
             {
                 if (hadSave) File.WriteAllBytes(savePath, previousSave);
                 else if (File.Exists(savePath)) File.Delete(savePath);
+                if (hadLegacySave) File.WriteAllBytes(legacySavePath, previousLegacySave);
+                else if (File.Exists(legacySavePath)) File.Delete(legacySavePath);
             }
         }
 

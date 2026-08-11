@@ -101,6 +101,15 @@ namespace Narthex.Tests
         }
 
         [Test]
+        public void TutorialSaveAlias_UsesTheCanonicalTitleSavePath()
+        {
+            Assert.That(GameLaunchSession.ResolveSavePath("narthex_save.json"),
+                Is.EqualTo(GameLaunchSession.SavePath));
+            Assert.That(GameLaunchSession.ResolveSavePath("narthex_tutorial_save.json"),
+                Is.EqualTo(GameLaunchSession.SavePath));
+        }
+
+        [Test]
         public void MigrationRunner_AdvancesSaveVersion()
         {
             var save = new SaveData();

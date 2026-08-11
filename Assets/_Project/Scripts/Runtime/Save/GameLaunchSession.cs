@@ -18,13 +18,29 @@ namespace Narthex.Save
     public static class GameLaunchSession
     {
         private const string SaveFileName = "narthex_save.json";
+        private const string LegacyTutorialSaveFileName = "narthex_tutorial_save.json";
         private static GameLaunchMode mode = GameLaunchMode.DirectDevelopment;
         private static GameLaunchMode pendingTutorialMode = GameLaunchMode.DirectDevelopment;
 
         public static GameLaunchMode Mode => mode;
         public static string SavePath => Path.Combine(Application.persistentDataPath, SaveFileName);
+        public static string LegacyTutorialSavePath =>
+            Path.Combine(Application.persistentDataPath, LegacyTutorialSaveFileName);
 
-        public static SaveData LoadSave() => new SaveFileStore(SavePath).Load();
+        public static SaveData LoadSave()
+        {
+            MigrateLegacyTutorialSave();
+            return new SaveFileStore(SavePath).Load();
+        }
+
+        public static string ResolveSavePath(string requestedFileName)
+        {
+            if (string.IsNullOrWhiteSpace(requestedFileName) ||
+                requestedFileName == SaveFileName ||
+                requestedFileName == LegacyTutorialSaveFileName)
+                return SavePath;
+            return Path.Combine(Application.persistentDataPath, requestedFileName);
+        }
 
         public static bool CanContinue(SaveData data)
         {
@@ -41,6 +57,7 @@ namespace Narthex.Save
         public static void PrepareNewGame()
         {
             var current = LoadSave();
+            ResetSaveStore(LegacyTutorialSavePath);
             new SaveFileStore(SavePath).Save(CreateFreshSavePreservingSettings(current));
             pendingTutorialMode = GameLaunchMode.DirectDevelopment;
             mode = GameLaunchMode.NewGame;
@@ -97,11 +114,20 @@ namespace Narthex.Save
         public static void ResetAllLocalData()
         {
             ResetSaveStore(SavePath);
+            ResetSaveStore(LegacyTutorialSavePath);
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             Caching.ClearCache();
             mode = GameLaunchMode.DirectDevelopment;
             pendingTutorialMode = GameLaunchMode.DirectDevelopment;
+        }
+
+        private static void MigrateLegacyTutorialSave()
+        {
+            if (File.Exists(SavePath) || !File.Exists(LegacyTutorialSavePath)) return;
+            var legacyData = new SaveFileStore(LegacyTutorialSavePath).Load();
+            new SaveFileStore(SavePath).Save(legacyData);
+            ResetSaveStore(LegacyTutorialSavePath);
         }
 
         public static void ResetSaveStore(string path)

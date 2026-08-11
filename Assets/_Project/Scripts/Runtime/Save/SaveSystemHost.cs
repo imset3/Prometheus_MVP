@@ -22,7 +22,7 @@ namespace Narthex.Save
             }
 
             serviceRoot.Initialize();
-            var path = global::System.IO.Path.Combine(Application.persistentDataPath, saveFileName);
+            var path = GameLaunchSession.ResolveSavePath(saveFileName);
             System = new SaveSystem(serviceRoot.Events, new SaveFileStore(path));
             System.Load();
             return true;
