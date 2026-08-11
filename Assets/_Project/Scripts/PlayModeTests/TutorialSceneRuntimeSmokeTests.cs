@@ -836,7 +836,7 @@ namespace Narthex.PlayModeTests
             Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneComponent<TutorialWaveEncounterHost>(tutorialScene).EncounterStarted, Is.True);
 
-            Assert.That(skip.JumpToNextSection(), Is.True);
+            Assert.That(skip.JumpToHelteSection(), Is.True);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-008"));
             Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.False);
@@ -1509,6 +1509,10 @@ namespace Narthex.PlayModeTests
             Assert.That(jumpProjectileSprite, Is.Not.Null);
             Assert.That(jumpProjectileSprite.enabled && jumpProjectileSprite.sprite != null, Is.True,
                 "The active jump projectile must have visible sprite art.");
+            Assert.That(jumpProjectileSprite.sortingOrder, Is.GreaterThanOrEqualTo(180),
+                "The forward projectile must render above training platforms in player builds.");
+            Assert.That(jumpProjectileSprite.sharedMaterial?.name, Does.Contain("Sprite-Unlit-Default"),
+                "The forward projectile must remain visible without depending on scene lighting.");
             yield return new WaitForSeconds(0.15f);
             Assert.That(jumpProjectile.transform.position.x, Is.LessThan(jumpProjectileStart.x - 0.05f),
                 "The right-wall jump projectile must visibly travel toward the player lane.");
@@ -1530,6 +1534,11 @@ namespace Narthex.PlayModeTests
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
             yield return WaitForTrainingPhase(phaseController, 3);
+            var trainingFade = GetPrivateField<CanvasGroup>(phaseController, "fadeCanvasGroup");
+            Assert.That(trainingFade.alpha, Is.EqualTo(0f).Within(0.001f),
+                "The jump-to-melee transition must never leave the player behind a black overlay.");
+            Assert.That(trainingFade.blocksRaycasts, Is.False);
+            Assert.That(inputHost.enabled, Is.True);
             yield return WaitForConditionRealtime(
                 () => trainingSpawn.EnemySequenceStarted,
                 2f,

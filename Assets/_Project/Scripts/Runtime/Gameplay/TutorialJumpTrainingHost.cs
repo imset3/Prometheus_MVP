@@ -34,6 +34,7 @@ namespace Narthex.Gameplay
 
         private Coroutine trainingRoutine;
         private int nextProjectileIndex;
+        private Material runtimeUnlitMaterial;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
                                      !string.IsNullOrWhiteSpace(jumpQuestId) && player != null && playerBody != null &&
@@ -51,6 +52,7 @@ namespace Narthex.Gameplay
 
             serviceRoot.Initialize();
             questManagerHost.Initialize();
+            EnsureProjectileVisuals();
             HideProjectiles();
         }
 
@@ -106,6 +108,7 @@ namespace Narthex.Gameplay
             var projectileObject = projectilePool[index];
             var body = projectileBodyPool[index];
             var hazard = projectileHazardPool[index];
+            EnsureProjectileVisuals(projectileObject);
             body.position = launchPoint.position;
             projectileObject.transform.position = launchPoint.position;
             projectileObject.SetActive(true);
@@ -170,6 +173,38 @@ namespace Narthex.Gameplay
                     projectileHazardPool[index] == null)
                     return false;
             return true;
+        }
+
+        private void EnsureProjectileVisuals()
+        {
+            runtimeUnlitMaterial = FindRuntimeUnlitSpriteMaterial();
+            foreach (var projectileObject in projectilePool)
+                EnsureProjectileVisuals(projectileObject);
+        }
+
+        private void EnsureProjectileVisuals(GameObject projectileObject)
+        {
+            if (projectileObject == null) return;
+            foreach (var renderer in projectileObject.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                renderer.enabled = true;
+                var color = renderer.color;
+                color.a = 1f;
+                renderer.color = color;
+                renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 180);
+                if (runtimeUnlitMaterial != null) renderer.sharedMaterial = runtimeUnlitMaterial;
+            }
+        }
+
+        private static Material FindRuntimeUnlitSpriteMaterial()
+        {
+            foreach (var renderer in Resources.FindObjectsOfTypeAll<SpriteRenderer>())
+            {
+                var material = renderer != null ? renderer.sharedMaterial : null;
+                if (material != null && material.name.Contains("Sprite-Unlit-Default"))
+                    return material;
+            }
+            return null;
         }
     }
 }

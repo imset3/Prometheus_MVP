@@ -113,9 +113,11 @@ namespace Narthex.Gameplay
         private void OnDisable()
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
-            if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+            var interruptedOwnTransition = transitionRoutine != null;
+            if (interruptedOwnTransition) StopCoroutine(transitionRoutine);
             transitionRoutine = null;
             SetPlayerLocked(false);
+            if (interruptedOwnTransition) ResetFadeOverlay();
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message)
@@ -166,28 +168,50 @@ namespace Narthex.Gameplay
 
         private IEnumerator TransitionToPhase(int nextPhaseIndex)
         {
-            SetPlayerLocked(true);
-            yield return FadeTo(1f, fadeOutDuration);
-            Refresh(trainingQuestIds[nextPhaseIndex]);
-            MovePlayerToMarker(phaseStartMarkers[nextPhaseIndex]);
-            yield return FadeTo(0f, fadeInDuration);
-            SetPlayerLocked(false);
-            transitionRoutine = null;
+            try
+            {
+                SetPlayerLocked(true);
+                yield return FadeTo(1f, fadeOutDuration);
+                Refresh(trainingQuestIds[nextPhaseIndex]);
+                MovePlayerToMarker(phaseStartMarkers[nextPhaseIndex]);
+                yield return FadeTo(0f, fadeInDuration);
+            }
+            finally
+            {
+                ResetFadeOverlay();
+                SetPlayerLocked(false);
+                transitionRoutine = null;
+            }
         }
 
         private IEnumerator RestartPhase(int phaseIndex)
         {
-            SetPlayerLocked(true);
-            yield return FadeTo(1f, fadeOutDuration);
-            questManagerHost.Initialize();
-            questManagerHost.System.ResetProgress(trainingQuestIds[phaseIndex]);
-            phaseContentRoots[phaseIndex].SetActive(false);
-            MovePlayerToMarker(phaseStartMarkers[phaseIndex]);
-            phaseContentRoots[phaseIndex].SetActive(true);
-            phaseAreas[phaseIndex].enabled = true;
-            yield return FadeTo(0f, fadeInDuration);
-            SetPlayerLocked(false);
-            transitionRoutine = null;
+            try
+            {
+                SetPlayerLocked(true);
+                yield return FadeTo(1f, fadeOutDuration);
+                questManagerHost.Initialize();
+                questManagerHost.System.ResetProgress(trainingQuestIds[phaseIndex]);
+                phaseContentRoots[phaseIndex].SetActive(false);
+                MovePlayerToMarker(phaseStartMarkers[phaseIndex]);
+                phaseContentRoots[phaseIndex].SetActive(true);
+                phaseAreas[phaseIndex].enabled = true;
+                yield return FadeTo(0f, fadeInDuration);
+            }
+            finally
+            {
+                ResetFadeOverlay();
+                SetPlayerLocked(false);
+                transitionRoutine = null;
+            }
+        }
+
+        private void ResetFadeOverlay()
+        {
+            if (fadeCanvasGroup == null) return;
+            fadeCanvasGroup.alpha = 0f;
+            fadeCanvasGroup.blocksRaycasts = false;
+            fadeCanvasGroup.interactable = false;
         }
 
         private void MovePlayerToMarker(Transform marker)

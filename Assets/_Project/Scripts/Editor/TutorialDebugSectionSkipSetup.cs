@@ -136,7 +136,7 @@ namespace Narthex.Tools
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
                 AssetDatabase.SaveAssets();
-                Debug.Log("[sragon000][개발자 스킵] F8=F 바로가기, F9=F→G→헬테 순차 이동을 적용했습니다.");
+                Debug.Log("[sragon000][개발자 스킵] F8=다음 전투 구간, F9=헬테 직전 이동을 적용했습니다.");
             }
             catch (Exception exception)
             {

@@ -131,9 +131,6 @@ namespace Narthex.Gameplay
 
         public bool TryDebugJumpToQuest(string questId)
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            return false;
-#else
             if (!HasValidSequence || string.IsNullOrWhiteSpace(questId))
                 return false;
             serviceRoot.Initialize();
@@ -155,7 +152,6 @@ namespace Narthex.Gameplay
             currentStep = targetStep;
             PublishCurrentObjective();
             return true;
-#endif
         }
 
         private int FindFirstIncompleteStep()

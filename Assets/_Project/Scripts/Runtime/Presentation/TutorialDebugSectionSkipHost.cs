@@ -101,8 +101,8 @@ namespace Narthex.Presentation
         {
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
-            if (keyboard.f8Key.wasPressedThisFrame) JumpToFSection();
-            else if (keyboard.f9Key.wasPressedThisFrame) JumpToNextSection();
+            if (keyboard.f8Key.wasPressedThisFrame) JumpToNextSection();
+            else if (keyboard.f9Key.wasPressedThisFrame) JumpToHelteSection();
         }
 
         private void OnGUI()
@@ -111,6 +111,8 @@ namespace Narthex.Presentation
         }
 
         public bool JumpToFSection() => JumpToSection(0);
+
+        public bool JumpToHelteSection() => JumpToSection(sections.Length - 1);
 
         public bool JumpToNextSection()
         {
@@ -122,6 +124,11 @@ namespace Narthex.Presentation
         {
             if (!HasValidSetup || sectionIndex < 0 || sectionIndex >= sections.Length) return false;
             var section = sections[sectionIndex];
+            if (questSequenceHost.FindStepIndex(section.QuestId) < 0)
+            {
+                Debug.LogError($"구간 스킵 퀘스트를 찾지 못했습니다: {section.QuestId}", this);
+                return false;
+            }
 
             dialoguePresenter.CancelForDebugSkip();
             if (introFlowHost != null) introFlowHost.enabled = false;
