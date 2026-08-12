@@ -29,12 +29,24 @@ namespace Narthex.Gameplay
             System.Array.Empty<TutorialJumpProjectileHazardHost>();
         [SerializeField, Min(0f)] private float initialDelay = 0.45f;
         [SerializeField, Min(0.1f)] private float travelDuration = 1.55f;
-        [SerializeField, Min(0.1f)] private float launchInterval = 1f;
+        [SerializeField, Min(0.1f)] private float launchInterval = 2.25f;
         [SerializeField, Min(0f)] private float restartDelay = 0.4f;
 
         private Coroutine trainingRoutine;
         private int nextProjectileIndex;
         private Material runtimeUnlitMaterial;
+
+        /// <summary>
+        /// The next projectile must not launch before the previous one has cleared
+        /// the lane and the player has had a readable jump/landing window.
+        /// Older scenes serialized a one-second interval, so enforce the safe gap
+        /// at runtime as well as through the Inspector default.
+        /// </summary>
+        private float EffectiveLaunchInterval => Mathf.Max(launchInterval, travelDuration + 0.65f);
+        public float SafeLaunchInterval => EffectiveLaunchInterval;
+        public int ActiveProjectileCount => projectilePool == null
+            ? 0
+            : System.Array.FindAll(projectilePool, item => item != null && item.activeInHierarchy).Length;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
                                      !string.IsNullOrWhiteSpace(jumpQuestId) && player != null && playerBody != null &&
@@ -106,7 +118,7 @@ namespace Narthex.Gameplay
                 nextProjectileIndex = (nextProjectileIndex + 1) % projectilePool.Length;
                 if (projectilePool[index].activeSelf) HideProjectile(index);
                 StartCoroutine(FlyProjectile(index));
-                yield return new WaitForSeconds(launchInterval);
+                yield return new WaitForSeconds(EffectiveLaunchInterval);
             }
             trainingRoutine = null;
         }

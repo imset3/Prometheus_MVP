@@ -50,6 +50,7 @@ namespace Narthex.Tools
             "tutorial.double-jump-platform-align",
             "tutorial.demo-ending.apply",
             "tutorial.training-dummies.apply",
+            "tutorial.lava-art.apply",
             "tilemap.clearance.audit",
             "tilemap.clearance.apply",
             "title.scene.apply",
@@ -307,6 +308,12 @@ namespace Narthex.Tools
                     response.changed = !request.dryRun && response.changes.Count > 0;
                     response.message = (request.dryRun ? "Previewed" : "Applied") +
                                        " existing ranged training dummies (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.lava-art.apply":
+                    response.changes = PrometheusTutorialLavaArtAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " animated G-stage lava art (" + response.changes.Count + " change(s)).";
                     break;
                 case "tilemap.clearance.audit":
                     response.records = PrometheusTilemapSceneIntegrator.AuditSolidColliders(

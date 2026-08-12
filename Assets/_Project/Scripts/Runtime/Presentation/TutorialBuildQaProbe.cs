@@ -47,10 +47,21 @@ namespace Narthex.Presentation
                 yield break;
             }
             phase.RefreshCurrentQuest();
-            yield return new WaitForSecondsRealtime(1.25f);
+            var jumpTraining = FindSceneComponent<TutorialJumpTrainingHost>();
+            var maxConcurrentProjectiles = 0;
+            var jumpSampleEnd = Time.realtimeSinceStartup + 6.25f;
+            while (Time.realtimeSinceStartup < jumpSampleEnd)
+            {
+                maxConcurrentProjectiles = Mathf.Max(
+                    maxConcurrentProjectiles,
+                    jumpTraining != null ? jumpTraining.ActiveProjectileCount : 0);
+                yield return new WaitForSecondsRealtime(0.1f);
+            }
             var projectile = FindActive("JumpProjectileVisual_ART");
             Capture("01_jump_projectile.png");
             LogState("jump-projectile", projectile);
+            Debug.Log($"[BUILD-QA] jump-spacing maxConcurrent={maxConcurrentProjectiles} " +
+                      $"safeInterval={jumpTraining?.SafeLaunchInterval:0.00}");
 
             if (!sequence.TryDebugJumpToQuest("QST-TUTO-003"))
             {
@@ -62,6 +73,17 @@ namespace Narthex.Presentation
             var dummy = FindActive("TrainingDummyVisual_ART");
             Capture("02_melee_dummy.png");
             LogState("melee-dummy", dummy);
+
+            if (!sequence.TryDebugJumpToQuest("QST-TUTO-005"))
+            {
+                Finish(false, "failed to enter ranged quest");
+                yield break;
+            }
+            phase.RefreshCurrentQuest();
+            yield return new WaitForSecondsRealtime(0.75f);
+            var rangedFlow = FindSceneComponent<TutorialImportedTrainingFlowHost>();
+            var visibleRangedTargets = rangedFlow?.VisibleRangedTargetCount ?? 0;
+            Debug.Log($"[BUILD-QA] ranged-dummies visible={visibleRangedTargets}");
 
             if (!skip.JumpToFSection())
             {
@@ -82,13 +104,17 @@ namespace Narthex.Presentation
             yield return new WaitForSecondsRealtime(1.75f);
             var wave = FindSceneComponent<TutorialWaveEncounterHost>();
             var activeWaveEnemies = wave?.ActiveEnemyCount ?? 0;
+            var lavaVisual = FindActive("LavaAnimatedVisual_ART");
             Capture("04_g_enemies.png");
-            Debug.Log($"[BUILD-QA] g-enemies active={activeWaveEnemies} background={background.CurrentKey}");
+            Debug.Log($"[BUILD-QA] g-enemies active={activeWaveEnemies} background={background.CurrentKey} " +
+                      $"lavaVisible={lavaVisual != null}");
 
-            Finish(projectile != null && dummy != null && activeEnemies > 0 && background.CurrentKey == "G" &&
-                   activeWaveEnemies > 0,
-                $"projectile={projectile != null}, dummy={dummy != null}, fEnemies={activeEnemies}, " +
-                $"gEnemies={activeWaveEnemies}, background={background.CurrentKey}");
+            Finish(projectile != null && maxConcurrentProjectiles == 1 && dummy != null &&
+                   visibleRangedTargets == 3 && activeEnemies > 0 && background.CurrentKey == "G" &&
+                   activeWaveEnemies > 0 && lavaVisual != null,
+                $"projectile={projectile != null}, maxConcurrent={maxConcurrentProjectiles}, " +
+                $"dummy={dummy != null}, ranged={visibleRangedTargets}, fEnemies={activeEnemies}, " +
+                $"gEnemies={activeWaveEnemies}, lava={lavaVisual != null}, background={background.CurrentKey}");
         }
 
         private static T FindSceneComponent<T>() where T : Component =>

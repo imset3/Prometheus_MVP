@@ -88,14 +88,20 @@ namespace Narthex.Gameplay
         private void RecoverRuntimeReferences()
         {
             dashRestartPoint ??= transform.Find("DashTrainingRestartPoint");
-            if (tutorialEnemy == null)
-                tutorialEnemy = transform.Find("TrainingPhaseContents/04_근접공격/AttackTrainingArea/TutorialEnemy")?.gameObject;
+            var runtimeEnemy = transform.Find(
+                "TrainingPhaseContents/04_근접공격/AttackTrainingArea/TutorialEnemy")?.gameObject;
+            // EditorOnly marker transforms are stripped from Player builds. Never keep
+            // their serialized references when a self-contained runtime dummy exists.
+            if (runtimeEnemy != null)
+                tutorialEnemy = runtimeEnemy;
             if (tutorialEnemy != null)
             {
-                enemySpawnPoint ??= tutorialEnemy.transform;
-                enemyLandingPoint ??= tutorialEnemy.transform;
-                enemyCollider ??= tutorialEnemy.GetComponent<Collider2D>();
-                enemyAttackBehaviour ??= tutorialEnemy.GetComponent<EnemyAttackHost>();
+                if (enemySpawnPoint == null || enemySpawnPoint.CompareTag("EditorOnly"))
+                    enemySpawnPoint = tutorialEnemy.transform;
+                if (enemyLandingPoint == null || enemyLandingPoint.CompareTag("EditorOnly"))
+                    enemyLandingPoint = tutorialEnemy.transform;
+                enemyCollider = tutorialEnemy.GetComponent<Collider2D>() ?? enemyCollider;
+                enemyAttackBehaviour = tutorialEnemy.GetComponent<EnemyAttackHost>() ?? enemyAttackBehaviour;
             }
         }
 
