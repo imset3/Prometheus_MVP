@@ -49,6 +49,15 @@ namespace Narthex.Gameplay
             }
         }
 
+        public bool AreRangedTargetsInside(Bounds bounds)
+        {
+            if (rangedTargets == null || rangedTargets.Length != 3) return false;
+            foreach (var target in rangedTargets)
+                if (target == null || !bounds.Contains(target.transform.position))
+                    return false;
+            return true;
+        }
+
         private void Awake()
         {
             if (!HasValidSetup)

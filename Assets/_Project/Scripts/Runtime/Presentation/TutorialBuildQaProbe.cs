@@ -71,8 +71,12 @@ namespace Narthex.Presentation
             phase.RefreshCurrentQuest();
             yield return new WaitForSecondsRealtime(1.25f);
             var dummy = FindActive("TrainingDummyVisual_ART");
+            var meleeActor = FindActiveObject("TutorialEnemy");
+            var meleeInsideTraining = meleeActor != null && phase.ContainsCurrentPhase(meleeActor.transform.position);
             Capture("02_melee_dummy.png");
             LogState("melee-dummy", dummy);
+            Debug.Log($"[BUILD-QA] melee-placement insideTraining={meleeInsideTraining} " +
+                      $"position={meleeActor?.transform.position}");
 
             if (!sequence.TryDebugJumpToQuest("QST-TUTO-005"))
             {
@@ -83,7 +87,10 @@ namespace Narthex.Presentation
             yield return new WaitForSecondsRealtime(0.75f);
             var rangedFlow = FindSceneComponent<TutorialImportedTrainingFlowHost>();
             var visibleRangedTargets = rangedFlow?.VisibleRangedTargetCount ?? 0;
-            Debug.Log($"[BUILD-QA] ranged-dummies visible={visibleRangedTargets}");
+            var rangedInsideTraining = rangedFlow != null &&
+                                       rangedFlow.AreRangedTargetsInside(phase.CurrentPhaseBounds);
+            Debug.Log($"[BUILD-QA] ranged-dummies visible={visibleRangedTargets} " +
+                      $"insideTraining={rangedInsideTraining}");
 
             if (!skip.JumpToFSection())
             {
@@ -110,10 +117,12 @@ namespace Narthex.Presentation
                       $"lavaVisible={lavaVisual != null}");
 
             Finish(projectile != null && maxConcurrentProjectiles == 1 && dummy != null &&
-                   visibleRangedTargets == 3 && activeEnemies > 0 && background.CurrentKey == "G" &&
+                   meleeInsideTraining && visibleRangedTargets == 3 && rangedInsideTraining &&
+                   activeEnemies > 0 && background.CurrentKey == "G" &&
                    activeWaveEnemies > 0 && lavaVisual != null,
                 $"projectile={projectile != null}, maxConcurrent={maxConcurrentProjectiles}, " +
-                $"dummy={dummy != null}, ranged={visibleRangedTargets}, fEnemies={activeEnemies}, " +
+                $"dummy={dummy != null}, meleeInside={meleeInsideTraining}, ranged={visibleRangedTargets}, " +
+                $"rangedInside={rangedInsideTraining}, fEnemies={activeEnemies}, " +
                 $"gEnemies={activeWaveEnemies}, lava={lavaVisual != null}, background={background.CurrentKey}");
         }
 
@@ -127,6 +136,13 @@ namespace Narthex.Presentation
                                              candidate.gameObject.scene.name == "TutorialScene" &&
                                              candidate.gameObject.activeInHierarchy &&
                                              candidate.GetComponent<SpriteRenderer>() is { enabled: true, sprite: not null })
+                ?.gameObject;
+
+        private static GameObject FindActiveObject(string objectName) =>
+            Resources.FindObjectsOfTypeAll<Transform>()
+                .FirstOrDefault(candidate => candidate != null && candidate.name == objectName &&
+                                             candidate.gameObject.scene.name == "TutorialScene" &&
+                                             candidate.gameObject.activeInHierarchy)
                 ?.gameObject;
 
         private static void LogState(string label, GameObject target) =>

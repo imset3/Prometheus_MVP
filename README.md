@@ -294,7 +294,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
 - 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-DEMO_V1 교체 릴리스 직전 Unity 검증 결과는 EditMode `120/120`, PlayMode 전체 `15/15` 통과, Console 컴파일 오류 `0`입니다. PlayMode에는 실제 타이틀 보스전 버튼→`BossDevelopmentScene`, 새 게임 초기화, 저장 및 나가기→이어하기 좌표 복원, 즉시 전체 초기화, 회의장부터 훈련장 진입, 순차 훈련, 빌드 환경용 더블점프 정상 마커 복원, G 상승기류→H 이동, 전체 훈련→헬테 완료, 목표 화살표, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 메인·보스 개발씬의 스킬 1·2·3 아이콘은 동일한 `112×112` 규격이며, 상세 실플로우 기록은 [전체 플레이 검증 보고서](Assets/_Project/Docs/FULL_PLAYTEST_REPORT_2026-08-11.md)에 남겼습니다.
+DEMO_V3 교체 릴리스 직전 Unity 검증 결과는 EditMode `120/120`, PlayMode 전체 `15/15` 통과, Console 컴파일 오류 `0`입니다. 근접 훈련 허수아비는 훈련장 중앙 X=200, 원거리 허수아비 3기는 X=197/200/203에 실제 계층 오브젝트로 배치되어 있으며 구역 밖 배치를 차단하는 회귀 검사가 포함됩니다. PlayMode에는 실제 타이틀 보스전 버튼→`BossDevelopmentScene`, 새 게임 초기화, 저장 및 나가기→이어하기 좌표 복원, 즉시 전체 초기화, 회의장부터 훈련장 진입, 순차 훈련, 빌드 환경용 더블점프 정상 마커 복원, G 상승기류→H 이동, 전체 훈련→헬테 완료, 목표 화살표, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 메인·보스 개발씬의 스킬 1·2·3 아이콘은 동일한 `112×112` 규격이며, 상세 실플로우 기록은 [전체 플레이 검증 보고서](Assets/_Project/Docs/FULL_PLAYTEST_REPORT_2026-08-11.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 

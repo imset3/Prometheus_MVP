@@ -73,6 +73,15 @@ namespace Narthex.Gameplay
         public int CurrentPhaseIndex { get; private set; } = -1;
         public bool IsExitLocked { get; private set; }
         public bool IsTransitioning => transitionRoutine != null;
+        public Bounds CurrentPhaseBounds => CurrentPhaseIndex >= 0 && phaseAreas != null &&
+                                            CurrentPhaseIndex < phaseAreas.Length &&
+                                            phaseAreas[CurrentPhaseIndex] != null
+            ? phaseAreas[CurrentPhaseIndex].bounds
+            : default;
+
+        public bool ContainsCurrentPhase(Vector3 worldPosition) =>
+            CurrentPhaseIndex >= 0 && phaseAreas != null && CurrentPhaseIndex < phaseAreas.Length &&
+            phaseAreas[CurrentPhaseIndex] != null && phaseAreas[CurrentPhaseIndex].OverlapPoint(worldPosition);
         public int ActivePhaseAreaCount
         {
             get

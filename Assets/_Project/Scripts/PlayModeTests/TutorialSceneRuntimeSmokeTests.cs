@@ -1552,6 +1552,8 @@ namespace Narthex.PlayModeTests
                 () => tutorialEnemy.activeInHierarchy && tutorialEnemyCollider.enabled,
                 2f,
                 "The melee-training enemy did not finish its arrival.");
+            Assert.That(phaseController.ContainsCurrentPhase(tutorialEnemy.transform.position), Is.True,
+                $"The melee dummy spawned outside the training room at {tutorialEnemy.transform.position}.");
             MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.AttackPerformed, "PLAYER-001", 3);
             yield return null;
@@ -1683,6 +1685,8 @@ namespace Narthex.PlayModeTests
                 () => trainingFlow.VisibleRangedTargetCount == 3,
                 2f,
                 "The ranged lesson did not display all three training targets.");
+            Assert.That(trainingFlow.AreRangedTargetsInside(phaseController.CurrentPhaseBounds), Is.True,
+                "One or more ranged dummies are outside the reusable training-room bounds.");
             var rangedDirection = Vector2.zero;
             rangedAttack.RangedAttackStarted += direction => rangedDirection = direction;
             InvokePrivateMethod(inputHost, "UpdateAimDirection", -1f);
