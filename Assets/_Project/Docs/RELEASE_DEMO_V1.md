@@ -1,12 +1,12 @@
-# DEMO_V1 릴리스 노트
+# DEMO 릴리스 노트
 
-`DEMO_V1`은 Prometheus 챕터 0 튜토리얼을 처음부터 데모 엔딩까지 플레이할 수 있는 Windows·macOS 배포본입니다.
+`DEMO`는 Prometheus 챕터 0 튜토리얼을 처음부터 데모 엔딩까지 플레이할 수 있는 Windows·macOS 최신 배포본입니다.
 
 ## 배포 파일
 
-- `Prometheus_MVP_DEMO_V1_Windows.zip`
-- `Prometheus_MVP_DEMO_V1_macOS.zip`
-- `Prometheus_MVP_DEMO_V1_SHA256.txt`
+- `Prometheus_MVP_DEMO_Windows.zip`
+- `Prometheus_MVP_DEMO_macOS.zip`
+- `Prometheus_MVP_DEMO_SHA256.txt`
 
 압축을 완전히 해제한 뒤 Windows는 `Prometheus_MVP.exe`, macOS는 `Prometheus_MVP.app`을 실행합니다. Windows 실행 파일과 함께 배포된 `Prometheus_MVP_Data`, DLL 파일은 같은 폴더에 유지해야 합니다.
 
