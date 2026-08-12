@@ -31,6 +31,7 @@ namespace Narthex.Tools
             "marker.move",
             "object.set-active",
             "object.transform",
+            "hud.player-health.apply",
             "background.backplate.apply",
             "background.zenith-approach.apply",
             "training.art.apply",
@@ -197,6 +198,11 @@ namespace Narthex.Tools
                     break;
                 case "object.transform":
                     SetObjectTransform(scene, request, response);
+                    break;
+                case "hud.player-health.apply":
+                    response.changes = PrometheusPlayerHealthBarAutomation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} player health bar ({response.changes.Count} change(s)).";
                     break;
                 case "background.backplate.apply":
                     ApplyBackgroundBackplate(scene, request, response);

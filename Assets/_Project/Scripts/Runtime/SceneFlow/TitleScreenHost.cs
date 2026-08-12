@@ -85,8 +85,6 @@ namespace Narthex.SceneFlow
         private Dropdown resolutionDropdown;
         private Dropdown displayModeDropdown;
         private Slider masterSlider;
-        private Slider musicSlider;
-        private Slider sfxSlider;
         private AudioSource musicSource;
         private SaveData saveData;
         private float elapsed;
@@ -141,7 +139,7 @@ namespace Narthex.SceneFlow
             musicSource.clip = titleMusic;
             musicSource.loop = true;
             musicSource.playOnAwake = false;
-            musicSource.volume = Mathf.Clamp01(saveData.Settings.MusicVolume) * 0.62f;
+            musicSource.volume = 0.62f;
             musicSource.Play();
         }
 
@@ -270,8 +268,6 @@ namespace Narthex.SceneFlow
             resolutionDropdown = FindNamedComponent<Dropdown>(canvasObject.transform, "ResolutionDropdown");
             displayModeDropdown = FindNamedComponent<Dropdown>(canvasObject.transform, "DisplayModeDropdown");
             masterSlider = FindNamedComponent<Slider>(canvasObject.transform, "전체 음량Slider");
-            musicSlider = FindNamedComponent<Slider>(canvasObject.transform, "배경 음악Slider");
-            sfxSlider = FindNamedComponent<Slider>(canvasObject.transform, "효과음Slider");
             loadingText = FindNamedComponent<Text>(canvasObject.transform, "ProgressText");
             loadingBar = FindNamedComponent<Image>(canvasObject.transform, "ProgressFill");
             loadingCompassGlow = FindNamedComponent<Image>(canvasObject.transform, "CompassGlow");
@@ -289,7 +285,7 @@ namespace Narthex.SceneFlow
 
             if (backgroundImage == null || zenithImage == null || promeImage == null || introGroup == null ||
                 menuGroup == null || settingsGroup == null || loadingGroup == null || resolutionDropdown == null ||
-                displayModeDropdown == null || masterSlider == null || musicSlider == null || sfxSlider == null ||
+                displayModeDropdown == null || masterSlider == null ||
                 loadingText == null || loadingBar == null || loadingCompassRect == null)
                 return false;
 
@@ -374,8 +370,6 @@ namespace Narthex.SceneFlow
             CreateLabel(panel.transform, "오디오", new Vector2(-350f, 82f), 24, 220f, TextAnchor.MiddleLeft,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
             masterSlider = CreateVolumeRow(panel.transform, "전체 음량", 20f);
-            musicSlider = CreateVolumeRow(panel.transform, "배경 음악", -60f);
-            sfxSlider = CreateVolumeRow(panel.transform, "효과음", -140f);
             var apply = CreateMenuButton(panel.transform, "설정 적용", applyLabelSprite, ApplyAndCloseSettings);
             SetRect(apply.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-145f, -245f), new Vector2(260f, 72f));
             var close = CreateMenuButton(panel.transform, "돌아가기", backLabelSprite, HideSettings);
@@ -534,8 +528,8 @@ namespace Narthex.SceneFlow
             saveData.Settings.HasDisplayModeSelection = true;
             saveData.Settings.Fullscreen = displayMode != FullScreenMode.Windowed;
             saveData.Settings.MasterVolume = masterSlider.value;
-            saveData.Settings.MusicVolume = musicSlider.value;
-            saveData.Settings.SfxVolume = sfxSlider.value;
+            saveData.Settings.MusicVolume = 1f;
+            saveData.Settings.SfxVolume = 1f;
             GameLaunchSession.SaveSettings(saveData.Settings);
             ApplySavedSettings();
             HideSettings();
@@ -552,7 +546,9 @@ namespace Narthex.SceneFlow
                 resolution.x,
                 resolution.y,
                 ResolveDisplayMode(settings));
-            if (musicSource != null) musicSource.volume = Mathf.Clamp01(settings.MusicVolume) * 0.62f;
+            settings.MusicVolume = 1f;
+            settings.SfxVolume = 1f;
+            if (musicSource != null) musicSource.volume = 0.62f;
             PopulateSettingsUi();
         }
 
@@ -574,8 +570,6 @@ namespace Narthex.SceneFlow
             var displayModeIndex = System.Array.IndexOf(supportedDisplayModes, displayMode);
             displayModeDropdown.value = Mathf.Max(0, displayModeIndex);
             masterSlider.value = Mathf.Clamp01(settings.MasterVolume);
-            musicSlider.value = Mathf.Clamp01(settings.MusicVolume);
-            sfxSlider.value = Mathf.Clamp01(settings.SfxVolume);
         }
 
         private void RefreshSupportedResolutions()

@@ -15,8 +15,6 @@ namespace Narthex.SceneFlow
         private CanvasGroup root;
         private CanvasGroup settingsPanel;
         private Slider masterSlider;
-        private Slider musicSlider;
-        private Slider sfxSlider;
         private SaveSystemHost saveSystemHost;
         private PlayerInputHost playerInputHost;
         private TutorialQuestSequenceHost questSequenceHost;
@@ -104,8 +102,6 @@ namespace Narthex.SceneFlow
         {
             var settings = LoadSettings();
             masterSlider.value = settings.MasterVolume;
-            musicSlider.value = settings.MusicVolume;
-            sfxSlider.value = settings.SfxVolume;
             SetVisible(root, false);
             SetVisible(settingsPanel, true);
             RefreshPanelLayout();
@@ -116,8 +112,8 @@ namespace Narthex.SceneFlow
         {
             var settings = LoadSettings();
             settings.MasterVolume = masterSlider.value;
-            settings.MusicVolume = musicSlider.value;
-            settings.SfxVolume = sfxSlider.value;
+            settings.MusicVolume = 1f;
+            settings.SfxVolume = 1f;
             if (saveSystemHost != null && saveSystemHost.Initialize())
             {
                 saveSystemHost.System.Current.Settings = settings;
@@ -197,9 +193,7 @@ namespace Narthex.SceneFlow
             SetRect(settings.rectTransform, Vector2.zero, new Vector2(700f, 600f));
             settingsPanelRect = settings.rectTransform;
             AddText(settings.transform, "음량 설정", 40, new Vector2(0f, 235f), new Vector2(500f, 65f));
-            masterSlider = AddSlider(settings.transform, "전체 음량", 105f);
-            musicSlider = AddSlider(settings.transform, "음악", 15f);
-            sfxSlider = AddSlider(settings.transform, "효과음", -75f);
+            masterSlider = AddSlider(settings.transform, "전체 음량", 55f);
             AddButton(settings.transform, "적용", new Vector2(-115f, -205f), ApplySettings, new Vector2(200f, 58f));
             AddButton(settings.transform, "취소", new Vector2(115f, -205f), HideSettings, new Vector2(200f, 58f));
         }
@@ -307,7 +301,7 @@ namespace Narthex.SceneFlow
             var point = mouse.position.ReadValue();
             if (mouse.leftButton.isPressed)
             {
-                if (SetSlider(masterSlider, point) || SetSlider(musicSlider, point) || SetSlider(sfxSlider, point)) return;
+                if (SetSlider(masterSlider, point)) return;
             }
             if (!mouse.leftButton.wasReleasedThisFrame) return;
             foreach (var binding in visible)

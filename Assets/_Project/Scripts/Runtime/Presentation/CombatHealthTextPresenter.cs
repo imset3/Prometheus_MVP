@@ -10,6 +10,7 @@ namespace Narthex.Presentation
         [SerializeField] private CombatActorHost actorHost;
         [SerializeField] private CombatActorHost[] alternateActorHosts = Array.Empty<CombatActorHost>();
         [SerializeField] private Text healthText;
+        [SerializeField] private Image healthFill;
         [SerializeField] private string label = "체력";
         [SerializeField] private string defeatedText = "처치됨";
         [SerializeField] private bool hideWhenNoActiveActor = true;
@@ -17,6 +18,7 @@ namespace Narthex.Presentation
         [SerializeField] private bool hideBossActors;
         [SerializeField] private string enemyLabel = "적";
         [SerializeField] private string bossLabel = "헬테";
+        [SerializeField] private bool showLabel = true;
 
         public bool HasValidSetup => actorHost != null && healthText != null;
         public int AlternateActorCount => alternateActorHosts?.Length ?? 0;
@@ -44,8 +46,11 @@ namespace Narthex.Presentation
 
             healthText.enabled = true;
             var visibleLabel = ResolveLabel(visibleActor);
-            healthText.text = visibleActor.Runtime.IsAlive
-                ? $"{visibleLabel} {visibleActor.Runtime.CurrentHealth}/{visibleActor.Runtime.MaxHealth}"
+            var current = Mathf.Max(0, visibleActor.Runtime.CurrentHealth);
+            var maximum = Mathf.Max(1, visibleActor.Runtime.MaxHealth);
+            if (healthFill != null) healthFill.fillAmount = Mathf.Clamp01((float)current / maximum);
+            healthText.text = visibleActor.Runtime.IsAlive || !showLabel
+                ? showLabel ? $"{visibleLabel} {current}/{maximum}" : $"{current} / {maximum}"
                 : defeatedText;
         }
 

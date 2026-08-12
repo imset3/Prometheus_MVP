@@ -21,12 +21,12 @@ namespace Narthex.Tools
         [MenuItem("sragon000/Build/Release/Build Windows x64")]
         public static void BuildWindows() => Build(
             BuildTarget.StandaloneWindows64,
-            "Builds/Release/DEMO_V2/Windows/Prometheus_MVP.exe");
+            "Builds/Release/DEMO_V3/Windows/Prometheus_MVP.exe");
 
         [MenuItem("sragon000/Build/Release/Build macOS")]
         public static void BuildMacOS() => Build(
             BuildTarget.StandaloneOSX,
-            "Builds/Release/DEMO_V2/macOS/Prometheus_MVP.app");
+            "Builds/Release/DEMO_V3/macOS/Prometheus_MVP.app");
 
         [MenuItem("sragon000/Build/Release/Build Windows and macOS")]
         public static void BuildAllDesktop()

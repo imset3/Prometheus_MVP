@@ -28,7 +28,7 @@ namespace Narthex.Gameplay
         [SerializeField] private TutorialJumpProjectileHazardHost[] projectileHazardPool =
             System.Array.Empty<TutorialJumpProjectileHazardHost>();
         [SerializeField, Min(0f)] private float initialDelay = 0.45f;
-        [SerializeField, Min(0.1f)] private float travelDuration = 1.55f;
+        [SerializeField, Min(0.1f)] private float travelDuration = 2.8f;
         [SerializeField, Min(0.1f)] private float launchInterval = 2.25f;
         [SerializeField, Min(0f)] private float restartDelay = 0.4f;
 

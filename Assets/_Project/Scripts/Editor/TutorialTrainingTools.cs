@@ -720,7 +720,7 @@ namespace Narthex.Tools
                 hazardPool.GetArrayElementAtIndex(index).objectReferenceValue = projectileHazards[index];
             }
             serialized.FindProperty("initialDelay").floatValue = 0.75f;
-            serialized.FindProperty("travelDuration").floatValue = 3.8f;
+            serialized.FindProperty("travelDuration").floatValue = 2.8f;
             serialized.FindProperty("launchInterval").floatValue = 1f;
             serialized.FindProperty("restartDelay").floatValue = 0.4f;
             serialized.ApplyModifiedPropertiesWithoutUndo();

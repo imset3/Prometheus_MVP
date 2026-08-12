@@ -5900,10 +5900,84 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 127377593}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 0}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.8
   stopDistance: 1.15
-  collisionSkin: 0.03
+--- !u!1 &127948139
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 127948140}
+  - component: {fileID: 127948142}
+  - component: {fileID: 127948141}
+  m_Layer: 0
+  m_Name: PlayerHealthBarFill
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &127948140
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127948139}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1696343985}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -8, y: -8}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &127948141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127948139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.18, g: 0.9, b: 0.82, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 3
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 0
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &127948142
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127948139}
+  m_CullTransparentMesh: 1
 --- !u!1 &132310813
 GameObject:
   m_ObjectHideFlags: 0
@@ -11983,10 +12057,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 276116076}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 0}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.8
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &278304942
 GameObject:
   m_ObjectHideFlags: 0
@@ -14726,10 +14799,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 341712017}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 341712018}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.9
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &342533598
 GameObject:
   m_ObjectHideFlags: 0
@@ -18654,10 +18726,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 403210901}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 403210902}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.9
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &403348776
 GameObject:
   m_ObjectHideFlags: 0
@@ -24531,10 +24602,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 507195200}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 0}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.8
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &508424738
 GameObject:
   m_ObjectHideFlags: 0
@@ -56935,10 +57005,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 1141034775}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 1141034778}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.9
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &1141718464
 GameObject:
   m_ObjectHideFlags: 0
@@ -71834,10 +71903,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Gameplay::Narthex.Gameplay.TutorialEnemyPursuitHost
   actor: {fileID: 1426907106}
   target: {fileID: 718908608}
-  bodyCollider: {fileID: 1426907107}
+  groundMotor: {fileID: 0}
   moveSpeed: 1.9
   stopDistance: 1.15
-  collisionSkin: 0.03
 --- !u!1 &1430720344
 GameObject:
   m_ObjectHideFlags: 0
@@ -76778,6 +76846,7 @@ MonoBehaviour:
   - {fileID: 1141034775}
   - {fileID: 1608749477}
   healthText: {fileID: 1536048866}
+  healthFill: {fileID: 0}
   label: "\uD6C8\uB828 \uB300\uC0C1"
   defeatedText: "\uCC98\uCE58\uB428"
   hideWhenNoActiveActor: 1
@@ -76785,6 +76854,7 @@ MonoBehaviour:
   hideBossActors: 1
   enemyLabel: "\uC801"
   bossLabel: "\uD5EC\uD14C"
+  showLabel: 1
 --- !u!114 &1536048866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -85609,6 +85679,83 @@ Transform:
   - {fileID: 2037961642}
   m_Father: {fileID: 732711655}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1696343984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1696343985}
+  - component: {fileID: 1696343987}
+  - component: {fileID: 1696343986}
+  m_Layer: 0
+  m_Name: PlayerHealthBarTrack
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1696343985
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696343984}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 127948140}
+  - {fileID: 1818276112}
+  m_Father: {fileID: 1952071615}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1696343986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696343984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.025, g: 0.06, b: 0.085, a: 0.96}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1696343987
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696343984}
+  m_CullTransparentMesh: 1
 --- !u!1 &1697628278
 GameObject:
   m_ObjectHideFlags: 0
@@ -92217,6 +92364,101 @@ Transform:
   - {fileID: 1370584578}
   m_Father: {fileID: 1999020062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1818276111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1818276112}
+  - component: {fileID: 1818276115}
+  - component: {fileID: 1818276114}
+  - component: {fileID: 1818276113}
+  m_Layer: 0
+  m_Name: PlayerHealthValueText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1818276112
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1818276111}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1696343985}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1818276113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1818276111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.9}
+  m_EffectDistance: {x: 1.5, y: -1.5}
+  m_UseGraphicAlpha: 1
+--- !u!114 &1818276114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1818276111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 5a3ce77911a36465bb608d3c4d8733d3, type: 3}
+    m_FontSize: 24
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 500 / 500
+--- !u!222 &1818276115
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1818276111}
+  m_CullTransparentMesh: 1
 --- !u!1 &1823028114
 GameObject:
   m_ObjectHideFlags: 0
@@ -98886,7 +99128,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Narthex.Presentation::Narthex.Presentation.CombatHealthTextPresenter
   actorHost: {fileID: 718908618}
   alternateActorHosts: []
-  healthText: {fileID: 1952071613}
+  healthText: {fileID: 1818276114}
+  healthFill: {fileID: 127948141}
   label: "\uD50C\uB808\uC774\uC5B4"
   defeatedText: "\uCC98\uCE58\uB428"
   hideWhenNoActiveActor: 1
@@ -98894,6 +99137,7 @@ MonoBehaviour:
   hideBossActors: 0
   enemyLabel: "\uC801"
   bossLabel: "\uD5EC\uD14C"
+  showLabel: 0
 --- !u!114 &1952071613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -98901,7 +99145,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1952071611}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 
@@ -98947,13 +99191,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1696343985}
   m_Father: {fileID: 1319569776}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 28, y: -28}
-  m_SizeDelta: {x: 260, y: 44}
+  m_SizeDelta: {x: 330, y: 48}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1954748845
 GameObject:

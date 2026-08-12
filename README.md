@@ -5,12 +5,12 @@
 
 게임플레이 기준 씬에는 판정과 진행 로직뿐 아니라 승인된 배경·타일·소품·적·헬테 애니메이션, BGM, SFX와 보스전 폴리싱까지 통합되어 있습니다. 비주얼과 판정 오브젝트는 계속 분리되어 있어 이후 아트 교체도 Rigidbody, Collider, 진행 Trigger를 유지한 채 진행할 수 있습니다.
 
-## DEMO_V2 다운로드 및 실행
+## DEMO_V3 다운로드 및 실행
 
-GitHub Releases의 최신 `DEMO_V2`에서 운영체제에 맞는 압축 파일을 받습니다.
+GitHub Releases의 최신 `DEMO_V3`에서 운영체제에 맞는 압축 파일을 받습니다.
 
-- Windows: `Prometheus_MVP_DEMO_V2_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
-- macOS: `Prometheus_MVP_DEMO_V2_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
+- Windows: `Prometheus_MVP_DEMO_V3_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
+- macOS: `Prometheus_MVP_DEMO_V3_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
 - macOS가 처음 실행을 차단하면 Finder에서 앱을 Control-클릭한 뒤 `열기`를 선택합니다. 공식 릴리스에서 받은 파일인지 먼저 확인하세요.
 - 실행 파일만 따로 옮기지 말고 압축이 풀린 폴더 구조를 유지해야 합니다.
 
@@ -21,12 +21,14 @@ GitHub Releases의 최신 `DEMO_V2`에서 운영체제에 맞는 압축 파일�
 | 새 게임 시작 | 기존 진행을 초기화하고 챕터 0 튜토리얼 시작 |
 | 이어하기 | 일시정지 메뉴에서 저장한 퀘스트와 프로메의 마지막 좌표부터 재개. 저장이 없거나 데모를 완료하면 비활성화 |
 | 보스전 | 헬테 보스전을 바로 확인하는 `BossDevelopmentScene` 진입 |
-| 설정 | 해상도, 화면 모드, 마스터·BGM·SFX 음량 변경 및 저장 |
+| 설정 | 해상도, 화면 모드, 전체 음량 변경 및 저장 |
 | 나가기 | 게임 종료 |
 
 설정창 맨 아래의 `초기화`는 시연용 전체 초기화 기능입니다. 버튼을 한 번 누르면 즉시 정식·레거시 저장 진행도, 이어하기 위치, 로컬 설정과 Unity 캐시를 지우고 최초 타이틀 상태로 돌아갑니다. 이후 `새 게임 시작`을 누르면 회의장·튜토리얼 1단계에서 시작합니다.
 
 기본 해상도는 `1920×1080`입니다. 해상도 드롭다운은 현재 컴퓨터와 모니터가 보고하는 지원 모드만 표시하며, 화면 모드는 `창 모드 / 전체 화면 / 창 없는 전체 화면`을 지원합니다. 튜토리얼 중 `Esc`를 누르면 게임이 일시정지되고 설정 변경, 계속하기, 저장 후 타이틀 복귀를 선택할 수 있습니다.
+
+플레이어 체력은 좌측 상단의 게이지와 `현재 / 최대` 숫자로 함께 표시됩니다. 기본 최대 체력은 `500`입니다.
 
 데모는 회의장과 훈련장, 외부 전투, 헬테 보스전, 비행정 엔딩까지 포함합니다. 엔딩 뒤 타이틀로 돌아오면 해당 플레이 기록은 완료 처리되어 `이어하기`를 사용할 수 없습니다.
 
@@ -263,7 +265,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 ## 문서
 
-- [DEMO_V2 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V2.md) — 배포 구성, 실행 방법과 검증 범위
+- [DEMO_V3 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V3.md) — 배포 구성, 실행 방법과 검증 범위
 - [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
 - [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
 - [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
@@ -294,7 +296,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
 - 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-DEMO_V2 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `15/15` 통과, Tutorial Scene Validator 통과, Scene Doctor 신규 오류 `0`입니다. 점프 훈련은 점프 입력이 아니라 실제 투사체 3회 회피만 집계하며, F/G 적 7기는 공용 지상 물리 모터로 바닥·벽·발판 끝을 준수합니다. F 구역 세 번째 원거리 적은 로컬 X=80에서 생성되고, F/G 원거리 적 3기는 바닥 피벗과 Collider 접지면이 일치합니다. 근접 훈련 허수아비는 훈련장 중앙 X=200, 원거리 허수아비 3기는 X=197/200/203에 실제 계층 오브젝트로 배치되어 있습니다. PlayMode에는 실제 타이틀 보스전 버튼→`BossDevelopmentScene`, 새 게임 초기화, 저장 및 나가기→이어하기 좌표 복원, 회의장부터 훈련장 진입, 순차 훈련, G 상승기류→H 이동, 전체 훈련→헬테 완료, 테우스 동행, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 상세 기반 결과는 [DEMO_V1 핫픽스 QA 보고서](Assets/_Project/Docs/DEMO_V1_HOTFIX_QA_2026-08-13.md), V2 변경점은 [DEMO_V2 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V2.md)에 남겼습니다.
+DEMO_V3 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `15/15` 통과, Tutorial Scene Validator 통과, Scene Doctor 신규 오류 `0`입니다. 점프 훈련 투사체는 오른쪽 대포 발사구에서 출발해 2.8초 동안 통과하며, 점프 입력이 아니라 실제 투사체 3회 회피만 집계합니다. F/G 적 7기는 공용 지상 물리 모터로 바닥·벽·발판 끝을 준수합니다. F 구역 세 번째 원거리 적은 로컬 X=80에서 생성되고, F/G 원거리 적 3기는 바닥 피벗과 Collider 접지면이 일치합니다. PlayMode에는 타이틀 보스전 버튼, 새 게임과 이어하기, 순차 훈련, G 상승기류→H 이동, 전체 훈련→헬테 완료, 테우스 동행, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. V3 변경점은 [DEMO_V3 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V3.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 

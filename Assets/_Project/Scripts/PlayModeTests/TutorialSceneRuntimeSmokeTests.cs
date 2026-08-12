@@ -80,6 +80,11 @@ namespace Narthex.PlayModeTests
             {
                 "창 모드", "전체 화면", "창 없는 전체 화면"
             }));
+            Assert.That(FindSceneTransformOrDefault(scene, "전체 음량Slider")?.gameObject.activeInHierarchy, Is.True);
+            Assert.That(FindSceneTransformOrDefault(scene, "배경 음악Slider")?.gameObject.activeInHierarchy, Is.False,
+                "Title settings must expose only the master-volume control.");
+            Assert.That(FindSceneTransformOrDefault(scene, "효과음Slider")?.gameObject.activeInHierarchy, Is.False,
+                "Title settings must expose only the master-volume control.");
 
             Assert.That(host.RegisteredButtonCount, Is.EqualTo(8),
                 "The title must register the five main-menu and three settings buttons exactly once.");
@@ -421,23 +426,17 @@ namespace Narthex.PlayModeTests
                 }
             }
             InvokePrivateMethod(pauseMenu, "ShowSettings");
-            foreach (var slider in new[]
-                     {
-                         GetPrivateField<Slider>(pauseMenu, "masterSlider"),
-                         GetPrivateField<Slider>(pauseMenu, "musicSlider"),
-                         GetPrivateField<Slider>(pauseMenu, "sfxSlider")
-                     })
-            {
-                slider.value = 1f;
-                Canvas.ForceUpdateCanvases();
-                var sliderRect = (RectTransform)slider.transform;
-                var fillBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
-                    sliderRect,
-                    slider.fillRect);
-                Assert.That(fillBounds.min.x, Is.GreaterThanOrEqualTo(sliderRect.rect.xMin - 0.1f));
-                Assert.That(fillBounds.max.x, Is.LessThanOrEqualTo(sliderRect.rect.xMax + 0.1f),
-                    $"Pause volume fill '{slider.name}' must remain inside its slider and modal panel.");
-            }
+            var slider = GetPrivateField<Slider>(pauseMenu, "masterSlider");
+            Assert.That(Resources.FindObjectsOfTypeAll<Slider>()
+                .Count(candidate => candidate != null && candidate.gameObject.scene == scene), Is.EqualTo(1),
+                "Pause settings must expose only the master-volume control.");
+            slider.value = 1f;
+            Canvas.ForceUpdateCanvases();
+            var sliderRect = (RectTransform)slider.transform;
+            var fillBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(sliderRect, slider.fillRect);
+            Assert.That(fillBounds.min.x, Is.GreaterThanOrEqualTo(sliderRect.rect.xMin - 0.1f));
+            Assert.That(fillBounds.max.x, Is.LessThanOrEqualTo(sliderRect.rect.xMax + 0.1f),
+                "Pause master-volume fill must remain inside its slider and modal panel.");
             InvokePrivateMethod(pauseMenu, "Resume");
             Time.timeScale = 1f;
         }
@@ -570,6 +569,7 @@ namespace Narthex.PlayModeTests
                 Is.EqualTo("나디르 선착장"));
             Assert.That(FindSceneTransform(scene, "선착장").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneTransform(scene, "H_Helte_Integration").gameObject.activeInHierarchy, Is.True);
+            AssertPlayerHealthBar(scene);
             AssertUniformSkillIconLayout(scene);
             Assert.That(
                 FindSceneTransformOrDefault(scene, "BossArena_EntryGate_ART_SLOT"),
@@ -806,6 +806,7 @@ namespace Narthex.PlayModeTests
             Assert.That(resultBackground, Is.Not.Null);
             Assert.That(resultBackground.color.a, Is.GreaterThanOrEqualTo(0.8f),
                 "The demo result requires an opaque-enough dark cinematic background.");
+            AssertPlayerHealthBar(tutorialScene);
             AssertUniformSkillIconLayout(tutorialScene);
 
             var transitions = Resources.FindObjectsOfTypeAll<TutorialZoneTransitionHost>()
@@ -1393,6 +1394,16 @@ namespace Narthex.PlayModeTests
             Assert.That(trainingSpawn.HasValidSetup, Is.True);
             Assert.That(trainingFlow.HasValidSetup, Is.True);
             Assert.That(jumpTraining.HasValidSetup, Is.True);
+            var jumpLaunchPoint = GetPrivateField<Transform>(jumpTraining, "launchPoint");
+            var buildLaunchPoint = jumpTraining.transform.Find("JumpProjectileLaunchPoint");
+            Assert.That(buildLaunchPoint, Is.Not.Null);
+            Assert.That(Vector3.Distance(jumpLaunchPoint.position, buildLaunchPoint.position), Is.LessThan(0.01f),
+                "The Player-build launch anchor must match the cannon muzzle marker.");
+            Assert.That(GetPrivateField<float>(jumpTraining, "travelDuration"), Is.EqualTo(2.8f).Within(0.001f),
+                "The jump projectile must use the faster readable V3 travel time.");
+            var dialoguePresenter = FindSceneComponent<TutorialDialoguePresenter>(tutorialScene);
+            Assert.That(dialoguePresenter.HasIntroductionDefinition("QST-TUTO-007", false), Is.False,
+                "Cryon's repeated introduction card must remain disabled.");
             Assert.That(phaseController.HasValidSetup, Is.True);
             Assert.That(actionScopes.HasValidSetup, Is.True);
             Assert.That(meleeAttack.HasValidSetup, Is.True);
@@ -2492,6 +2503,18 @@ namespace Narthex.PlayModeTests
                 Assert.That(image.preserveAspect, Is.True,
                     $"{name} must preserve the square icon artwork.");
             }
+        }
+
+        private static void AssertPlayerHealthBar(Scene scene)
+        {
+            var track = FindSceneTransform(scene, "PlayerHealthBarTrack").GetComponent<Image>();
+            var fill = FindSceneTransform(scene, "PlayerHealthBarFill").GetComponent<Image>();
+            var value = FindSceneTransform(scene, "PlayerHealthValueText").GetComponent<Text>();
+            Assert.That(track, Is.Not.Null);
+            Assert.That(fill, Is.Not.Null);
+            Assert.That(fill.type, Is.EqualTo(Image.Type.Filled));
+            Assert.That(value, Is.Not.Null);
+            Assert.That(value.text, Does.Match(@"\d+ / \d+"));
         }
 
         private static Transform FindSceneTransform(Scene scene, string objectName)
