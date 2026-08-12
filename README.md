@@ -5,12 +5,12 @@
 
 게임플레이 기준 씬에는 판정과 진행 로직뿐 아니라 승인된 배경·타일·소품·적·헬테 애니메이션, BGM, SFX와 보스전 폴리싱까지 통합되어 있습니다. 비주얼과 판정 오브젝트는 계속 분리되어 있어 이후 아트 교체도 Rigidbody, Collider, 진행 Trigger를 유지한 채 진행할 수 있습니다.
 
-## DEMO 다운로드 및 실행
+## DEMO_V1 다운로드 및 실행
 
-GitHub Releases의 최신 `DEMO`에서 운영체제에 맞는 압축 파일을 받습니다.
+GitHub Releases의 최신 `DEMO_V1`에서 운영체제에 맞는 압축 파일을 받습니다.
 
-- Windows: `Prometheus_MVP_DEMO_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
-- macOS: `Prometheus_MVP_DEMO_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
+- Windows: `Prometheus_MVP_DEMO_V1_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
+- macOS: `Prometheus_MVP_DEMO_V1_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
 - macOS가 처음 실행을 차단하면 Finder에서 앱을 Control-클릭한 뒤 `열기`를 선택합니다. 공식 릴리스에서 받은 파일인지 먼저 확인하세요.
 - 실행 파일만 따로 옮기지 말고 압축이 풀린 폴더 구조를 유지해야 합니다.
 
@@ -294,7 +294,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
 - 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-DEMO 릴리스 직전 Unity 검증 결과는 EditMode `120/120`, PlayMode 전체 `15/15` 통과, Console 컴파일 오류 `0`입니다. 근접 훈련 허수아비는 훈련장 중앙 X=200, 원거리 허수아비 3기는 X=197/200/203에 실제 계층 오브젝트로 배치되어 있으며 구역 밖 배치를 차단하는 회귀 검사가 포함됩니다. PlayMode에는 실제 타이틀 보스전 버튼→`BossDevelopmentScene`, 새 게임 초기화, 저장 및 나가기→이어하기 좌표 복원, 즉시 전체 초기화, 회의장부터 훈련장 진입, 순차 훈련, 빌드 환경용 더블점프 정상 마커 복원, G 상승기류→H 이동, 전체 훈련→헬테 완료, 목표 화살표, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 메인·보스 개발씬의 스킬 1·2·3 아이콘은 동일한 `112×112` 규격이며, 상세 실플로우 기록은 [전체 플레이 검증 보고서](Assets/_Project/Docs/FULL_PLAYTEST_REPORT_2026-08-11.md)에 남겼습니다.
+DEMO_V1 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `15/15` 통과, Tutorial Scene Validator 통과, Scene Doctor 신규 오류 `0`입니다. 점프 훈련은 점프 입력이 아니라 실제 투사체 3회 회피만 집계하며, F/G 적 7기는 공용 지상 물리 모터로 바닥·벽·발판 끝을 준수합니다. 근접 훈련 허수아비는 훈련장 중앙 X=200, 원거리 허수아비 3기는 X=197/200/203에 실제 계층 오브젝트로 배치되어 있으며 구역 밖 배치를 차단하는 회귀 검사가 포함됩니다. PlayMode에는 실제 타이틀 보스전 버튼→`BossDevelopmentScene`, 새 게임 초기화, 저장 및 나가기→이어하기 좌표 복원, 즉시 전체 초기화, 회의장부터 훈련장 진입, 순차 훈련, G 상승기류→H 이동, 전체 훈련→헬테 완료, 테우스 동행, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. 상세 결과는 [DEMO_V1 핫픽스 QA 보고서](Assets/_Project/Docs/DEMO_V1_HOTFIX_QA_2026-08-13.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 

@@ -19,6 +19,13 @@ namespace Narthex.Tests
                 projectileObject.transform.SetParent(enemy.transform);
                 var actor = enemy.AddComponent<CombatActorHost>();
                 var body = enemy.AddComponent<BoxCollider2D>();
+                body.isTrigger = false;
+                var enemyBody = enemy.AddComponent<Rigidbody2D>();
+                enemyBody.bodyType = RigidbodyType2D.Dynamic;
+                enemyBody.gravityScale = 3f;
+                enemyBody.constraints = RigidbodyConstraints2D.FreezeRotation;
+                var groundedMotor = enemy.AddComponent<TutorialGroundedEnemyMotorHost>();
+                groundedMotor.Configure(enemyBody, body);
                 var muzzle = new GameObject("RangedMuzzle_EDITABLE").transform;
                 muzzle.SetParent(enemy.transform);
                 var warningRenderer = warning.AddComponent<SpriteRenderer>();

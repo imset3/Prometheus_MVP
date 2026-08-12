@@ -11,6 +11,39 @@ namespace Narthex.Tests
 {
     public sealed class GameplayPipelineTests
     {
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void FixedStepMotion_IsInvariantAcrossRenderFrameRates(int renderFramesPerSecond)
+        {
+            const float duration = 6f;
+            const float fixedStep = .02f;
+            const float horizontalSpeed = 5f;
+            const float jumpVelocity = 8f;
+            const float gravity = -9.81f;
+            var renderFrameCount = renderFramesPerSecond * (int)duration;
+            var fixedStepCount = Mathf.RoundToInt((renderFrameCount / (float)renderFramesPerSecond) / fixedStep);
+            var x = 0f;
+            var y = 0f;
+            var verticalVelocity = jumpVelocity;
+            for (var step = 0; step < fixedStepCount; step++)
+            {
+                x += horizontalSpeed * fixedStep;
+                verticalVelocity += gravity * fixedStep;
+                y += verticalVelocity * fixedStep;
+            }
+
+            Assert.That(fixedStepCount, Is.EqualTo(300));
+            Assert.That(x, Is.EqualTo(30f).Within(.001f));
+            Assert.That(y, Is.EqualTo(-129.169f).Within(.01f));
+
+            const float projectileDuration = 1.55f;
+            var projectileSteps = Mathf.CeilToInt(projectileDuration / fixedStep);
+            var elapsed = Mathf.Min(projectileDuration, projectileSteps * fixedStep);
+            var projectileX = Mathf.Lerp(198.5f, 192.5f, elapsed / projectileDuration);
+            Assert.That(projectileX, Is.EqualTo(192.5f).Within(.001f));
+        }
+
         [Test]
         public void PlayerDashTimingPolicy_AppliesCooldownAfterInvulnerableDashEnds()
         {

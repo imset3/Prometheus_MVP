@@ -228,6 +228,7 @@ namespace Narthex.Gameplay
                 spawnWarnings[enemyIndex].SetActive(false);
                 var enemy = enemies[enemyIndex];
                 enemy.transform.position = spawnPoints[enemyIndex].position;
+                enemy.GetComponent<TutorialGroundedEnemyMotorHost>()?.ResetMotion();
                 enemy.gameObject.SetActive(true);
                 enemy.ResetRuntime();
                 activeEnemyIds.Add(enemy.ActorId);

@@ -457,6 +457,23 @@ namespace Narthex.PlayModeTests
 #endif
             yield return null;
             var scene = SceneManager.GetActiveScene();
+            var groundedEnemies = Resources.FindObjectsOfTypeAll<TutorialGroundedEnemyMotorHost>()
+                .Where(motor => motor != null && motor.gameObject.scene == scene &&
+                                (motor.name.StartsWith("ExteriorA_Enemy_") ||
+                                 motor.name.StartsWith("ExteriorB_Enemy_")))
+                .ToArray();
+            Assert.That(groundedEnemies.Length, Is.EqualTo(7),
+                "All seven F/G combat enemies must use the shared grounded motor.");
+            foreach (var motor in groundedEnemies)
+            {
+                var body = motor.GetComponent<Rigidbody2D>();
+                var bodyCollider = motor.GetComponent<Collider2D>();
+                Assert.That(motor.HasValidSetup, Is.True, motor.name);
+                Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Dynamic), motor.name);
+                Assert.That(body.gravityScale, Is.EqualTo(3f).Within(.001f), motor.name);
+                Assert.That((body.constraints & RigidbodyConstraints2D.FreezeRotation) != 0, Is.True, motor.name);
+                Assert.That(bodyCollider.isTrigger, Is.False, motor.name);
+            }
             var projectiles = Resources.FindObjectsOfTypeAll<TutorialEnemyProjectileHost>()
                 .Where(projectile => projectile != null && projectile.gameObject.scene == scene)
                 .ToArray();
@@ -1309,8 +1326,19 @@ namespace Narthex.PlayModeTests
                 2f,
                 "The meeting-room return transition did not complete.");
             AdvanceDialogue(dialogue, 2);
+            var guideCompanion = FindSceneComponent<TutorialGuideCompanionHost>(tutorialScene);
+            Assert.That(guideCompanion.gameObject.activeInHierarchy, Is.True);
+            Assert.That(guideCompanion.IsGuiding, Is.False,
+                "After the hidden room Theus must follow Prome instead of replaying the old meeting route.");
+            var visibleTheusRenderers = guideCompanion.GetComponentsInChildren<SpriteRenderer>(false);
+            Assert.That(visibleTheusRenderers, Is.Not.Empty);
+            Assert.That(visibleTheusRenderers.All(renderer => renderer.enabled && renderer.color.a > .99f), Is.True,
+                "Leaving light form must restore Theus' normal visible sprite and alpha.");
 
             yield return UseZoneTransition(tutorialScene, playerBody, playerInput, "TUTORIAL-HQ-EXIT");
+            Assert.That(guideCompanion.gameObject.activeInHierarchy, Is.True,
+                "The same Theus companion must remain visible through the meeting-to-corridor transition.");
+            Assert.That(guideCompanion.IsGuiding, Is.False);
             yield return WaitForConditionRealtime(
                 () => questSequence.CurrentQuestId == "QST-TUTO-004",
                 3f,
@@ -1529,9 +1557,19 @@ namespace Narthex.PlayModeTests
             MovePlayer(playerBody, new Vector2(170f, -3.4f));
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
             yield return null;
-            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"));
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"),
+                "Jump input alone must never complete the projectile-dodge lesson.");
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
-            PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
+            PublishSignals(serviceRoot, QuestSignalType.ProjectileAvoided, "TRAINING-JUMP-PROJECTILE", 2);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"));
+            Assert.That(jumpTraining.TryRestartJumpSection(playerCollider), Is.True);
+            MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
+            PublishSignals(serviceRoot, QuestSignalType.ProjectileAvoided, "TRAINING-JUMP-PROJECTILE", 1);
+            yield return null;
+            Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"),
+                "A projectile hit must reset accumulated dodge progress to zero.");
+            PublishSignals(serviceRoot, QuestSignalType.ProjectileAvoided, "TRAINING-JUMP-PROJECTILE", 2);
             yield return WaitForQuest(questSequence, "QST-TUTO-003");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);
@@ -1864,9 +1902,9 @@ namespace Narthex.PlayModeTests
             PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
             yield return null;
             Assert.That(questSequence.CurrentQuestId, Is.EqualTo("QST-TUTO-002"),
-                "Jump actions outside the authored jump lane must not count.");
+                "Jump input alone must not count as a projectile dodge.");
             MovePlayer(playerBody, FindSceneTransform(tutorialScene, "TrainingScope_Jump").position);
-            PublishSignals(serviceRoot, QuestSignalType.JumpPerformed, "PLAYER-001", 3);
+            PublishSignals(serviceRoot, QuestSignalType.ProjectileAvoided, "TRAINING-JUMP-PROJECTILE", 3);
             yield return WaitForQuest(questSequence, "QST-TUTO-003");
 
             yield return DismissCurrentPresentation(dialogue, introductionCard, 5f);

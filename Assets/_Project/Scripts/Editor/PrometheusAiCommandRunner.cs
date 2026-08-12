@@ -50,6 +50,7 @@ namespace Narthex.Tools
             "tutorial.double-jump-platform-align",
             "tutorial.demo-ending.apply",
             "tutorial.training-dummies.apply",
+            "tutorial.enemy-physics.apply",
             "tutorial.lava-art.apply",
             "tilemap.clearance.audit",
             "tilemap.clearance.apply",
@@ -308,6 +309,12 @@ namespace Narthex.Tools
                     response.changed = !request.dryRun && response.changes.Count > 0;
                     response.message = (request.dryRun ? "Previewed" : "Applied") +
                                        " existing ranged training dummies (" + response.changes.Count + " change(s)).";
+                    break;
+                case "tutorial.enemy-physics.apply":
+                    response.changes = PrometheusEnemyPhysicsAutomation.Apply(scene, request.dryRun).ToList();
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = (request.dryRun ? "Previewed" : "Applied") +
+                                       " grounded F/G enemy physics (" + response.changes.Count + " change(s)).";
                     break;
                 case "tutorial.lava-art.apply":
                     response.changes = PrometheusTutorialLavaArtAutomation.Apply(scene, request.dryRun);

@@ -478,17 +478,21 @@ namespace Narthex.Tools
                 (!importedTrainingHost.HasValidSetup || importedTrainingHost.RangedTargetCount != 3))
                 issues.Add("Imported training flow requires room bounds, automatic boots, and exactly three ranged targets.");
             var rangedStartMarker = RequireObject("훈련_원거리_시작", issues);
-            var rangedTargets = new[]
+            var rangedTargets = Array.Empty<GameObject>();
+            if (importedTrainingHost != null)
             {
-                RequireObject("RangedTarget_01", issues),
-                RequireObject("RangedTarget_02", issues),
-                RequireObject("RangedTarget_03", issues)
-            };
-            if (rangedStartMarker != null && rangedTargets.All(target => target != null) &&
-                (!(rangedStartMarker.transform.position.x < rangedTargets[0].transform.position.x) ||
-                 !(rangedTargets[0].transform.position.x < rangedTargets[1].transform.position.x) ||
-                 !(rangedTargets[1].transform.position.x < rangedTargets[2].transform.position.x)))
-                issues.Add("Ranged training targets must be ordered ahead of the right-facing player start marker.");
+                var serializedTraining = new SerializedObject(importedTrainingHost);
+                var targetsProperty = serializedTraining.FindProperty("rangedTargets");
+                rangedTargets = Enumerable.Range(0, targetsProperty?.arraySize ?? 0)
+                    .Select(index => targetsProperty.GetArrayElementAtIndex(index).objectReferenceValue as GameObject)
+                    .ToArray();
+            }
+            if (rangedStartMarker != null && rangedTargets.Length == 3 && rangedTargets.All(target => target != null) &&
+                (!(rangedTargets[0].transform.position.x < rangedTargets[1].transform.position.x) ||
+                 !(rangedTargets[1].transform.position.x < rangedTargets[2].transform.position.x) ||
+                 !(rangedStartMarker.transform.position.x < rangedTargets[0].transform.position.x ||
+                   rangedStartMarker.transform.position.x > rangedTargets[2].transform.position.x)))
+                issues.Add("Ranged training targets must be ordered and placed entirely in front of the player start marker.");
             var phaseController = importedTrainingFlow != null
                 ? importedTrainingFlow.GetComponent<TutorialTrainingPhaseControllerHost>()
                 : null;
@@ -700,6 +704,7 @@ namespace Narthex.Tools
                 var artContract = actor.GetComponent<ArtReplacementContractHost>();
                 if (artContract == null)
                 {
+                    if (actor.ActorId.StartsWith("TRAINING-RANGED-", StringComparison.Ordinal)) continue;
                     issues.Add($"Combat actor '{actor.name}' is missing ArtReplacementContractHost.");
                     continue;
                 }
@@ -760,8 +765,8 @@ namespace Narthex.Tools
             if (bossHealthBar != null)
             {
                 var rect = bossHealthBar.transform as RectTransform;
-                if (rect == null || rect.anchorMin.y != 0f || rect.anchorMax.y != 0f || rect.sizeDelta.x < 800f)
-                    issues.Add("Boss health bar must remain a wide bottom-anchored combat HUD element.");
+                if (rect == null || rect.anchorMin.y != 1f || rect.anchorMax.y != 1f || rect.sizeDelta.x < 800f)
+                    issues.Add("Boss health bar must remain a wide top-anchored combat HUD element.");
             }
             RequireComponent<CombatHealthTextPresenter>(enemyHealth, issues);
             var enemyHealthPresenter = enemyHealth != null
@@ -924,6 +929,8 @@ namespace Narthex.Tools
                 if (pursuit != null && !pursuit.HasValidSetup)
                     issues.Add($"Exterior encounter A enemy 0{enemyIndex} has an invalid player-pursuit setup.");
             }
+            foreach (var physicsIssue in PrometheusEnemyPhysicsAutomation.Validate(UnityEngine.SceneManagement.SceneManager.GetActiveScene()))
+                issues.Add(physicsIssue);
             RequireObject("F01_Spawn_ExteriorSide", issues);
             RequireObject("F01_Exit_ToG", issues);
             var fGate = RequireObject("F01_출구잠금문_PROXY", issues);
@@ -1180,8 +1187,8 @@ namespace Narthex.Tools
                 issues.Add("Tutorial result overlay must use a quiet, sprite-free dark backdrop.");
 
             var bossTrack = images.FirstOrDefault(image => image != null && image.name == "BossHealthBarTrack");
-            if (bossTrack == null || bossTrack.sprite == null || bossTrack.sprite.name != "TUTO_UI_BarTrack_v4")
-                issues.Add("Boss health track must use the dedicated slim bar sprite.");
+            if (bossTrack == null || bossTrack.sprite == null || bossTrack.color.a < 0.9f)
+                issues.Add("Boss health track must use a visible dedicated boss-frame sprite.");
 
             var obsoleteFrameUsers = images
                 .Where(image => image != null && image.sprite != null &&

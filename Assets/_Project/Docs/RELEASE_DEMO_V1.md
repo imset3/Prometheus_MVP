@@ -1,12 +1,12 @@
-# DEMO 릴리스 노트
+# DEMO_V1 릴리스 노트
 
-`DEMO`는 Prometheus 챕터 0 튜토리얼을 처음부터 데모 엔딩까지 플레이할 수 있는 Windows·macOS 최신 배포본입니다.
+`DEMO_V1`은 Prometheus 챕터 0 튜토리얼을 처음부터 데모 엔딩까지 플레이할 수 있는 Windows·macOS 최신 배포본입니다.
 
 ## 배포 파일
 
-- `Prometheus_MVP_DEMO_Windows.zip`
-- `Prometheus_MVP_DEMO_macOS.zip`
-- `Prometheus_MVP_DEMO_SHA256.txt`
+- `Prometheus_MVP_DEMO_V1_Windows.zip`
+- `Prometheus_MVP_DEMO_V1_macOS.zip`
+- `Prometheus_MVP_DEMO_V1_SHA256.txt`
 
 압축을 완전히 해제한 뒤 Windows는 `Prometheus_MVP.exe`, macOS는 `Prometheus_MVP.app`을 실행합니다. Windows 실행 파일과 함께 배포된 `Prometheus_MVP_Data`, DLL 파일은 같은 폴더에 유지해야 합니다.
 
@@ -27,7 +27,12 @@
 - 타이틀·일시정지 설정 패널이 작은 해상도에서도 화면 경계 안에 자동 축소·정렬
 - 새 게임은 이전 진행을 완전히 초기화하고, 이어하기는 저장한 퀘스트와 마지막 좌표를 복원
 - 타이틀 `보스전` 버튼을 빌드에 포함된 `BossDevelopmentScene`으로 고정하고 실제 버튼 클릭 회귀 테스트 추가
-- 검증: EditMode `120/120`, PlayMode `15/15`, 필수 Build Settings 씬 5개 활성화
+- 점프 훈련 조건을 입력 횟수에서 실제 전방 투사체 3회 회피로 변경하고, 피격 시 누적 횟수 초기화
+- 점프 훈련 투사체를 고정 물리 스텝·Collider Cast 방식으로 변경해 저프레임 충돌 누락 방지
+- F/G 적 7기에 공용 지상 물리 모터를 적용해 중력, 벽 충돌, 발판 끝 정지를 보장
+- F 순차 전투 사망·부활 시 적 상태와 출구 잠금을 최초 상태로 복구
+- 숨겨진 방 복귀 이후 테우스의 일반 동행과 스프라이트 표시 상태 유지
+- 검증: EditMode `123/123`, PlayMode `15/15`, Tutorial Scene Validator 통과, 필수 Build Settings 씬 5개 활성화
 - QA 편의: Windows·macOS 릴리스 빌드에서 `F8`은 다음 전투 구간, `F9`는 헬테 직전으로 위치·퀘스트·HUD 상태를 함께 전환
 - Player 빌드 검증: 점프 투사체, 근접 허수아비, F 적 3기·배경 F, G 적 2기·배경 G 활성화 확인
 - 시연 편의: 타이틀 설정 하단의 `초기화`를 한 번 눌러 저장·이어하기·로컬 설정·캐시 즉시 삭제

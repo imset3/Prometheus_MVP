@@ -102,6 +102,12 @@ namespace Narthex.Presentation
         private void HandleQuestProgressChanged(QuestProgressChanged message)
         {
             if (message.QuestId != currentObjective.QuestId) return;
+            if (message.QuestId == "QST-TUTO-002")
+            {
+                statusText.text = $"전방 투사체 3회 회피 · {message.CurrentAmount}/{message.RequiredAmount}";
+                if (amountText != null) amountText.text = string.Empty;
+                return;
+            }
             statusText.text = ResolveContextualObjective(currentObjective.QuestId, currentObjective.ObjectiveText);
             if (amountText != null)
                 amountText.text = $"목표 {message.CurrentAmount} / {message.RequiredAmount}";
@@ -127,6 +133,7 @@ namespace Narthex.Presentation
                 ? string.Empty
                 : string.Format(progressFormat, message.StepIndex + 1, totalSteps);
             var objective = ResolveContextualObjective(message.QuestId, message.ObjectiveText);
+            if (message.QuestId == "QST-TUTO-002") objective = "전방 투사체 3회 회피 · 0/3";
             if (progressText != null)
             {
                 progressText.text = progress;
@@ -175,7 +182,7 @@ namespace Narthex.Presentation
             keyPromptText.text = questId switch
             {
                 "QST-TUTO-001" => $"이동  [ {Binding("Move", "A / D")} ]",
-                "QST-TUTO-002" => $"점프 · 활공  [ {Binding("Jump", "SPACE")} ]",
+                "QST-TUTO-002" => $"전방 투사체 3회 회피  [ {Binding("Jump", "SPACE")} ]",
                 "QST-TUTO-003" => $"기본 공격  [ {Binding("Attack", "LMB")} ]",
                 "QST-TUTO-004" => $"대시  [ {Binding("Sprint", "LEFT SHIFT")} ]",
                 "QST-TUTO-005" => $"원거리 공격  [ {Binding("Next", "1")} ]",

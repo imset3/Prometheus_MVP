@@ -367,7 +367,7 @@ namespace Narthex.Presentation
                 if (resumeGuideAfterDialogue)
                 {
                     resumeGuideAfterDialogue = false;
-                    guideCompanion.BeginGuide(legacyGuideRoute.Waypoints);
+                    guideCompanion.CancelGuide();
                 }
                 return;
             }
@@ -468,7 +468,7 @@ namespace Narthex.Presentation
             state = TutorialChapter0IntroState.SeekTrainingExit;
             objectiveBeacon.SetExternalTarget(trainingExitTarget);
             auxiliaryDialogue = true;
-            resumeGuideAfterDialogue = true;
+            resumeGuideAfterDialogue = false;
             serviceRoot.Events.Publish(new TutorialNarrativeChanged(
                 TutorialChapter0IntroProgress.ReturnStageId,
                 "아다마스 본부",
@@ -636,7 +636,7 @@ namespace Narthex.Presentation
             SetTheusLightForm(false);
             trainingExitTransitionTrigger.enabled = true;
             objectiveBeacon.SetExternalTarget(trainingExitTarget);
-            guideCompanion.BeginGuide(legacyGuideRoute.Waypoints);
+            guideCompanion.CancelGuide();
         }
 
         private static string[] HiddenRoomEntryDialogue()

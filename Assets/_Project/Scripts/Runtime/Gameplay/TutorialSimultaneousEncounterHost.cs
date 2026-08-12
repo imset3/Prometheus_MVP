@@ -129,6 +129,7 @@ namespace Narthex.Gameplay
             {
                 var enemy = enemies[index];
                 enemy.transform.position = spawnPoints[index].position;
+                enemy.GetComponent<TutorialGroundedEnemyMotorHost>()?.ResetMotion();
                 enemy.gameObject.SetActive(true);
                 enemy.ResetRuntime();
             }

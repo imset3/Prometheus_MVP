@@ -21,6 +21,7 @@ namespace Narthex.Gameplay
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private Transform target;
         [SerializeField] private Collider2D bodyCollider;
+        [SerializeField] private TutorialGroundedEnemyMotorHost groundMotor;
         [SerializeField] private Transform muzzleAnchor;
         [SerializeField] private GameObject warningVisualSlot;
         [SerializeField] private Renderer warningRenderer;
@@ -31,8 +32,6 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0.1f)] private float retreatDistance = 3.2f;
         [SerializeField, Min(0.1f)] private float preferredDistance = 5.2f;
         [SerializeField, Min(0.1f)] private float maximumAttackDistance = 8.5f;
-        [SerializeField, Min(0.001f)] private float collisionSkin = 0.03f;
-
         [Header("Attack")]
         [SerializeField] private string attackId = "ENEMY-TUTO-RANGED";
         [SerializeField] private int damage = 12;
@@ -42,7 +41,6 @@ namespace Narthex.Gameplay
         [SerializeField, Min(0.1f)] private float projectileLifetime = 4f;
         [SerializeField] private Color warningColor = new Color(0.2f, 0.9f, 1f, 0.92f);
 
-        private readonly RaycastHit2D[] castHits = new RaycastHit2D[12];
         private readonly RaycastHit2D[] sightHits = new RaycastHit2D[24];
         private float phaseEndsAt;
         private float muzzleX;
@@ -53,6 +51,7 @@ namespace Narthex.Gameplay
         public int ShotsFired { get; private set; }
         public bool HasValidSetup => actor != null && target != null && bodyCollider != null && muzzleAnchor != null &&
                                      warningVisualSlot != null && projectilePool != null && projectilePool.Length > 0 &&
+                                     groundMotor != null && groundMotor.HasValidSetup &&
                                      Array.TrueForAll(projectilePool, item => item != null);
         public event Action<TutorialRangedEnemyPhase> PhaseChanged;
 
@@ -72,11 +71,13 @@ namespace Narthex.Gameplay
             warningVisualSlot = configuredWarning;
             warningRenderer = configuredWarningRenderer;
             projectilePool = configuredPool ?? new TutorialEnemyProjectileHost[0];
+            groundMotor ??= GetComponent<TutorialGroundedEnemyMotorHost>();
         }
 
         private void Awake()
         {
             if (bodyCollider == null) bodyCollider = GetComponent<Collider2D>();
+            groundMotor ??= GetComponent<TutorialGroundedEnemyMotorHost>();
             if (warningRenderer == null && warningVisualSlot != null)
                 warningRenderer = warningVisualSlot.GetComponentInChildren<Renderer>(true);
             if (!HasValidSetup)
@@ -95,6 +96,7 @@ namespace Narthex.Gameplay
 
         private void OnDisable()
         {
+            groundMotor?.ResetMotion();
             ResetAttackState();
             if (projectilePool == null) return;
             foreach (var projectile in projectilePool)
@@ -132,28 +134,33 @@ namespace Narthex.Gameplay
         private void FixedUpdate()
         {
             if (!CanAct() || CurrentPhase == TutorialRangedEnemyPhase.Telegraph ||
-                CurrentPhase == TutorialRangedEnemyPhase.Fire) return;
+                CurrentPhase == TutorialRangedEnemyPhase.Fire)
+            {
+                groundMotor?.StopHorizontal();
+                return;
+            }
 
             var deltaX = target.position.x - transform.position.x;
             var distance = Mathf.Abs(deltaX);
             var direction = 0f;
-            var requestedDistance = 0f;
+            var requestedSpeed = 0f;
             if (distance < retreatDistance)
             {
                 direction = deltaX >= 0f ? -1f : 1f;
-                requestedDistance = Mathf.Min(moveSpeed * Time.fixedDeltaTime, retreatDistance - distance);
+                requestedSpeed = Mathf.Min(moveSpeed, (retreatDistance - distance) / Time.fixedDeltaTime);
             }
             else if (distance > preferredDistance)
             {
                 direction = deltaX >= 0f ? 1f : -1f;
-                requestedDistance = Mathf.Min(moveSpeed * Time.fixedDeltaTime, distance - preferredDistance);
+                requestedSpeed = Mathf.Min(moveSpeed, (distance - preferredDistance) / Time.fixedDeltaTime);
             }
 
-            if (Mathf.Approximately(direction, 0f) || requestedDistance <= 0f) return;
-            var allowed = FindAllowedDistance(new Vector2(direction, 0f), requestedDistance);
-            if (allowed <= 0f) return;
-            transform.position += Vector3.right * (direction * allowed);
-            Physics2D.SyncTransforms();
+            if (Mathf.Approximately(direction, 0f) || requestedSpeed <= 0f)
+            {
+                groundMotor.StopHorizontal();
+                return;
+            }
+            groundMotor.TrySetHorizontalSpeed(direction * requestedSpeed);
         }
 
         private void LateUpdate()
@@ -225,26 +232,6 @@ namespace Narthex.Gameplay
             var local = muzzleAnchor.localPosition;
             local.x = (target.position.x >= transform.position.x ? 1f : -1f) * muzzleX;
             muzzleAnchor.localPosition = local;
-        }
-
-        private float FindAllowedDistance(Vector2 direction, float requestedDistance)
-        {
-            var filter = new ContactFilter2D
-            {
-                useLayerMask = true,
-                layerMask = Physics2D.AllLayers,
-                useTriggers = false
-            };
-            var count = bodyCollider.Cast(direction, filter, castHits, requestedDistance + collisionSkin);
-            var allowed = requestedDistance;
-            for (var index = 0; index < count; index++)
-            {
-                var hit = castHits[index];
-                if (hit.collider == null || hit.collider.transform.IsChildOf(transform)) continue;
-                if (Mathf.Abs(hit.normal.x) < 0.5f) continue;
-                allowed = Mathf.Min(allowed, Mathf.Max(0f, hit.distance - collisionSkin));
-            }
-            return allowed;
         }
 
         private bool HasClearLineOfSight()

@@ -66,6 +66,7 @@ namespace Narthex.Gameplay
             if (!HasValidSetup) return;
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost.Events.Subscribe<EnemyKilled>(HandleEnemyKilled);
+            combatSystemHost.Events.Subscribe<PlayerRespawned>(HandlePlayerRespawned);
         }
 
         private void Start() => TryStartEncounter(questSequenceHost.CurrentQuestId);
@@ -74,6 +75,7 @@ namespace Narthex.Gameplay
         {
             serviceRoot?.Events?.Unsubscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost?.Events?.Unsubscribe<EnemyKilled>(HandleEnemyKilled);
+            combatSystemHost?.Events?.Unsubscribe<PlayerRespawned>(HandlePlayerRespawned);
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => TryStartEncounter(message.QuestId);
@@ -103,6 +105,33 @@ namespace Narthex.Gameplay
             spawnRoutine = StartCoroutine(SpawnEnemyAfterDelay(nextIndex, nextEnemyDelay));
         }
 
+        private void HandlePlayerRespawned(PlayerRespawned message)
+        {
+            if (cleared || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            ResetEncounter();
+        }
+
+        private void ResetEncounter()
+        {
+            if (spawnRoutine != null)
+            {
+                StopCoroutine(spawnRoutine);
+                spawnRoutine = null;
+            }
+            activeEnemyIndex = -1;
+            encounterStarted = true;
+            spawnWarning.SetActive(false);
+            SetGateLocked(true);
+            foreach (var enemy in enemies)
+            {
+                if (enemy == null) continue;
+                enemy.gameObject.SetActive(false);
+                enemy.ResetRuntime();
+                enemy.GetComponent<TutorialGroundedEnemyMotorHost>()?.ResetMotion();
+            }
+            spawnRoutine = StartCoroutine(SpawnEnemyAfterDelay(0, initialDelay));
+        }
+
         private IEnumerator SpawnEnemyAfterDelay(int enemyIndex, float delay)
         {
             activeEnemyIndex = -1;
@@ -115,7 +144,9 @@ namespace Narthex.Gameplay
 
             var enemy = enemies[enemyIndex];
             enemy.transform.position = spawnPoints[enemyIndex].position;
+            enemy.GetComponent<TutorialGroundedEnemyMotorHost>()?.ResetMotion();
             enemy.gameObject.SetActive(true);
+            enemy.ResetRuntime();
             activeEnemyIndex = enemyIndex;
             spawnRoutine = null;
         }

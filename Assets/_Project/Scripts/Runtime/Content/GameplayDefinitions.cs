@@ -16,7 +16,8 @@ namespace Narthex.Content
         PortalUsed,
         DoubleJumpPerformed,
         MeleeComboCompleted,
-        RangedTripleHitPerformed
+        RangedTripleHitPerformed,
+        ProjectileAvoided
     }
     public enum RewardType { None, ModulePoint, TreeUnlock, BossModuleTreeUnlock, StageUnlock }
     public enum ModuleTreeType { Basic, Boss }

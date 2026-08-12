@@ -61,7 +61,18 @@ namespace Narthex.Presentation
         public void ExitLightForm()
         {
             lightFormActive = false;
-            if (normalVisualRoot != null) normalVisualRoot.SetActive(true);
+            if (normalVisualRoot != null)
+            {
+                normalVisualRoot.SetActive(true);
+                foreach (var renderer in normalVisualRoot.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    renderer.enabled = true;
+                    var color = renderer.color;
+                    color.a = 1f;
+                    renderer.color = color;
+                    renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 700);
+                }
+            }
             if (lightFormRoot != null) lightFormRoot.SetActive(false);
             if (lightCoreVisual != null && coreBaseScale != Vector3.zero)
                 lightCoreVisual.localScale = coreBaseScale;

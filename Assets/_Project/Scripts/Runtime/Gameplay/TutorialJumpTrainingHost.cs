@@ -35,6 +35,7 @@ namespace Narthex.Gameplay
         private Coroutine trainingRoutine;
         private int nextProjectileIndex;
         private Material runtimeUnlitMaterial;
+        private readonly RaycastHit2D[] projectileCastHits = new RaycastHit2D[8];
 
         /// <summary>
         /// The next projectile must not launch before the previous one has cleared
@@ -137,13 +138,43 @@ namespace Narthex.Gameplay
             var elapsed = 0f;
             while (elapsed < travelDuration && questSequenceHost.CurrentQuestId == jumpQuestId)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.fixedDeltaTime;
                 var progress = Mathf.Clamp01(elapsed / travelDuration);
-                body.position = Vector3.Lerp(launchPoint.position, endPoint.position, progress);
-                yield return null;
+                var nextPosition = (Vector2)Vector3.Lerp(launchPoint.position, endPoint.position, progress);
+                if (WouldHitPlayer(projectileObject, body.position, nextPosition))
+                {
+                    TryRestartJumpSection(player.GetComponent<Collider2D>());
+                    yield break;
+                }
+                body.MovePosition(nextPosition);
+                yield return new WaitForFixedUpdate();
             }
 
+            if (questSequenceHost.CurrentQuestId == jumpQuestId)
+                serviceRoot.Events.Publish(new GameplaySignal(
+                    Narthex.Content.QuestSignalType.ProjectileAvoided,
+                    "TRAINING-JUMP-PROJECTILE"));
             HideProjectile(index);
+        }
+
+        private bool WouldHitPlayer(GameObject projectileObject, Vector2 current, Vector2 next)
+        {
+            if (projectileObject == null) return false;
+            var hitbox = projectileObject.GetComponent<Collider2D>();
+            var playerCollider = player != null ? player.GetComponent<Collider2D>() : null;
+            if (hitbox == null || playerCollider == null) return false;
+            var delta = next - current;
+            var distance = delta.magnitude;
+            if (distance <= Mathf.Epsilon) return false;
+            var filter = new ContactFilter2D { useLayerMask = true, layerMask = Physics2D.AllLayers, useTriggers = true };
+            var count = hitbox.Cast(delta / distance, filter, projectileCastHits, distance);
+            for (var index = 0; index < count; index++)
+            {
+                var candidate = projectileCastHits[index].collider;
+                if (candidate == playerCollider || candidate != null && candidate.transform.IsChildOf(player))
+                    return true;
+            }
+            return false;
         }
 
         public bool TryRestartJumpSection(Collider2D other)
@@ -156,6 +187,11 @@ namespace Narthex.Gameplay
             trainingRoutine = null;
             HideProjectiles();
             questManagerHost.System.ResetProgress(jumpQuestId);
+            serviceRoot.Events.Publish(new QuestProgressChanged(
+                jumpQuestId,
+                "COND-TUTO-002-JUMP",
+                0,
+                3));
             playerMotor.ResetTransientInput();
             playerBody.linearVelocity = Vector2.zero;
             playerBody.position = restartPoint.position;

@@ -9,81 +9,46 @@ namespace Narthex.Gameplay
     {
         [SerializeField] private CombatActorHost actor;
         [SerializeField] private Transform target;
-        [SerializeField] private Collider2D bodyCollider;
+        [SerializeField] private TutorialGroundedEnemyMotorHost groundMotor;
         [SerializeField, Min(0.1f)] private float moveSpeed = 1.8f;
         [SerializeField, Min(0.1f)] private float stopDistance = 1.15f;
-        [SerializeField, Min(0.001f)] private float collisionSkin = 0.03f;
-
-        private readonly RaycastHit2D[] castHits = new RaycastHit2D[12];
         private readonly RaycastHit2D[] sightHits = new RaycastHit2D[24];
-        private Rigidbody2D body;
 
-        private Collider2D ResolvedBodyCollider =>
-            bodyCollider != null ? bodyCollider : GetComponent<Collider2D>();
-
-        public bool HasValidSetup => actor != null && target != null && ResolvedBodyCollider != null &&
-                                     moveSpeed > 0f && stopDistance > 0f && collisionSkin > 0f;
+        public bool HasValidSetup => actor != null && target != null && groundMotor != null &&
+                                     groundMotor.HasValidSetup && moveSpeed > 0f && stopDistance > 0f;
 
         private void Awake()
         {
-            bodyCollider = ResolvedBodyCollider;
-            body = GetComponent<Rigidbody2D>();
+            groundMotor ??= GetComponent<TutorialGroundedEnemyMotorHost>();
             if (HasValidSetup) return;
             Debug.LogError(
-                "TutorialEnemyPursuitHost requires actor, target, body-collider, speed, stop-distance, and collision-skin references.",
+                "TutorialEnemyPursuitHost requires actor, target, and a grounded enemy motor.",
                 this);
             enabled = false;
         }
 
         private void FixedUpdate()
         {
-            if (actor.Runtime == null || !actor.Runtime.IsAlive || actor.Runtime.State == CombatState.Hit) return;
+            if (GetComponent<TutorialRangedEnemyHost>() is { enabled: true }) return;
+            if (actor.Runtime == null || !actor.Runtime.IsAlive || actor.Runtime.State == CombatState.Hit)
+            {
+                groundMotor.StopHorizontal();
+                return;
+            }
             var deltaX = target.position.x - transform.position.x;
-            if (Mathf.Abs(deltaX) <= stopDistance) return;
-            if (!HasClearLineOfSight()) return;
-
-            var direction = deltaX > 0f ? Vector2.right : Vector2.left;
-            var requestedDistance = Mathf.Min(
-                moveSpeed * Time.fixedDeltaTime,
-                Mathf.Abs(deltaX) - stopDistance);
-            var allowedDistance = FindAllowedDistance(direction, requestedDistance);
-            if (allowedDistance <= 0f) return;
-
-            var nextPosition = (Vector2)transform.position + direction * allowedDistance;
-            if (body != null && body.bodyType != RigidbodyType2D.Static)
-                body.MovePosition(nextPosition);
-            else
-                transform.position = nextPosition;
-            Physics2D.SyncTransforms();
-        }
-
-        private float FindAllowedDistance(Vector2 direction, float requestedDistance)
-        {
-            var filter = new ContactFilter2D
+            if (Mathf.Abs(deltaX) <= stopDistance || !HasClearLineOfSight())
             {
-                useLayerMask = true,
-                layerMask = Physics2D.AllLayers,
-                useTriggers = false
-            };
-            var hitCount = bodyCollider.Cast(
-                direction,
-                filter,
-                castHits,
-                requestedDistance + collisionSkin);
-            var allowedDistance = requestedDistance;
-            for (var index = 0; index < hitCount; index++)
-            {
-                var hit = castHits[index];
-                if (hit.collider == null || hit.collider.transform.IsChildOf(transform)) continue;
-                if (Mathf.Abs(hit.normal.x) < 0.5f) continue;
-                allowedDistance = Mathf.Min(allowedDistance, Mathf.Max(0f, hit.distance - collisionSkin));
+                groundMotor.StopHorizontal();
+                return;
             }
 
-            return allowedDistance;
+            var speed = Mathf.Min(moveSpeed, (Mathf.Abs(deltaX) - stopDistance) / Time.fixedDeltaTime);
+            groundMotor.TrySetHorizontalSpeed(Mathf.Sign(deltaX) * speed);
         }
 
         private bool HasClearLineOfSight()
         {
+            var bodyCollider = groundMotor.BodyCollider;
             var origin = (Vector2)bodyCollider.bounds.center;
             var targetCollider = target.GetComponentInChildren<Collider2D>();
             var destination = targetCollider != null

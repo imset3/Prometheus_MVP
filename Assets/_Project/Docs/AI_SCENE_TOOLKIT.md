@@ -34,6 +34,7 @@
 | 헬테 전용 PNG 모션 v2 | `boss.helte-animation-v2.apply` | Animator / SpriteRenderer |
 | 헬테 모션 가독성 속도 | `boss.helte-animation-v2.pacing` | Animator / HelteBossPatternHost |
 | 기존 원거리 더미 통합 | `tutorial.training-dummies.apply` | Hierarchy / Collider2D |
+| F/G 적 지상 물리 적용 | `tutorial.enemy-physics.apply` | Rigidbody2D / Collider2D / Grounded Motor |
 | 원거리 적 투사체 아트 | `tutorial.enemy-projectile-art.apply` | SpriteRenderer / Scene View |
 | 코드 영향 확인 | `code.usage` | 씬 검색 |
 
@@ -192,6 +193,18 @@ G 스테이지와 Helte 보스 페이즈는 동기화된 레이어의 볼륨만 
 `CombatActorHost`와 피격 Collider를 연결하고, 훈련 흐름의 표적 참조를 이
 오브젝트들로 교체한다. 과거의 중복 `RangedTarget_01~03` 오브젝트는 제거한다.
 더미 Transform과 자식 스프라이트 배치는 변경하지 않는다.
+
+### F/G 적 지상 물리 적용
+
+- `tutorial.enemy-physics.apply`
+
+F/G에 배치된 전투 적 7기만 대상으로 Dynamic Rigidbody2D, 중력 3,
+회전 고정, 보간, 연속 충돌 감지, 고체 몸 Collider와
+`TutorialGroundedEnemyMotorHost`를 연결한다. 근접·원거리 이동은 같은 모터를
+사용하고 벽과 발판 끝에서 멈춘다. 스폰 마커와 적 Transform은 변경하지 않는다.
+외부 행군 연출에는 화면 밖 비표시 지원 발판만 추가하며 전투 AI와 분리한다.
+적 프리팹이나 슬롯을 교체한 뒤에는 반드시 `dryRun: true`로 예상 대상 7기를
+확인하고 적용한 다음 Scene Validator를 실행한다.
 
 ### 튜토리얼 효과음
 
