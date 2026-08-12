@@ -23,6 +23,13 @@ namespace Narthex.Tools
             "ExteriorB_Enemy_04_ART_SLOT"
         };
 
+        private static readonly HashSet<string> RangedEnemyNames = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "ExteriorA_Enemy_03_ART_SLOT",
+            "ExteriorB_Enemy_02_ART_SLOT",
+            "ExteriorB_Enemy_04_ART_SLOT"
+        };
+
         public static IReadOnlyList<PrometheusAiChange> Apply(Scene scene, bool dryRun)
         {
             var changes = new List<PrometheusAiChange>();
@@ -41,7 +48,9 @@ namespace Narthex.Tools
                     objectId = PrometheusSceneQuery.ObjectId(enemy),
                     hierarchyPath = PrometheusSceneQuery.Path(enemy),
                     before = Describe(enemy),
-                    after = "Dynamic Rigidbody2D; gravity=3; FreezeRotation; Interpolate; Continuous; solid body; grounded motor"
+                    after = RangedEnemyNames.Contains(enemy.name)
+                        ? "Dynamic Rigidbody2D; gravity=3; FreezeRotation; Interpolate; Continuous; solid body offsetY=0.8; grounded motor"
+                        : "Dynamic Rigidbody2D; gravity=3; FreezeRotation; Interpolate; Continuous; solid body; grounded motor"
                 });
                 if (!dryRun) ConfigureEnemy(enemy);
             }
@@ -86,6 +95,9 @@ namespace Narthex.Tools
                     issues.Add($"{enemyName}: invalid Rigidbody2D grounded configuration.");
                 if (collider == null || collider.isTrigger)
                     issues.Add($"{enemyName}: body collider must be solid.");
+                if (RangedEnemyNames.Contains(enemyName) && collider is BoxCollider2D rangedCollider &&
+                    !Mathf.Approximately(rangedCollider.offset.y, 0.8f))
+                    issues.Add($"{enemyName}: ranged body collider offset must keep the sprite feet on the ground.");
                 if (motor == null || !motor.HasValidSetup)
                     issues.Add($"{enemyName}: grounded motor is missing or invalid.");
             }
@@ -99,6 +111,7 @@ namespace Narthex.Tools
             Undo.RecordObject(collider, "Configure solid enemy body");
             collider.enabled = true;
             collider.isTrigger = false;
+            collider.offset = new Vector2(collider.offset.x, RangedEnemyNames.Contains(enemy.name) ? 0.8f : 0f);
 
             var body = enemy.GetComponent<Rigidbody2D>();
             if (body == null) body = Undo.AddComponent<Rigidbody2D>(enemy);

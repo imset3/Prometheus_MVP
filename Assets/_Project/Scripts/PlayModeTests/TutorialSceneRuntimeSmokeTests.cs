@@ -474,6 +474,17 @@ namespace Narthex.PlayModeTests
                 Assert.That((body.constraints & RigidbodyConstraints2D.FreezeRotation) != 0, Is.True, motor.name);
                 Assert.That(bodyCollider.isTrigger, Is.False, motor.name);
             }
+            var rangedEnemies = Resources.FindObjectsOfTypeAll<TutorialRangedEnemyHost>()
+                .Where(host => host != null && host.gameObject.scene == scene)
+                .ToArray();
+            Assert.That(rangedEnemies.Length, Is.EqualTo(3));
+            foreach (var rangedEnemy in rangedEnemies)
+            {
+                var bodyCollider = rangedEnemy.GetComponent<BoxCollider2D>();
+                Assert.That(bodyCollider, Is.Not.Null);
+                Assert.That(bodyCollider.offset.y, Is.EqualTo(0.8f).Within(0.001f),
+                    $"{rangedEnemy.name} must align its bottom-pivot sprite feet with the physical floor.");
+            }
             var projectiles = Resources.FindObjectsOfTypeAll<TutorialEnemyProjectileHost>()
                 .Where(projectile => projectile != null && projectile.gameObject.scene == scene)
                 .ToArray();
