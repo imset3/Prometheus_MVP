@@ -91,11 +91,23 @@ namespace Narthex.Gameplay
             if (importedTrainingFlow == null) importedTrainingFlow = GetComponent<TutorialImportedTrainingFlowHost>();
             if (trainingSpawnHost == null)
                 trainingSpawnHost = FindFirstObjectByType<TutorialTrainingSpawnHost>(FindObjectsInactive.Include);
+            RecoverRuntimePhaseMarkers();
             if (HasValidSetup) return;
             Debug.LogError(
                 "TutorialTrainingPhaseControllerHost requires five marker-authored phases, player transition references, and one exit gate.",
                 this);
             enabled = false;
+        }
+
+        private void RecoverRuntimePhaseMarkers()
+        {
+            if (phaseStartMarkers == null || phaseStartMarkers.Length == 0) return;
+            Transform fallback = null;
+            if (trainingSpawnHost != null)
+                fallback = trainingSpawnHost.transform.Find("DashTrainingRestartPoint");
+            fallback ??= player;
+            for (var index = 0; index < phaseStartMarkers.Length; index++)
+                phaseStartMarkers[index] ??= fallback;
         }
 
         private void OnEnable()

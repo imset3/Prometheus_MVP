@@ -34,6 +34,18 @@ namespace Narthex.Gameplay
                                      spawnPoints.AllValid() && exitGateCollider != null && exitGateRenderer != null;
         public bool ActivatesAllEnemiesAtOnce => true;
         public int EnemyCount => enemies?.Length ?? 0;
+        public int ActiveEnemyCount
+        {
+            get
+            {
+                if (enemies == null) return 0;
+                var count = 0;
+                foreach (var enemy in enemies)
+                    if (enemy != null && enemy.gameObject.activeInHierarchy)
+                        count++;
+                return count;
+            }
+        }
         public bool IsCleared => cleared;
 
         private void Awake()
@@ -60,6 +72,7 @@ namespace Narthex.Gameplay
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost.Events.Subscribe<EnemyKilled>(HandleEnemyKilled);
             combatSystemHost.Events.Subscribe<PlayerRespawned>(HandlePlayerRespawned);
+            RefreshForCurrentQuest();
         }
 
         private void Start() => TryStartEncounter(questSequenceHost.CurrentQuestId);
@@ -72,6 +85,17 @@ namespace Narthex.Gameplay
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => TryStartEncounter(message.QuestId);
+
+        public void RefreshForCurrentQuest()
+        {
+            if (!HasValidSetup || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            if (!encounterStarted || !HasAnyActiveEnemy())
+            {
+                encounterStarted = true;
+                cleared = false;
+                ResetEnemiesAndGate();
+            }
+        }
 
         private void TryStartEncounter(string questId)
         {
@@ -117,6 +141,14 @@ namespace Narthex.Gameplay
                 if (enemy != null && enemy.ActorId == actorId)
                     return enemy;
             return null;
+        }
+
+        private bool HasAnyActiveEnemy()
+        {
+            foreach (var enemy in enemies)
+                if (enemy != null && enemy.gameObject.activeInHierarchy)
+                    return true;
+            return false;
         }
 
         private void CompleteEncounter()

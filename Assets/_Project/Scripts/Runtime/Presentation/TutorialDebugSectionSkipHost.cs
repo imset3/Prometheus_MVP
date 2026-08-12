@@ -137,9 +137,19 @@ namespace Narthex.Presentation
 
             SetAllActive(zoneRoots, false);
             SetAllActive(technicalRoots, false);
+            if (!questSequenceHost.TryDebugJumpToQuest(section.QuestId))
+            {
+                Debug.LogError($"개발자 스킵 퀘스트 전환에 실패했습니다: {section.QuestId}", this);
+                return false;
+            }
+
+            // The destination runtime roots must be enabled only after the quest is current.
+            // Their OnEnable hooks can then deterministically initialize enemies and gates even
+            // when the objective event was published while those roots were inactive.
             section.ZoneRoot.SetActive(true);
             section.TechnicalRoot.SetActive(true);
             SetAllActive(section.ActivateOnJump, true);
+            RefreshDestinationRuntime(section);
             playerMotorHost.UnlockDoubleJump();
 
             playerBody.linearVelocity = Vector2.zero;
@@ -162,12 +172,6 @@ namespace Narthex.Presentation
                     true);
 
             restartHost.SetRuntimeCheckpoint(section.QuestId, section.SpawnPoint);
-            if (!questSequenceHost.TryDebugJumpToQuest(section.QuestId))
-            {
-                Debug.LogError($"개발자 스킵 퀘스트 전환에 실패했습니다: {section.QuestId}", this);
-                return false;
-            }
-
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
             fadeCanvasGroup.interactable = false;
@@ -176,6 +180,15 @@ namespace Narthex.Presentation
             activeSectionIndex = sectionIndex;
             Debug.Log($"[sragon000][구간 스킵] {section.DisplayName}부터 테스트를 시작합니다.", this);
             return true;
+        }
+
+        private static void RefreshDestinationRuntime(TutorialDebugSectionDefinition section)
+        {
+            if (section?.TechnicalRoot == null) return;
+            foreach (var encounter in section.TechnicalRoot.GetComponentsInChildren<TutorialSimultaneousEncounterHost>(true))
+                encounter.RefreshForCurrentQuest();
+            foreach (var encounter in section.TechnicalRoot.GetComponentsInChildren<TutorialWaveEncounterHost>(true))
+                encounter.RefreshForCurrentQuest();
         }
 
         private int FindCurrentSectionIndex()

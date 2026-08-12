@@ -43,6 +43,7 @@ namespace Narthex.Gameplay
 
         private void Awake()
         {
+            RecoverRuntimeReferences();
             if (!HasValidSetup)
             {
                 Debug.LogError("TutorialJumpTrainingHost requires quest, player, anchor, and projectile references.", this);
@@ -54,6 +55,13 @@ namespace Narthex.Gameplay
             questManagerHost.Initialize();
             EnsureProjectileVisuals();
             HideProjectiles();
+        }
+
+        private void RecoverRuntimeReferences()
+        {
+            restartPoint ??= transform.Find("JumpTrainingRestartPoint");
+            launchPoint ??= transform.Find("JumpProjectileLaunchPoint");
+            endPoint ??= transform.Find("JumpProjectileEndPoint");
         }
 
         private void OnEnable()
@@ -204,7 +212,9 @@ namespace Narthex.Gameplay
                 if (material != null && material.name.Contains("Sprite-Unlit-Default"))
                     return material;
             }
-            return null;
+            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ??
+                         Shader.Find("Sprites/Default");
+            return shader != null ? new Material(shader) { name = "Runtime_Sprite-Unlit-Default" } : null;
         }
     }
 }

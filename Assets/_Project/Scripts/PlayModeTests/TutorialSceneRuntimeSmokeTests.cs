@@ -835,6 +835,8 @@ namespace Narthex.PlayModeTests
             Assert.That(FindSceneTransform(tutorialScene, "F스테이지").gameObject.activeInHierarchy, Is.False);
             Assert.That(FindSceneTransform(tutorialScene, "G스테이지").gameObject.activeInHierarchy, Is.True);
             Assert.That(FindSceneComponent<TutorialWaveEncounterHost>(tutorialScene).EncounterStarted, Is.True);
+            Assert.That(FindSceneComponent<TutorialBackgroundPresenter>(tutorialScene).CurrentKey, Is.EqualTo("G"),
+                "F8 progression must switch the runtime background together with the G quest and enemies.");
 
             Assert.That(skip.JumpToHelteSection(), Is.True);
             yield return null;

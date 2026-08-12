@@ -96,6 +96,7 @@ namespace Narthex.Gameplay
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost.Events.Subscribe<EnemyKilled>(HandleEnemyKilled);
             combatSystemHost.Events.Subscribe<PlayerRespawned>(HandlePlayerRespawned);
+            RefreshForCurrentQuest();
         }
 
         private void Start() => TryStartEncounter(questSequenceHost.CurrentQuestId);
@@ -108,6 +109,17 @@ namespace Narthex.Gameplay
         }
 
         private void HandleObjectiveChanged(TutorialObjectiveChanged message) => TryStartEncounter(message.QuestId);
+
+        public void RefreshForCurrentQuest()
+        {
+            if (!HasValidSetup || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            if (!encounterStarted || (!cleared && waveRoutine == null && activeEnemyIds.Count == 0))
+            {
+                encounterStarted = true;
+                cleared = false;
+                ResetEncounter();
+            }
+        }
 
         private void TryStartEncounter(string questId)
         {

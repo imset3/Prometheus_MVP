@@ -51,6 +51,7 @@ namespace Narthex.Gameplay
         private bool enemySequenceStarted;
         private bool fallingStartPending;
         private bool enemyStartPending;
+        private static Material runtimeVisibleSpriteMaterial;
 
         public bool HasValidSetup => serviceRoot != null && questSequenceHost != null && questManagerHost != null &&
                                      playerInputHost != null &&
@@ -70,6 +71,7 @@ namespace Narthex.Gameplay
 
         private void Awake()
         {
+            RecoverRuntimeReferences();
             if (!HasValidSetup)
             {
                 Debug.LogError("TutorialTrainingSpawnHost requires quest, falling prop, and enemy arrival references.", this);
@@ -83,11 +85,26 @@ namespace Narthex.Gameplay
             PrepareEnemy();
         }
 
+        private void RecoverRuntimeReferences()
+        {
+            dashRestartPoint ??= transform.Find("DashTrainingRestartPoint");
+            if (tutorialEnemy == null)
+                tutorialEnemy = transform.Find("TrainingPhaseContents/04_근접공격/AttackTrainingArea/TutorialEnemy")?.gameObject;
+            if (tutorialEnemy != null)
+            {
+                enemySpawnPoint ??= tutorialEnemy.transform;
+                enemyLandingPoint ??= tutorialEnemy.transform;
+                enemyCollider ??= tutorialEnemy.GetComponent<Collider2D>();
+                enemyAttackBehaviour ??= tutorialEnemy.GetComponent<EnemyAttackHost>();
+            }
+        }
+
         private void OnEnable()
         {
             if (serviceRoot == null) return;
             serviceRoot.Initialize();
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
+            TryStartForQuest(questSequenceHost != null ? questSequenceHost.CurrentQuestId : string.Empty);
         }
 
         private void Start() => TryStartForQuest(questSequenceHost.CurrentQuestId);
@@ -135,8 +152,41 @@ namespace Narthex.Gameplay
             tutorialEnemy.transform.position = enemyLandingPoint.position;
             tutorialEnemy.SetActive(true);
             tutorialEnemy.GetComponent<CombatActorHost>()?.ResetRuntime();
+            EnsureEnemyVisible(tutorialEnemy);
             enemyCollider.enabled = true;
             enemyAttackBehaviour.enabled = false;
+        }
+
+        private static void EnsureEnemyVisible(GameObject enemy)
+        {
+            if (enemy == null) return;
+            foreach (var renderer in enemy.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                renderer.enabled = true;
+                var color = renderer.color;
+                color.a = 1f;
+                renderer.color = color;
+                renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 180);
+                var fallback = ResolveVisibleSpriteMaterial();
+                if (fallback != null) renderer.sharedMaterial = fallback;
+            }
+        }
+
+        private static Material ResolveVisibleSpriteMaterial()
+        {
+            if (runtimeVisibleSpriteMaterial != null) return runtimeVisibleSpriteMaterial;
+            foreach (var candidate in Resources.FindObjectsOfTypeAll<SpriteRenderer>())
+            {
+                var material = candidate != null ? candidate.sharedMaterial : null;
+                if (material == null || !material.name.Contains("Sprite-Unlit-Default")) continue;
+                runtimeVisibleSpriteMaterial = material;
+                return runtimeVisibleSpriteMaterial;
+            }
+            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ??
+                         Shader.Find("Sprites/Default");
+            if (shader != null)
+                runtimeVisibleSpriteMaterial = new Material(shader) { name = "Runtime_Sprite-Unlit-Default" };
+            return runtimeVisibleSpriteMaterial;
         }
 
         private void PrepareFallingObjects()
