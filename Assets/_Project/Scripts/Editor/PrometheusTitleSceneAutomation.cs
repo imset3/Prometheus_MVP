@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Narthex.Tools
 {
@@ -66,6 +67,79 @@ namespace Narthex.Tools
             Selection.activeGameObject = FindRoot(scene, "TitleScreenRoot");
             Debug.Log($"[sragon000][Title] Applied {changes.Count} change(s), Doctor {issues.Count} issue(s), " +
                       $"snapshot delta {deltaCount}. {ScenePath}");
+        }
+
+        [MenuItem(PrometheusToolMenuPaths.Ai + "Repair Title Prome Presentation")]
+        public static void RepairTitlePromePresentationMenu()
+        {
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var beforePath = "Temp/PrometheusSceneToolkit/title-prome-before.json";
+            var afterPath = "Temp/PrometheusSceneToolkit/title-prome-after.json";
+            PrometheusSceneSnapshotService.Save(PrometheusSceneSnapshotService.Capture(scene), beforePath);
+            var preview = RepairTitlePromePresentation(scene, true);
+            Debug.Log($"[sragon000][Title Prome] Dry-run: {string.Join(" | ", preview.Select(item => item.after))}");
+            var changes = RepairTitlePromePresentation(scene, false);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            var issues = PrometheusSceneDoctor.Scan(scene);
+            PrometheusSceneSnapshotService.Save(PrometheusSceneSnapshotService.Capture(scene), afterPath);
+            var comparison = PrometheusSceneSnapshotService.Compare(
+                PrometheusSceneSnapshotService.Load(beforePath),
+                PrometheusSceneSnapshotService.Load(afterPath));
+            var deltaCount = comparison.added.Count + comparison.modified.Count + comparison.removed.Count;
+            Debug.Log($"[sragon000][Title Prome] Applied {changes.Count} change(s), Doctor {issues.Count} issue(s), " +
+                      $"snapshot delta {deltaCount}. {ScenePath}");
+        }
+
+        public static List<PrometheusAiChange> RepairTitlePromePresentation(Scene scene, bool dryRun)
+        {
+            var changes = new List<PrometheusAiChange>
+            {
+                Change("title-prome-frames", "Rebind all imported Prome idle frames without rebuilding authored UI"),
+                Change("title-prome-scale", "Place a large, right-facing Prome on the left hill while preserving the foot line")
+            };
+            if (dryRun) return changes;
+
+            var root = FindRoot(scene, "TitleScreenRoot");
+            var host = root != null ? root.GetComponent<TitleScreenHost>() : null;
+            if (host == null) throw new InvalidOperationException("TitleScreenRoot/TitleScreenHost is missing.");
+
+            var frames = AssetDatabase.FindAssets("t:Sprite", new[] { PromeFolder })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => path.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .Select(AssetDatabase.LoadAssetAtPath<Sprite>)
+                .Where(sprite => sprite != null)
+                .ToArray();
+            if (frames.Length == 0) throw new InvalidOperationException("No Prome idle sprites were imported.");
+
+            var serialized = new SerializedObject(host);
+            var frameProperty = serialized.FindProperty("promeIdleFrames");
+            frameProperty.arraySize = frames.Length;
+            for (var index = 0; index < frames.Length; index++)
+                frameProperty.GetArrayElementAtIndex(index).objectReferenceValue = frames[index];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(host);
+
+            var prome = scene.GetRootGameObjects()
+                .SelectMany(sceneRoot => sceneRoot.GetComponentsInChildren<Transform>(true))
+                .FirstOrDefault(item => item.name == "Prome");
+            if (prome == null) throw new InvalidOperationException("Authored title Prome Image is missing.");
+            var image = prome.GetComponent<Image>();
+            var rect = prome as RectTransform;
+            if (image == null || rect == null) throw new InvalidOperationException("Title Prome requires Image and RectTransform.");
+            image.sprite = frames[0];
+            image.color = Color.white;
+            image.preserveAspect = true;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(-575f, -115f);
+            rect.sizeDelta = new Vector2(700f, 700f);
+            rect.localScale = new Vector3(-1f, 1f, 1f);
+            EditorUtility.SetDirty(image);
+            EditorUtility.SetDirty(rect);
+            return changes;
         }
 
         public static List<PrometheusAiChange> Apply(Scene scene, bool dryRun)

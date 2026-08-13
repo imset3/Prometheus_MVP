@@ -104,7 +104,8 @@ namespace Narthex.SceneFlow
         private bool usesAuthoredPresentation;
 
         public bool HasValidSetup => backgroundSprite != null && zenithSprite != null &&
-                                     promeIdleFrames != null && promeIdleFrames.Length > 0;
+                                     promeIdleFrames != null && promeIdleFrames.Length > 0 &&
+                                     promeIdleFrames.All(frame => frame != null);
         public bool HasThemeSpriteSetup => titleLogoFrameSprite != null && buttonFrameSprite != null &&
                                            loadingCompassSprite != null && modalPanelSprite != null &&
                                            volumeTrackSprite != null && volumeFillSprite != null &&
@@ -209,7 +210,10 @@ namespace Narthex.SceneFlow
 
             promeImage = CreateImage("Prome", canvas.transform, promeIdleFrames[0], Color.white);
             promeImage.preserveAspect = true;
-            SetRect(promeImage.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-575f, -175f), new Vector2(280f, 480f));
+            // The PNG sequence uses a square canvas with generous transparent padding. A square 700px
+            // presentation rect keeps the visible character large enough and seats her feet on the left hill.
+            SetRect(promeImage.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-575f, -115f), new Vector2(700f, 700f));
+            promeImage.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
 
             var titleFrame = CreateImage("TitleLogoFrame", canvas.transform, titleLogoFrameSprite, Color.white);
             SetRect(titleFrame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(410f, 155f), new Vector2(920f, 345f));
@@ -494,9 +498,10 @@ namespace Narthex.SceneFlow
                 if (next != promeFrameIndex)
                 {
                     promeFrameIndex = next;
-                    promeImage.sprite = promeIdleFrames[promeFrameIndex];
+                    var frame = promeIdleFrames[promeFrameIndex];
+                    if (frame != null) promeImage.sprite = frame;
                 }
-                promeImage.rectTransform.anchoredPosition = new Vector2(-575f, -175f + Mathf.Sin(elapsed * 1.35f) * 2.5f);
+                promeImage.rectTransform.anchoredPosition = new Vector2(-575f, -115f + Mathf.Sin(elapsed * 1.35f) * 2.5f);
             }
             if (loadingCompassRect != null && loadingGroup != null && loadingGroup.alpha > 0.01f)
             {
