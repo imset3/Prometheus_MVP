@@ -3,8 +3,8 @@
 이 문서는 Codex, Claude Code 또는 다른 자동화 에이전트가 프로젝트를 처음 접했을 때 탐색에 시간을 낭비하지 않고 안전하게 수정·검증·배포하도록 만든 운영 기준서다.
 
 > 기준일: 2026-08-13  
-> 기준 브랜치/릴리스: `main` / `DEMO_V4`  
-> 기준 배포: `DEMO_V4`  
+> 기준 브랜치/릴리스: `main` / `DEMO_V5`  
+> 기준 배포: `DEMO_V5`  
 > Unity: `6000.3.14f1`  
 > 프로젝트 루트: `/Users/limseth/Unity/Unity_Projects/Prometheus_MVP`
 
@@ -339,7 +339,7 @@ Unity 메뉴:
 - `sragon000/Build/Release/Build macOS`
 - `sragon000/Build/Release/Build Windows and macOS`
 
-현재 출력 루트는 `Builds/Release/DEMO_V4`다. 새 버전 배포 전 자동화 경로, README, 릴리스 노트의 버전을 함께 올린다.
+현재 출력 루트는 `Builds/Release/DEMO_V5`다. 새 버전 배포 전 자동화 경로, README, 릴리스 노트의 버전을 함께 올린다.
 
 릴리스 순서:
 
@@ -386,7 +386,7 @@ Unity 메뉴:
 - [튜토리얼 E2E 체크리스트](TutorialEndToEndChecklist.md)
 - [통합 레벨 계획](TutorialImportedLevelIntegrationPlan.md)
 - [개발일지](DEVLOG.md)
-- [DEMO_V4 릴리스 노트](RELEASE_DEMO_V4.md)
+- [DEMO_V5 릴리스 노트](RELEASE_DEMO_V5.md)
 
 이 문서와 실제 코드가 충돌하면 다음 순서로 판단한다.
 

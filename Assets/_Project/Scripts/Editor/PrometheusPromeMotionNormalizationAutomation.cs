@@ -102,6 +102,44 @@ namespace Narthex.Tools
             return issues;
         }
 
+        public static List<PrometheusAiChange> AlignVisualFootToCollider(Scene scene, bool dryRun)
+        {
+            var changes = new List<PrometheusAiChange>();
+            foreach (var bridge in scene.GetRootGameObjects()
+                         .SelectMany(root => root.GetComponentsInChildren<CharacterPngAnimationBridge>(true))
+                         .Where(item => item.Preset == CharacterPngAnimationPreset.Prome))
+            {
+                var actor = bridge.GetComponentInParent<CombatActorHost>();
+                var bodyCollider = actor != null ? actor.GetComponent<Collider2D>() : null;
+                var renderer = bridge.GetComponentInChildren<SpriteRenderer>(true);
+                if (bodyCollider == null || renderer == null) continue;
+
+                var visual = renderer.transform;
+                var targetWorldY = bodyCollider.bounds.min.y;
+                changes.Add(new PrometheusAiChange
+                {
+                    action = "align-prome-visible-foot",
+                    hierarchyPath = PrometheusSceneQuery.Path(visual.gameObject),
+                    before = $"worldY={visual.position.y:0.###}; colliderBottom={targetWorldY:0.###}",
+                    after = $"worldY={targetWorldY:0.###}; foot/collider error=0"
+                });
+                if (dryRun) continue;
+
+                Undo.RecordObject(visual, "Align Prome visible foot to collider");
+                var world = visual.position;
+                world.y = targetWorldY;
+                visual.position = world;
+                EditorUtility.SetDirty(visual);
+            }
+
+            if (!dryRun && changes.Count > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            return changes;
+        }
+
         private static void AuthorAttackRelays(Scene scene)
         {
             foreach (var bridge in scene.GetRootGameObjects()

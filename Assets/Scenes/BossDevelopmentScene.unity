@@ -6996,6 +6996,8 @@ MonoBehaviour:
   questId: QST-TUTO-002
   checkpoint: {fileID: 149782769}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &150462796
 GameObject:
   m_ObjectHideFlags: 0
@@ -35680,6 +35682,8 @@ MonoBehaviour:
   cooldownSeconds: 0.25
   activeSeconds: 0.08
   directionLockSeconds: 0.22
+  useAnimationEventImpact: 0
+  impactFallbackSeconds: 0.2
 --- !u!114 &718908618
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42653,7 +42657,7 @@ Transform:
   m_GameObject: {fileID: 850681315}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.26666668, z: 0}
   m_LocalScale: {x: 0.10042283, y: 0.10042283, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -42738,7 +42742,7 @@ SpriteRenderer:
   m_Size: {x: 7.07, y: 9.46}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &852453007
 GameObject:
@@ -44484,6 +44488,8 @@ MonoBehaviour:
   questId: QST-TUTO-001
   checkpoint: {fileID: 892450779}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &893435828
 GameObject:
   m_ObjectHideFlags: 0
@@ -48696,6 +48702,8 @@ MonoBehaviour:
   questId: QST-TUTO-003
   checkpoint: {fileID: 957740000}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &957922396
 GameObject:
   m_ObjectHideFlags: 0
@@ -73964,6 +73972,8 @@ MonoBehaviour:
   questId: QST-TUTO-006
   checkpoint: {fileID: 1457911724}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &1466424805
 GameObject:
   m_ObjectHideFlags: 0
@@ -77350,6 +77360,8 @@ MonoBehaviour:
   questId: QST-TUTO-005
   checkpoint: {fileID: 1528546914}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &1530993690
 GameObject:
   m_ObjectHideFlags: 0
@@ -87701,6 +87713,8 @@ MonoBehaviour:
   questId: QST-TUTO-007
   checkpoint: {fileID: 1715356149}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &1716362636
 GameObject:
   m_ObjectHideFlags: 0
@@ -92241,6 +92255,8 @@ MonoBehaviour:
   questId: QST-TUTO-004
   checkpoint: {fileID: 1786009281}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &1791304515
 GameObject:
   m_ObjectHideFlags: 0
@@ -94289,6 +94305,8 @@ MonoBehaviour:
   questId: QST-TUTO-007-B
   checkpoint: {fileID: 1832408955}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &1832561140
 GameObject:
   m_ObjectHideFlags: 0
@@ -104950,6 +104968,8 @@ MonoBehaviour:
   questId: QST-TUTO-007-A
   checkpoint: {fileID: 2040141006}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &2040506349
 GameObject:
   m_ObjectHideFlags: 0
@@ -105973,6 +105993,8 @@ MonoBehaviour:
   questId: QST-TUTO-008
   checkpoint: {fileID: 2057090553}
   sectionObjects: []
+  retryParticipants: []
+  initialObjectStates: []
 --- !u!1 &2059870926
 GameObject:
   m_ObjectHideFlags: 0

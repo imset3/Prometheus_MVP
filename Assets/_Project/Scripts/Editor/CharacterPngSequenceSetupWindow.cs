@@ -160,6 +160,80 @@ namespace Narthex.Tools
             }
         }
 
+        [MenuItem(PrometheusToolMenuPaths.Root + "Art/Repair Prome Idle and Run Clip References")]
+        public static void RepairPromeIdleAndRunClipReferences()
+        {
+            var folder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(PromeSequenceFolder);
+            var scan = ScanSequenceFolder(folder, CharacterPngAnimationPreset.Prome);
+            var builder = CreateInstance<CharacterPngSequenceSetupWindow>();
+            try
+            {
+                builder.framesPerSecond = 24f;
+                var clips = new Dictionary<string, AnimationClip>(StringComparer.OrdinalIgnoreCase);
+                foreach (var motionName in new[] { "Idle", "Run" })
+                {
+                    var motion = scan.Motions.FirstOrDefault(candidate =>
+                        candidate.Name.Equals(motionName, StringComparison.OrdinalIgnoreCase));
+                    if (motion == null || motion.Frames.Count == 0)
+                        throw new InvalidOperationException($"{PromeSequenceFolder}/{motionName}에 PNG 프레임이 없습니다.");
+                    if (motion.Errors.Count > 0)
+                        throw new InvalidOperationException(string.Join("\n", motion.Errors));
+
+                    // Preserve the normalized importer pivots. Only rebuild object-reference curves with
+                    // the currently imported Single Sprite objects (fileID 21300000).
+                    var sprites = motion.Frames
+                        .Select(frame => AssetDatabase.LoadAssetAtPath<Sprite>(frame.AssetPath))
+                        .ToArray();
+                    if (sprites.Any(sprite => sprite == null))
+                        throw new InvalidOperationException($"{motionName} 프레임 중 Sprite 참조가 누락됐습니다.");
+
+                    clips[motionName] = builder.CreateOrUpdateClip(
+                        sprites,
+                        $"Assets/_Project/Art/Generated/Characters/PlayerVisual/Animations/{motionName}.anim",
+                        motionName,
+                        true);
+                }
+
+                CreateOrUpdateController(PromeControllerPath, clips);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                const string tutorialScenePath = "Assets/Scenes/TutorialScene.unity";
+                var scene = EditorSceneManager.OpenScene(tutorialScenePath, OpenSceneMode.Single);
+                const string beforePath = "Temp/PrometheusSceneToolkit/prome-clip-repair-before.json";
+                const string afterPath = "Temp/PrometheusSceneToolkit/prome-clip-repair-after.json";
+                PrometheusSceneSnapshotService.Save(PrometheusSceneSnapshotService.Capture(scene), beforePath);
+                Debug.Log("[sragon000][Prome] Dry-run: Idle/Run 곡선 재연결, Player SpriteRenderer 기본 Idle 프레임 지정");
+                var playerRoot = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                    .FirstOrDefault(item => item.CompareTag("Player"));
+                var characterSprite = playerRoot != null
+                    ? playerRoot.GetComponentsInChildren<Transform>(true)
+                        .FirstOrDefault(item => item.name == GeneratedVisualName)
+                    : null;
+                var renderer = characterSprite != null ? characterSprite.GetComponent<SpriteRenderer>() : null;
+                if (renderer == null)
+                    throw new InvalidOperationException("TutorialScene의 Player CharacterSprite_ART를 찾지 못했습니다.");
+                renderer.sprite = GetFirstSprite(clips["Idle"]);
+                renderer.color = Color.white;
+                EditorUtility.SetDirty(renderer);
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                var issues = PrometheusSceneDoctor.Scan(scene);
+                PrometheusSceneSnapshotService.Save(PrometheusSceneSnapshotService.Capture(scene), afterPath);
+                var comparison = PrometheusSceneSnapshotService.Compare(
+                    PrometheusSceneSnapshotService.Load(beforePath),
+                    PrometheusSceneSnapshotService.Load(afterPath));
+                var deltaCount = comparison.added.Count + comparison.modified.Count + comparison.removed.Count;
+                Debug.Log($"[sragon000][Prome] Idle/Run Sprite 참조와 TutorialScene 기본 프레임 복구 완료. " +
+                          $"Doctor {issues.Count} issue(s), snapshot delta {deltaCount}.");
+            }
+            finally
+            {
+                DestroyImmediate(builder);
+            }
+        }
+
         private void OnGUI()
         {
             windowScroll = EditorGUILayout.BeginScrollView(windowScroll);

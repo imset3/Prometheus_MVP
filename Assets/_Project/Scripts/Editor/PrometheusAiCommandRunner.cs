@@ -71,6 +71,7 @@ namespace Narthex.Tools
             "boss.helte-animation-v2.pacing",
             "art.prome-motion.apply",
             "art.prome-motion.normalize",
+            "art.prome-foot-align",
             "art.prome-motion.validate",
             "component.inspect",
             "component.set",
@@ -454,6 +455,13 @@ namespace Narthex.Tools
                     response.changes = PrometheusPromeMotionNormalizationAutomation.Validate(scene);
                     response.success = response.changes.Count == 0;
                     response.message = $"Prome motion validation found {response.changes.Count} issue(s).";
+                    break;
+                case "art.prome-foot-align":
+                    response.changes = PrometheusPromeMotionNormalizationAutomation.AlignVisualFootToCollider(
+                        scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} Prome foot/collider alignment " +
+                                       $"({response.changes.Count} change(s)).";
                     break;
                 case "component.inspect":
                     InspectComponent(scene, request, response);

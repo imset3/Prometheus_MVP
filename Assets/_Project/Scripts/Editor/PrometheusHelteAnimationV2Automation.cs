@@ -22,6 +22,9 @@ namespace Narthex.Tools
         public const string OutputRoot =
             "Assets/_Project/Art/AIConcepts/TutorialHelte/AnimationBatch_v2/UnityGenerated";
         public const string ControllerPath = OutputRoot + "/HelteBoss_v2.controller";
+        private const float TargetOpaqueWorldHeight = 1.64f;
+        private const float MinimumPixelsPerUnit = 185f;
+        private const float MaximumPixelsPerUnit = 290f;
 
         private static readonly MotionSpec[] Motions =
         {
@@ -177,11 +180,27 @@ namespace Narthex.Tools
 
         private static List<Sprite> ImportMotionSprites(string motionName)
         {
-            var folder = $"{SequenceRoot}/{motionName}";
+            // SwordVolley source frames contain duplicated/cropped Helte figures at the canvas edges.
+            // The actual summoned swords are authored as gameplay VFX, so keep the coherent focus pose
+            // for the volley state instead of rendering duplicate character silhouettes.
+            var sourceMotionName = motionName == "SwordVolley" ? "SwordFocus" : motionName;
+            var folder = $"{SequenceRoot}/{sourceMotionName}";
             var paths = Directory.GetFiles(folder, "*.png", SearchOption.TopDirectoryOnly)
                 .Select(path => path.Replace('\\', '/'))
                 .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+            var opaqueHeights = paths
+                .Select(CalculateOpaquePixelHeight)
+                .Where(height => height > 0)
+                .OrderBy(height => height)
+                .ToArray();
+            if (opaqueHeights.Length == 0)
+                throw new InvalidOperationException("Opaque Helte pixels were not found: " + folder);
+            var medianOpaqueHeight = opaqueHeights[opaqueHeights.Length / 2];
+            var motionPixelsPerUnit = Mathf.Clamp(
+                medianOpaqueHeight / TargetOpaqueWorldHeight,
+                MinimumPixelsPerUnit,
+                MaximumPixelsPerUnit);
             var sprites = new List<Sprite>(paths.Length);
             foreach (var path in paths)
             {
@@ -191,7 +210,9 @@ namespace Narthex.Tools
 
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
-                importer.spritePixelsPerUnit = 256f;
+                // Normalize the median visible character height per motion. The original fixed PPU made
+                // BasicSlash frames visibly shrink next to Idle even though every PNG used a 512px canvas.
+                importer.spritePixelsPerUnit = motionPixelsPerUnit;
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
                 importer.filterMode = FilterMode.Bilinear;
@@ -208,6 +229,31 @@ namespace Narthex.Tools
                 sprites.Add(sprite);
             }
             return sprites;
+        }
+
+        private static int CalculateOpaquePixelHeight(string assetPath)
+        {
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            try
+            {
+                if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(Path.GetFullPath(assetPath)), false))
+                    return 0;
+                var pixels = texture.GetPixels32();
+                var minY = texture.height;
+                var maxY = -1;
+                for (var y = 0; y < texture.height; y++)
+                for (var x = 0; x < texture.width; x++)
+                {
+                    if (pixels[y * texture.width + x].a < 16) continue;
+                    minY = Mathf.Min(minY, y);
+                    maxY = Mathf.Max(maxY, y);
+                }
+                return maxY >= minY ? maxY - minY + 1 : 0;
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
         }
 
         private static AnimationClip CreateOrUpdateClip(MotionSpec motion, IReadOnlyList<Sprite> sprites)
@@ -315,9 +361,9 @@ namespace Narthex.Tools
                 boss.GetComponent<CombatVisualMotionHost>(),
                 false,
                 player.transform,
-                0.27f,
-                0.27f,
-                0.27f);
+                0.76f,
+                0.76f,
+                0.76f);
             blendOverlay.localPosition = Vector3.zero;
             blendOverlay.localRotation = Quaternion.identity;
             blendOverlay.localScale = Vector3.one;

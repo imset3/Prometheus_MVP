@@ -7,12 +7,12 @@
 
 처음 프로젝트를 수정하는 AI 에이전트나 팀원은 [신규 에이전트 기술 가이드](Assets/_Project/Docs/AI_AGENT_ONBOARDING.md)에서 현재 구조, 수정 불변 조건, Unity MCP 절차, 테스트와 릴리스 체크리스트를 먼저 확인하세요.
 
-## DEMO_V4 다운로드 및 실행
+## DEMO_V5 다운로드 및 실행
 
-GitHub Releases의 최신 `DEMO_V4`에서 운영체제에 맞는 압축 파일을 받습니다.
+GitHub Releases의 최신 `DEMO_V5`에서 운영체제에 맞는 압축 파일을 받습니다.
 
-- Windows: `Prometheus_MVP_DEMO_V4_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
-- macOS: `Prometheus_MVP_DEMO_V4_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
+- Windows: `Prometheus_MVP_DEMO_V5_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
+- macOS: `Prometheus_MVP_DEMO_V5_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
 - macOS가 처음 실행을 차단하면 Finder에서 앱을 Control-클릭한 뒤 `열기`를 선택합니다. 공식 릴리스에서 받은 파일인지 먼저 확인하세요.
 - 실행 파일만 따로 옮기지 말고 압축이 풀린 폴더 구조를 유지해야 합니다.
 
@@ -266,7 +266,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 ## 문서
 
-- [DEMO_V4 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V4.md) — 배포 구성, 실행 방법과 검증 범위
+- [DEMO_V5 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V5.md) — 배포 구성, 실행 방법과 검증 범위
 - [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
 - [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
 - [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
@@ -297,7 +297,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
 - 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-DEMO_V4 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `16/16` 통과, UI·캐릭터 비율·프로메 모션·V2 타일 Validator 오류 `0`, Scene Doctor 오류 등급 `0`입니다. 프로메 PNG 모션의 발 Pivot과 공격 타격 시점을 정규화했고, 훈련장·F·G·헬테전의 패배 복구 계약을 계층에 직렬화했습니다. 8개 구역의 시각 타일맵 V2, 회의장 NPC 전면 배치, 복도 상자 장식 통과, 타이틀·튜토리얼 UI 및 캐릭터 비율 개선이 포함됩니다. V4 변경점은 [DEMO_V4 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V4.md)에 남겼습니다.
+DEMO_V5 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `16/16` 통과, Scene Doctor 신규 오류 `0`입니다. 프로메 Idle·Run의 끊어진 Sprite 참조를 복구하고 발끝을 실제 Collider 바닥에 맞췄으며, 헬테 19개 패턴의 실루엣 크기를 정규화하고 중복·잘림이 있던 칼 발사 모션 소스를 교정했습니다. V5 변경점은 [DEMO_V5 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V5.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 
