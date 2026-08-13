@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Narthex.Gameplay;
+using Narthex.SceneFlow;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Narthex.Tools
 {
@@ -21,6 +23,7 @@ namespace Narthex.Tools
             ScanInvalidColliders(all, issues);
             ScanDuplicateSceneObjects(all, issues, "Passkey", "패스키");
             ScanBrokenObjectReferences(all, issues);
+            ScanAuthoredRuntimeContracts(scene, all, issues);
             return issues
                 .OrderByDescending(issue => issue.severity)
                 .ThenBy(issue => issue.hierarchyPath, StringComparer.Ordinal)
@@ -167,6 +170,47 @@ namespace Narthex.Tools
                     issues.Add(Issue(item, PrometheusIssueSeverity.Error, "broken-object-reference",
                         $"{behaviour.GetType().Name}.{property.propertyPath} 참조가 손상되었습니다."));
                 } while (property.NextVisible(false));
+            }
+        }
+
+        private static void ScanAuthoredRuntimeContracts(
+            Scene scene,
+            IReadOnlyCollection<GameObject> objects,
+            ICollection<PrometheusAiIssue> issues)
+        {
+            if (scene.name is not ("TitleScene" or "TutorialScene" or "BossDevelopmentScene")) return;
+            var target = scene.GetRootGameObjects().FirstOrDefault();
+            if (target == null) return;
+            foreach (var required in new[] { "SafeAreaRoot", "PrimaryHudRoot", "ModalRoot", "DialogueRoot", "TransitionRoot" })
+                if (!objects.Any(item => item.name == required))
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "authored-ui-root-missing",
+                        $"필수 계층 UI 루트 '{required}'가 없습니다. ui.readability.apply를 실행하세요."));
+
+            if (scene.name == "TitleScene")
+            {
+                if (objects.Any(item => item.name == "보스전"))
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "release-boss-route-present",
+                        "릴리즈 타이틀에 보스전 버튼이 남아 있습니다."));
+                var resolutionDropdown = objects.SelectMany(item => item.GetComponents<Dropdown>())
+                    .FirstOrDefault(dropdown => dropdown.name == "ResolutionDropdown");
+                if (resolutionDropdown == null)
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "resolution-dropdown-missing",
+                        "계층에 직렬화된 해상도 드롭다운이 없습니다."));
+                if (!objects.Any(item => item.name == "ResolutionConfirmPanel"))
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "resolution-confirm-missing",
+                        "10초 해상도 확인 패널이 없습니다."));
+            }
+
+            if (scene.name == "TutorialScene")
+            {
+                var pause = objects.SelectMany(item => item.GetComponents<TutorialPauseMenuHost>()).FirstOrDefault();
+                if (pause == null || !pause.HasAuthoredSetup())
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "pause-ui-not-authored",
+                        "일시정지 UI와 Inspector 참조가 계층에 완전히 작성되지 않았습니다."));
+                var restart = objects.SelectMany(item => item.GetComponents<TutorialRestartHost>()).FirstOrDefault();
+                if (restart == null || !restart.HasValidSceneRestartSetup)
+                    issues.Add(Issue(target, PrometheusIssueSeverity.Error, "retry-contract-incomplete",
+                        "패배 패널, 퀘스트, 체크포인트 또는 복구 참가자 참조가 누락됐습니다."));
             }
         }
 

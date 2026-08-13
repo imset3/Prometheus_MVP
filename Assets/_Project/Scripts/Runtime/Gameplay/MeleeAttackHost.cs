@@ -15,6 +15,8 @@ namespace Narthex.Gameplay
         [SerializeField] private float cooldownSeconds = 0.25f;
         [SerializeField] private float activeSeconds = 0.08f;
         [SerializeField, Min(0.01f)] private float directionLockSeconds = 0.22f;
+        [SerializeField] private bool useAnimationEventImpact;
+        [SerializeField, Min(0.01f)] private float impactFallbackSeconds = 0.2f;
 
         private readonly Collider2D[] results = new Collider2D[8];
         private float cooldownEndsAt;
@@ -25,6 +27,8 @@ namespace Narthex.Gameplay
         private Vector3 attackAnchorLocalScale;
         private uint attackSequence;
         private float externalAttackLockUntil;
+        private bool impactQueued;
+        private float impactFallbackAt;
 
         public bool HasValidSetup => inputHost != null && sourceActor != null && attackHitbox != null && attackAnchor != null;
         public bool UsesSingleHitAttacks => true;
@@ -34,6 +38,8 @@ namespace Narthex.Gameplay
         public float EffectiveDirectionLockSeconds => Mathf.Max(directionLockSeconds, presentationLockSeconds);
         public bool IsAttackDirectionLocked => Time.time < attackDirectionLockedUntil;
         public event System.Action AttackStarted;
+        public bool UsesAnimationEventImpact => useAnimationEventImpact;
+        public bool HasQueuedImpact => impactQueued;
 
         public void LockExternalAttack(float durationSeconds)
         {
@@ -73,10 +79,15 @@ namespace Narthex.Gameplay
             if (inputHost != null) inputHost.AttackRequested -= TryAttack;
             if (inputHost != null) inputHost.AimDirectionChanged -= ApplyAimDirection;
             if (attackHitbox != null) attackHitbox.enabled = false;
+            impactQueued = false;
         }
 
         private void Update()
         {
+            // The authored Animation Event is authoritative. This fallback prevents a broken
+            // imported clip from permanently swallowing an accepted attack.
+            if (impactQueued && Time.time >= impactFallbackAt)
+                ResolveQueuedImpact();
             if (attackHitbox != null && attackHitbox.enabled && Time.time >= deactivateAt)
             {
                 attackHitbox.enabled = false;
@@ -94,9 +105,33 @@ namespace Narthex.Gameplay
             cooldownEndsAt = Time.time + EffectiveCooldownSeconds;
             deactivateAt = Time.time + activeSeconds;
             attackDirectionLockedUntil = Time.time + Mathf.Max(activeSeconds, EffectiveDirectionLockSeconds);
-            attackHitbox.enabled = true;
             attackSequence++;
             AttackStarted?.Invoke();
+            if (useAnimationEventImpact)
+            {
+                impactQueued = true;
+                impactFallbackAt = Time.time + impactFallbackSeconds;
+                return;
+            }
+
+            ResolveImpact();
+        }
+
+        public void ResolveQueuedImpact()
+        {
+            if (!impactQueued) return;
+            impactQueued = false;
+            ResolveImpact();
+        }
+
+        private void ResolveImpact()
+        {
+            if (attackHitbox == null || sourceActor == null || sourceActor.Runtime == null ||
+                !sourceActor.Runtime.IsAlive)
+                return;
+
+            deactivateAt = Time.time + activeSeconds;
+            attackHitbox.enabled = true;
             Physics2D.SyncTransforms();
 
             var filter = ContactFilter2D.noFilter;
@@ -117,6 +152,15 @@ namespace Narthex.Gameplay
             if (!hitEnemy) return;
             sourceActor.Events?.Publish(new GameplaySignal(QuestSignalType.AttackPerformed, sourceActor.ActorId));
         }
+
+#if UNITY_EDITOR
+        public void ConfigureAnimationEventImpact(bool enabled, float fallbackSeconds)
+        {
+            useAnimationEventImpact = enabled;
+            impactFallbackSeconds = Mathf.Max(0.01f, fallbackSeconds);
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+#endif
 
         private void ApplyAimDirection(float direction)
         {

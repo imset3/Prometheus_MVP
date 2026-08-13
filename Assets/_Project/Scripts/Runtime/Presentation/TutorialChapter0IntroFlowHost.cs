@@ -721,7 +721,7 @@ namespace Narthex.Presentation
         private void LockPlayer()
         {
             playerMotorHost.ResetTransientInput();
-            playerInputHost.enabled = false;
+            playerInputHost.AcquireInputLock(PlayerInputLockReason.Cutscene);
             playerBody.linearVelocity = Vector2.zero;
             fadeCanvasGroup.blocksRaycasts = true;
         }
@@ -729,7 +729,7 @@ namespace Narthex.Presentation
         private void UnlockPlayer()
         {
             fadeCanvasGroup.blocksRaycasts = false;
-            playerInputHost.enabled = true;
+            playerInputHost.ReleaseInputLock(PlayerInputLockReason.Cutscene);
         }
 
         private IEnumerator FadeTo(float targetAlpha, float duration)

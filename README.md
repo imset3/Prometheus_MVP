@@ -7,12 +7,12 @@
 
 처음 프로젝트를 수정하는 AI 에이전트나 팀원은 [신규 에이전트 기술 가이드](Assets/_Project/Docs/AI_AGENT_ONBOARDING.md)에서 현재 구조, 수정 불변 조건, Unity MCP 절차, 테스트와 릴리스 체크리스트를 먼저 확인하세요.
 
-## DEMO_V3 다운로드 및 실행
+## DEMO_V4 다운로드 및 실행
 
-GitHub Releases의 최신 `DEMO_V3`에서 운영체제에 맞는 압축 파일을 받습니다.
+GitHub Releases의 최신 `DEMO_V4`에서 운영체제에 맞는 압축 파일을 받습니다.
 
-- Windows: `Prometheus_MVP_DEMO_V3_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
-- macOS: `Prometheus_MVP_DEMO_V3_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
+- Windows: `Prometheus_MVP_DEMO_V4_Windows.zip`을 완전히 압축 해제한 뒤 폴더 안의 `Prometheus_MVP.exe` 실행
+- macOS: `Prometheus_MVP_DEMO_V4_macOS.zip`을 압축 해제한 뒤 `Prometheus_MVP.app` 실행
 - macOS가 처음 실행을 차단하면 Finder에서 앱을 Control-클릭한 뒤 `열기`를 선택합니다. 공식 릴리스에서 받은 파일인지 먼저 확인하세요.
 - 실행 파일만 따로 옮기지 말고 압축이 풀린 폴더 구조를 유지해야 합니다.
 
@@ -22,13 +22,12 @@ GitHub Releases의 최신 `DEMO_V3`에서 운영체제에 맞는 압축 파일�
 | --- | --- |
 | 새 게임 시작 | 기존 진행을 초기화하고 챕터 0 튜토리얼 시작 |
 | 이어하기 | 일시정지 메뉴에서 저장한 퀘스트와 프로메의 마지막 좌표부터 재개. 저장이 없거나 데모를 완료하면 비활성화 |
-| 보스전 | 헬테 보스전을 바로 확인하는 `BossDevelopmentScene` 진입 |
 | 설정 | 해상도, 화면 모드, 전체 음량 변경 및 저장 |
 | 나가기 | 게임 종료 |
 
 설정창 맨 아래의 `초기화`는 시연용 전체 초기화 기능입니다. 버튼을 한 번 누르면 즉시 정식·레거시 저장 진행도, 이어하기 위치, 로컬 설정과 Unity 캐시를 지우고 최초 타이틀 상태로 돌아갑니다. 이후 `새 게임 시작`을 누르면 회의장·튜토리얼 1단계에서 시작합니다.
 
-기본 해상도는 `1920×1080`입니다. 해상도 드롭다운은 현재 컴퓨터와 모니터가 보고하는 지원 모드만 표시하며, 화면 모드는 `창 모드 / 전체 화면 / 창 없는 전체 화면`을 지원합니다. 튜토리얼 중 `Esc`를 누르면 게임이 일시정지되고 설정 변경, 계속하기, 저장 후 타이틀 복귀를 선택할 수 있습니다.
+기본 해상도는 `1920×1080`입니다. 계층에 미리 배치된 최대 16개 해상도 슬롯에 현재 컴퓨터가 지원하는 모드가 표시됩니다. 적용 후 10초 안에 유지하지 않으면 이전 설정으로 복구됩니다. 화면 모드는 `창 모드 / 전체 화면 / 창 없는 전체 화면`을 지원합니다. 튜토리얼 중 `Esc`를 누르면 게임이 일시정지되고 설정 변경, 계속하기, 저장 후 타이틀 복귀를 선택할 수 있습니다.
 
 플레이어 체력은 좌측 상단의 게이지와 `현재 / 최대` 숫자로 함께 표시됩니다. 기본 최대 체력은 `500`입니다.
 
@@ -51,16 +50,16 @@ GitHub Releases의 최신 `DEMO_V3`에서 운영체제에 맞는 압축 파일�
 - 튜토리얼 이후 연결 씬: `Assets/Scenes/Chapter01.unity`
 - 보스 격리 개발씬: `Assets/Scenes/BossDevelopmentScene.unity`
 
-빌드는 `TitleScene → Boot → TutorialScene → BossDevelopmentScene → Chapter01` 순서로 등록되어 있으며, 실제 사용자 시작점은 `TitleScene`입니다.
+릴리즈 빌드는 `TitleScene → Boot → TutorialScene → Chapter01` 순서로 등록되어 있습니다. `BossDevelopmentScene`은 프로젝트 내부 개발용으로만 유지되며 릴리즈 Build Settings와 타이틀 메뉴에서는 제외됩니다.
 
 ## 타이틀·저장·로딩 흐름
 
 타이틀 화면은 한 장의 영상 대신 교체 가능한 레이어 애니메이션으로 구성되어 있습니다. 생성 배경 위에 기존 프로메 Idle PNG 시퀀스, 화면 중앙의 대형 제니스 스프라이트, 구름 레이어를 분리해 배치하고 각각 반복 애니메이션과 이징을 적용했습니다. 로고는 `PROME&THEUS` 표기를 사용하며, 캐릭터·제니스·구름·UI 프레임을 나중에 최종 아트로 독립 교체할 수 있습니다.
 
-- 아무 키나 누르면 `새 게임 시작 / 이어하기 / 보스전 / 설정 / 나가기` 메뉴 표시
+- 아무 키나 누르면 `새 게임 시작 / 이어하기 / 설정 / 나가기` 메뉴 표시
 - 새 게임과 이어하기는 회전·호흡 애니메이션이 적용된 전용 로딩 스프라이트와 진행률을 거쳐 `TutorialScene`으로 이동
-- 보스전은 확장 가능한 선택 진입점으로 현재 `BossDevelopmentScene`에 연결
-- 기본 해상도는 `1920×1080`이며, 설정 드롭다운에는 실행 PC의 디스플레이가 실제 지원하는 해상도만 중복 없이 표시
+- 보스 개발씬은 릴리즈 메뉴와 빌드에서 제외하고 Unity Editor에서만 직접 실행
+- 기본 해상도는 `1920×1080`이며, 설정의 사전 배치 슬롯에는 실행 PC의 디스플레이가 실제 지원하는 해상도만 중복 없이 표시
 - 화면 모드(`창 모드 / 전체 화면 / 창 없는 전체 화면`)를 선택하고 마스터·BGM·SFX 음량 저장
 - 튜토리얼에서 `Esc`를 누르면 테마 스프라이트 패널의 일시정지 창이 열리며 설정, 저장 및 타이틀 복귀 가능
 - 타이틀·로딩·설정·일시정지 버튼과 패널은 황동·남색·아에테르 시안 계열의 공통 스프라이트 테마 사용
@@ -69,7 +68,7 @@ GitHub Releases의 최신 `DEMO_V3`에서 운영체제에 맞는 압축 파일�
 
 기존 튜토리얼 씬은 팀원이 새로 배치한 레벨과 최신 기능이 통합된 `TutorialScene`으로 대체되었습니다. 구역 최고 부모는 한글 이름을 사용하고, 코드가 연결된 Manager·Host 오브젝트는 영문 이름을 유지할 수 있습니다.
 
-`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 개발 전용 씬입니다. 과거 아트 후보·파일럿·백업·타일맵 통합 씬의 유효한 기능은 모두 `TutorialScene`으로 승격되었으며, 중복 씬은 제거했습니다.
+`BossDevelopmentScene`은 헬테 FSM과 전투 밸런스를 튜토리얼 진행에서 분리해 검증하는 Editor 전용 개발 씬입니다. 타이틀 버튼이나 릴리즈 빌드에서는 접근할 수 없습니다. 과거 아트 후보·파일럿·백업·타일맵 통합 씬의 유효한 기능은 모두 `TutorialScene`으로 승격되었으며, 중복 씬은 제거했습니다.
 
 ## AI 아트 통합 상태
 
@@ -267,7 +266,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 
 ## 문서
 
-- [DEMO_V3 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V3.md) — 배포 구성, 실행 방법과 검증 범위
+- [DEMO_V4 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V4.md) — 배포 구성, 실행 방법과 검증 범위
 - [개발일지](Assets/_Project/Docs/DEVLOG.md) — 주요 기능 변경, 검증 결과와 Git 이력
 - [AI Scene Toolkit 사용 설명서](Assets/_Project/Docs/AI_SCENE_TOOLKIT.md) — 사람·Codex·Claude Code·Unity MCP 공통 작업 방법
 - [마커 기반 레벨 저작 가이드](Assets/_Project/Docs/TUTORIAL_MARKER_AUTHORING.md) — 마커 이동만으로 기능 위치를 조정하는 규칙
@@ -298,7 +297,7 @@ AI는 `PrometheusAiCommandRunner`의 JSON 명령을 우선 사용하고, 사람�
 - PlayMode 전체 실행: `sragon000 > Validation > Run All PlayMode Tests`
 - 데스크톱 릴리스 빌드: `sragon000 > Build > Release > Build Windows and macOS`
 
-DEMO_V3 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `15/15` 통과, Tutorial Scene Validator 통과, Scene Doctor 신규 오류 `0`입니다. 점프 훈련 투사체는 오른쪽 대포 발사구에서 출발해 2.8초 동안 통과하며, 점프 입력이 아니라 실제 투사체 3회 회피만 집계합니다. F/G 적 7기는 공용 지상 물리 모터로 바닥·벽·발판 끝을 준수합니다. F 구역 세 번째 원거리 적은 로컬 X=80에서 생성되고, F/G 원거리 적 3기는 바닥 피벗과 Collider 접지면이 일치합니다. PlayMode에는 타이틀 보스전 버튼, 새 게임과 이어하기, 순차 훈련, G 상승기류→H 이동, 전체 훈련→헬테 완료, 테우스 동행, 원거리 적 투사체, 보스 개발씬과 일시정지 메뉴 검증이 포함됩니다. V3 변경점은 [DEMO_V3 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V3.md)에 남겼습니다.
+DEMO_V4 릴리스 직전 Unity 검증 결과는 EditMode `123/123`, PlayMode 전체 `16/16` 통과, UI·캐릭터 비율·프로메 모션·V2 타일 Validator 오류 `0`, Scene Doctor 오류 등급 `0`입니다. 프로메 PNG 모션의 발 Pivot과 공격 타격 시점을 정규화했고, 훈련장·F·G·헬테전의 패배 복구 계약을 계층에 직렬화했습니다. 8개 구역의 시각 타일맵 V2, 회의장 NPC 전면 배치, 복도 상자 장식 통과, 타이틀·튜토리얼 UI 및 캐릭터 비율 개선이 포함됩니다. V4 변경점은 [DEMO_V4 릴리스 노트](Assets/_Project/Docs/RELEASE_DEMO_V4.md)에 남겼습니다.
 
 검증 시에는 새 레벨 씬을 연 상태인지 먼저 확인합니다. `Legacy Migration`은 자동 실행되지 않으며, 명시적인 복구 작업이 아니라면 팀원이 배치한 씬에 적용하지 않습니다.
 

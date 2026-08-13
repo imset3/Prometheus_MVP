@@ -80,7 +80,7 @@ namespace Narthex.Tools
             var builder = CreateInstance<CharacterPngSequenceSetupWindow>();
             try
             {
-                builder.framesPerSecond = 30f;
+                builder.framesPerSecond = 42.857143f;
                 builder.pixelsPerUnit = 100f;
                 builder.pivot = new Vector2(0.5f, 0f);
                 builder.filterMode = FilterMode.Bilinear;
@@ -91,6 +91,10 @@ namespace Narthex.Tools
                     PromeAttackClipPath,
                     "Attack01",
                     false);
+                AnimationUtility.SetAnimationEvents(clip, new[]
+                {
+                    new AnimationEvent { time = 0.16f, functionName = "TriggerImpact" }
+                });
                 CreateOrUpdateController(
                     PromeControllerPath,
                     new Dictionary<string, AnimationClip>(StringComparer.OrdinalIgnoreCase)
@@ -100,7 +104,7 @@ namespace Narthex.Tools
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 Debug.Log(
-                    $"[sragon000][Prome] Attack01 적용 완료: {sprites.Count} frames / 30fps / " +
+                    $"[sragon000][Prome] Attack01 적용 완료: {sprites.Count} frames / 42.857fps / " +
                     $"{clip.length:0.###}s. 누락 번호는 시간 공백 없이 압축 재생합니다.");
             }
             finally

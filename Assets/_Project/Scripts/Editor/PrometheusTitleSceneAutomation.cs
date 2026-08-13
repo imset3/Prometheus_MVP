@@ -21,15 +21,23 @@ namespace Narthex.Tools
         private const string LogoFramePath =
             "Assets/_Project/Resources/UI/Title/TITLE_UI_LogoFrame_v1.png";
         private const string ButtonFramePath =
-            "Assets/_Project/Resources/UI/Title/TITLE_UI_ButtonPlate_v1.png";
+            "Assets/_Project/Resources/UI/Title/TITLE_UI_ButtonPlate_v2.png";
         private const string LoadingCompassPath =
             "Assets/_Project/Resources/UI/Title/TITLE_UI_LoadingCompass_v1.png";
         private const string ModalPanelPath =
             "Assets/_Project/Resources/UI/Title/TITLE_UI_ModalPanel_v1.png";
+        private const string VolumeTrackPath =
+            "Assets/_Project/Resources/UI/Title/TITLE_UI_VolumeTrack_v1.png";
+        private const string VolumeFillPath =
+            "Assets/_Project/Resources/UI/Title/TITLE_UI_VolumeFill_v1.png";
+        private const string VolumeHandlePath =
+            "Assets/_Project/Resources/UI/Title/TITLE_UI_VolumeHandle_v1.png";
         private const string TitleFontPath = "Assets/_Project/Art/Fonts/GoogleFonts/DoHyeon-Regular.ttf";
         private const string BodyFontPath = "Assets/_Project/Art/Fonts/GoogleFonts/GowunDodum-Regular.ttf";
         private const string MusicPath =
             "Assets/_Project/Audio/Music/Tutorial/Prototypes/MUS_TITLE_Prometheus_Prototype_Loop.wav";
+        private const string CloudSpritePath =
+            "Assets/_Project/Art/UI/Title/Generated/TITLE_CloudLayer_v1.png";
 
         [MenuItem(PrometheusToolMenuPaths.Ai + "Create or Update Title Scene")]
         public static void CreateOrUpdateMenu()
@@ -66,16 +74,20 @@ namespace Narthex.Tools
             if (!scene.IsValid() || !scene.isLoaded) throw new InvalidOperationException("Title scene must be loaded.");
             changes.Add(Change("title-root", "Create or update MainCamera and TitleScreenRoot"));
             changes.Add(Change("title-art", "Bind clean background, resized Prome, enlarged Zenith, UI sprites and title music"));
-            changes.Add(Change("build-settings", "Register Title/Tutorial/Boss Development scenes in Build Settings"));
+            changes.Add(Change("build-settings", "Register release scenes and exclude BossDevelopmentScene"));
             if (dryRun) return changes;
 
             PrometheusTitleButtonLabelGenerator.GenerateAll();
+            EnsureCloudSpriteAsset();
             ConfigureSpriteImporter(BackgroundPath, 100f);
             ConfigureSpriteImporter(ZenithPath, 100f);
             ConfigureSpriteImporter(LogoFramePath, 100f);
             ConfigureSpriteImporter(ButtonFramePath, 100f);
             ConfigureSpriteImporter(LoadingCompassPath, 100f);
             ConfigureSpriteImporter(ModalPanelPath, 100f);
+            ConfigureSpriteImporter(VolumeTrackPath, 100f);
+            ConfigureSpriteImporter(VolumeFillPath, 100f);
+            ConfigureSpriteImporter(VolumeHandlePath, 100f);
             var cameraObject = FindRoot(scene, "Main Camera");
             if (cameraObject == null)
             {
@@ -102,6 +114,8 @@ namespace Narthex.Tools
                 AssetDatabase.LoadAssetAtPath<Sprite>(BackgroundPath);
             serialized.FindProperty("zenithSprite").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<Sprite>(ZenithPath);
+            serialized.FindProperty("cloudSprite").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Sprite>(CloudSpritePath);
             serialized.FindProperty("titleLogoFrameSprite").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<Sprite>(LogoFramePath);
             serialized.FindProperty("buttonFrameSprite").objectReferenceValue =
@@ -110,9 +124,14 @@ namespace Narthex.Tools
                 AssetDatabase.LoadAssetAtPath<Sprite>(LoadingCompassPath);
             serialized.FindProperty("modalPanelSprite").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<Sprite>(ModalPanelPath);
+            serialized.FindProperty("volumeTrackSprite").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Sprite>(VolumeTrackPath);
+            serialized.FindProperty("volumeFillSprite").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Sprite>(VolumeFillPath);
+            serialized.FindProperty("volumeHandleSprite").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Sprite>(VolumeHandlePath);
             AssignLabelSprite(serialized, "newGameLabelSprite", "TITLE_LABEL_NewGame_v1");
             AssignLabelSprite(serialized, "continueLabelSprite", "TITLE_LABEL_Continue_v1");
-            AssignLabelSprite(serialized, "bossLabelSprite", "TITLE_LABEL_Boss_v1");
             AssignLabelSprite(serialized, "settingsLabelSprite", "TITLE_LABEL_Settings_v1");
             AssignLabelSprite(serialized, "quitLabelSprite", "TITLE_LABEL_Quit_v1");
             AssignLabelSprite(serialized, "applyLabelSprite", "TITLE_LABEL_Apply_v1");
@@ -123,7 +142,6 @@ namespace Narthex.Tools
             serialized.FindProperty("bodyFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Font>(BodyFontPath);
             serialized.FindProperty("titleMusic").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);
             serialized.FindProperty("tutorialSceneName").stringValue = "TutorialScene";
-            serialized.FindProperty("bossSceneName").stringValue = "BossDevelopmentScene";
 
             var frames = AssetDatabase.FindAssets("t:Sprite", new[] { PromeFolder })
                 .Select(AssetDatabase.GUIDToAssetPath)
@@ -137,6 +155,8 @@ namespace Narthex.Tools
             for (var index = 0; index < frames.Length; index++)
                 frameProperty.GetArrayElementAtIndex(index).objectReferenceValue = frames[index];
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (root.GetComponent<AudioSource>() == null)
+                root.AddComponent<AudioSource>();
             host.RebuildAuthoredPresentation();
             EditorUtility.SetDirty(host);
             EnsureBuildSettings();
@@ -171,6 +191,33 @@ namespace Narthex.Tools
             if (changed) importer.SaveAndReimport();
         }
 
+        private static void EnsureCloudSpriteAsset()
+        {
+            if (!string.IsNullOrWhiteSpace(AssetDatabase.AssetPathToGUID(CloudSpritePath))) return;
+            var directory = Path.GetDirectoryName(CloudSpritePath);
+            if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
+            const int width = 256;
+            const int height = 96;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            var pixels = new Color32[width * height];
+            for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var nx = x / (float)(width - 1);
+                var ny = y / (float)(height - 1);
+                var alpha = Mathf.Max(
+                    Mathf.Exp(-((nx - 0.32f) * (nx - 0.32f) / 0.045f + (ny - 0.48f) * (ny - 0.48f) / 0.15f)),
+                    Mathf.Exp(-((nx - 0.58f) * (nx - 0.58f) / 0.075f + (ny - 0.55f) * (ny - 0.55f) / 0.12f)));
+                pixels[y * width + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha * 0.82f));
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+            File.WriteAllBytes(CloudSpritePath, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(CloudSpritePath, ImportAssetOptions.ForceSynchronousImport);
+            ConfigureSpriteImporter(CloudSpritePath, 100f);
+        }
+
         private static GameObject FindRoot(Scene scene, string name) =>
             scene.GetRootGameObjects().FirstOrDefault(root => root.name == name);
 
@@ -181,7 +228,6 @@ namespace Narthex.Tools
                 ScenePath,
                 "Assets/_Project/Scenes/Boot.unity",
                 "Assets/Scenes/TutorialScene.unity",
-                "Assets/Scenes/BossDevelopmentScene.unity",
                 "Assets/Scenes/Chapter01.unity"
             };
             var existing = EditorBuildSettings.scenes.ToDictionary(scene => scene.path, scene => scene.enabled);
@@ -192,7 +238,7 @@ namespace Narthex.Tools
                 output.Add(new EditorBuildSettingsScene(path, true));
             }
             foreach (var scene in EditorBuildSettings.scenes)
-                if (!preferred.Contains(scene.path)) output.Add(scene);
+                if (!preferred.Contains(scene.path) && scene.path != "Assets/Scenes/BossDevelopmentScene.unity") output.Add(scene);
             EditorBuildSettings.scenes = output.ToArray();
         }
     }

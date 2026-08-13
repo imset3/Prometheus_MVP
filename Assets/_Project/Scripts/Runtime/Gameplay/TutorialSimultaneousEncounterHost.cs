@@ -10,7 +10,7 @@ namespace Narthex.Gameplay
     /// Activates every pre-placed F-stage enemy together and keeps the exit locked
     /// until all of them are defeated.
     /// </summary>
-    public sealed class TutorialSimultaneousEncounterHost : MonoBehaviour
+    public sealed class TutorialSimultaneousEncounterHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private CombatSystemHost combatSystemHost;
@@ -134,6 +134,14 @@ namespace Narthex.Gameplay
                 enemy.ResetRuntime();
             }
             Physics2D.SyncTransforms();
+        }
+
+        public void ResetForTutorialRetry()
+        {
+            if (questSequenceHost == null || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            encounterStarted = true;
+            cleared = false;
+            ResetEnemiesAndGate();
         }
 
         private CombatActorHost FindEnemy(string actorId)

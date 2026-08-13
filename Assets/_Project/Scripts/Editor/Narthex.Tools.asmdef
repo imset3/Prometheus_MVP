@@ -8,6 +8,7 @@
     "Narthex.Gameplay",
     "Narthex.SceneFlow",
     "Narthex.Presentation",
+    "Unity.2D.Sprite.Editor",
     "UnityEditor.TestRunner",
     "Unity.Newtonsoft.Json"
   ],

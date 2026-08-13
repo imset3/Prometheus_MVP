@@ -15,7 +15,7 @@ namespace Narthex.Tools
     public static class PrometheusTitleButtonLabelGenerator
     {
         public const string OutputFolder = "Assets/_Project/Resources/UI/Title/Labels";
-        private const string FontPath = "Assets/_Project/Art/Fonts/GoogleFonts/GowunDodum-Regular.ttf";
+        private const string FontPath = "Assets/_Project/Art/Fonts/GoogleFonts/DoHyeon-Regular.ttf";
         private const int TextureWidth = 512;
         private const int TextureHeight = 96;
         private const int RenderLayer = 31;
@@ -129,7 +129,7 @@ namespace Narthex.Tools
                 text.text = value;
                 text.font = font;
                 text.fontSize = 46;
-                text.fontStyle = FontStyle.Normal;
+                text.fontStyle = FontStyle.Bold;
                 text.alignment = TextAnchor.MiddleCenter;
                 text.color = new Color(0.97f, 0.99f, 1f, 1f);
                 text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -156,6 +156,7 @@ namespace Narthex.Tools
                 };
                 output.ReadPixels(new Rect(0f, 0f, TextureWidth, TextureHeight), 0, 0, false);
                 output.Apply(false, false);
+                CenterOpaquePixels(output);
                 return output.EncodeToPNG();
             }
             finally
@@ -175,6 +176,45 @@ namespace Narthex.Tools
                 if (canvasObject != null) UnityEngine.Object.DestroyImmediate(canvasObject);
                 if (cameraObject != null) UnityEngine.Object.DestroyImmediate(cameraObject);
             }
+        }
+
+        private static void CenterOpaquePixels(Texture2D texture)
+        {
+            var source = texture.GetPixels32();
+            var minX = TextureWidth;
+            var minY = TextureHeight;
+            var maxX = -1;
+            var maxY = -1;
+            for (var y = 0; y < TextureHeight; y++)
+            for (var x = 0; x < TextureWidth; x++)
+            {
+                if (source[y * TextureWidth + x].a <= 8) continue;
+                minX = Mathf.Min(minX, x);
+                minY = Mathf.Min(minY, y);
+                maxX = Mathf.Max(maxX, x);
+                maxY = Mathf.Max(maxY, y);
+            }
+
+            if (maxX < minX || maxY < minY) return;
+            var sourceCenterX = (minX + maxX) * 0.5f;
+            var sourceCenterY = (minY + maxY) * 0.5f;
+            var targetCenterX = (TextureWidth - 1) * 0.5f;
+            var targetCenterY = (TextureHeight - 1) * 0.5f;
+            var offsetX = Mathf.RoundToInt(targetCenterX - sourceCenterX);
+            var offsetY = Mathf.RoundToInt(targetCenterY - sourceCenterY);
+            if (offsetX == 0 && offsetY == 0) return;
+
+            var centered = new Color32[source.Length];
+            for (var y = minY; y <= maxY; y++)
+            for (var x = minX; x <= maxX; x++)
+            {
+                var targetX = x + offsetX;
+                var targetY = y + offsetY;
+                if (targetX < 0 || targetX >= TextureWidth || targetY < 0 || targetY >= TextureHeight) continue;
+                centered[targetY * TextureWidth + targetX] = source[y * TextureWidth + x];
+            }
+            texture.SetPixels32(centered);
+            texture.Apply(false, false);
         }
     }
 }

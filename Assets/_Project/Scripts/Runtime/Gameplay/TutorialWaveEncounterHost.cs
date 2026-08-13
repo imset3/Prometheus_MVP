@@ -10,7 +10,7 @@ namespace Narthex.Gameplay
     /// Runs a multi-wave encounter with multiple pre-placed enemies active at once.
     /// Wave composition is defined by contiguous counts in the enemy array.
     /// </summary>
-    public sealed class TutorialWaveEncounterHost : MonoBehaviour
+    public sealed class TutorialWaveEncounterHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [Header("Runtime")]
         [SerializeField] private ServiceRoot serviceRoot;
@@ -203,6 +203,14 @@ namespace Narthex.Gameplay
             }
 
             waveRoutine = StartCoroutine(SpawnWaveAfterDelay(0, initialDelay));
+        }
+
+        public void ResetForTutorialRetry()
+        {
+            if (questSequenceHost == null || questSequenceHost.CurrentQuestId != encounterQuestId) return;
+            encounterStarted = true;
+            cleared = false;
+            ResetEncounter();
         }
 
         private IEnumerator SpawnWaveAfterDelay(int waveIndex, float delay)

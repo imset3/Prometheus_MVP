@@ -347,6 +347,41 @@ PNG가 `Multiple Sprite`로 임포트되어 있어도 `LoadAllAssetsAtPath`로 �
 
 스냅샷은 오브젝트 활성 상태, Transform, 컴포넌트 타입, 기능 마커, Collider를 기록한다.
 
+### 계층 기반 UI·재시작·캐릭터 비율
+
+- `ui.readability.apply`: `SafeAreaRoot`, `PrimaryHudRoot`, `ModalRoot`, `DialogueRoot`, `TransitionRoot`와 사전 배치 일시정지 UI를 씬에 직렬화한다.
+- `ui.readability.validate`: 버튼 배경/글자 중심, 굵기, 패널 안전영역과 필수 계층 구성을 검사한다.
+- 전체 음량 슬라이더는 계층에 배치된 `Track`, `EnergyFill`, `Handle` 전용 스프라이트와
+  `ThemedVolumeSliderPresenter`를 사용한다. 트랙과 게이지 Rect는 줄이지 않고 `fillAmount`만
+  변경하며, 값 변경 즉시 전체 음량과 저장 설정에 반영한다.
+- `resolution-ui.author`: 타이틀의 지원 해상도 드롭다운과 10초 유지/복구 패널을 직렬화한다.
+- `sprite-scale.apply`: 캐릭터와 하위 VFX 비율을 실제 Transform에 저장한다.
+- `sprite-scale.validate`: 발 위치와 Collider 정렬 계약을 검사한다.
+- `tutorial.retry-contract.apply`: 퀘스트별 체크포인트, 패배 패널, 훈련/퀘스트 복구 참조를 씬에 기록한다.
+- `art.prome-motion.normalize`: Idle·Run·Jump·Dash·Attack01의 불투명 발 영역을 기준으로
+  PNG Pivot을 에셋에 저장하고, Attack01 0.16초 타격 이벤트와 계층의
+  `AttackImpactAnimationRelay`를 연결한다.
+- `art.prome-motion.validate`: 프레임별 발 높이 오차 0.05유닛과 공격 이벤트 수신 구성을 검사한다.
+
+패배 복구 대상은 `ITutorialRetryParticipant`를 구현하며, 각 체크포인트의
+`TutorialRetrySection`에 참가자와 초기 활성 상태가 직렬화된다. 비활성 전투 컨트롤러는
+Coroutine을 즉시 시작하지 않고 다시 활성화될 때 현재 퀘스트 기준으로 재개한다.
+
+이 명령들은 모두 Edit Mode에서 `dryRun: true`로 먼저 확인해야 하며, 런타임 fallback을 생성하지 않는다.
+
+### 연결형 튜토리얼 타일맵 V2
+
+- `tilemap.visual-v2.preview`: 8개 구역에서 읽을 기존 플랫폼 셀과 테마를 보고한다.
+- `tilemap.visual-v2.apply`: 기존 지형 셀을 유지한 채 `환경타일맵_v2`를 계층에 직렬화한다.
+- `tilemap.visual-v2.validate`: 누락 구역, 빈 타일맵, 시각 타일맵 Collider, 256 PPU를 검사한다.
+- `tilemap.visual-v2.rollback`: V2 시각 루트를 끄고 기존 `재구성_플랫폼타일맵`을 다시 켠다.
+
+V2 타일맵은 회의장·숨겨진 방·복도·훈련장·외부·F·G·선착장의 기존 지형 배치를
+그대로 사용한다. 새 타일맵에는 Collider를 만들지 않으며 기존 GameplayIntegrationRoot의
+충돌체, 기능 마커, 적, 문, 위험물은 변경하지 않는다. 구역마다 `구조바디`, `보행면`,
+`벽과모서리`, `지지기둥`, `배관과장식`, `상태오버레이`가 계층에 남아 이후 사람이
+직접 확장할 수 있다.
+
 ### 구역 흐름
 
 - `flow.validate`

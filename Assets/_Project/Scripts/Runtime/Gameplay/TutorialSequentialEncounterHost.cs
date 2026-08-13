@@ -9,7 +9,7 @@ namespace Narthex.Gameplay
     /// Runs a pre-placed tutorial encounter one enemy at a time. The next enemy
     /// appears only after the current one dies, then the exit gate opens.
     /// </summary>
-    public sealed class TutorialSequentialEncounterHost : MonoBehaviour
+    public sealed class TutorialSequentialEncounterHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [Header("Runtime")]
         [SerializeField] private ServiceRoot serviceRoot;
@@ -67,6 +67,7 @@ namespace Narthex.Gameplay
             serviceRoot.Events.Subscribe<TutorialObjectiveChanged>(HandleObjectiveChanged);
             combatSystemHost.Events.Subscribe<EnemyKilled>(HandleEnemyKilled);
             combatSystemHost.Events.Subscribe<PlayerRespawned>(HandlePlayerRespawned);
+            TryStartEncounter(questSequenceHost.CurrentQuestId);
         }
 
         private void Start() => TryStartEncounter(questSequenceHost.CurrentQuestId);
@@ -119,7 +120,7 @@ namespace Narthex.Gameplay
                 spawnRoutine = null;
             }
             activeEnemyIndex = -1;
-            encounterStarted = true;
+            encounterStarted = false;
             spawnWarning.SetActive(false);
             SetGateLocked(true);
             foreach (var enemy in enemies)
@@ -129,7 +130,14 @@ namespace Narthex.Gameplay
                 enemy.ResetRuntime();
                 enemy.GetComponent<TutorialGroundedEnemyMotorHost>()?.ResetMotion();
             }
-            spawnRoutine = StartCoroutine(SpawnEnemyAfterDelay(0, initialDelay));
+            if (isActiveAndEnabled)
+                TryStartEncounter(questSequenceHost.CurrentQuestId);
+        }
+
+        public void ResetForTutorialRetry()
+        {
+            if (questSequenceHost != null && questSequenceHost.CurrentQuestId == encounterQuestId)
+                ResetEncounter();
         }
 
         private IEnumerator SpawnEnemyAfterDelay(int enemyIndex, float delay)

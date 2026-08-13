@@ -19,7 +19,7 @@ namespace Narthex.Presentation
     /// Drives a pre-placed world-space objective beacon. The visual can be replaced later
     /// without changing quest progression or target bindings.
     /// </summary>
-    public sealed class TutorialObjectiveBeaconHost : MonoBehaviour
+    public sealed class TutorialObjectiveBeaconHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
@@ -138,6 +138,13 @@ namespace Narthex.Presentation
             externalTarget = null;
             externalTargetActive = false;
             SetTarget(questSequenceHost.CurrentQuestId);
+        }
+
+        public void ResetForTutorialRetry()
+        {
+            externalTarget = null;
+            externalTargetActive = false;
+            SetTarget(questSequenceHost != null ? questSequenceHost.CurrentQuestId : string.Empty);
         }
 
         private void SetTarget(string questId)

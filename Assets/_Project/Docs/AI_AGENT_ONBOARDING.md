@@ -3,8 +3,8 @@
 이 문서는 Codex, Claude Code 또는 다른 자동화 에이전트가 프로젝트를 처음 접했을 때 탐색에 시간을 낭비하지 않고 안전하게 수정·검증·배포하도록 만든 운영 기준서다.
 
 > 기준일: 2026-08-13  
-> 기준 브랜치/커밋: `main` / `3afbef1`  
-> 기준 배포: `DEMO_V3`  
+> 기준 브랜치/릴리스: `main` / `DEMO_V4`  
+> 기준 배포: `DEMO_V4`  
 > Unity: `6000.3.14f1`  
 > 프로젝트 루트: `/Users/limseth/Unity/Unity_Projects/Prometheus_MVP`
 
@@ -49,11 +49,12 @@ Build Settings의 필수 순서는 다음과 같다.
 
 | 순서 | 씬 | 역할 |
 | --- | --- | --- |
-| 0 | `Assets/Scenes/TitleScene.unity` | 타이틀, 새 게임, 이어하기, 보스전, 설정, 로딩 |
+| 0 | `Assets/Scenes/TitleScene.unity` | 타이틀, 새 게임, 이어하기, 설정, 로딩 |
 | 1 | `Assets/_Project/Scenes/Boot.unity` | 호환용 부트스트랩 |
 | 2 | `Assets/Scenes/TutorialScene.unity` | 챕터 0 전체 플레이 |
-| 3 | `Assets/Scenes/BossDevelopmentScene.unity` | 헬테 FSM 격리 개발·보스전 메뉴 진입 |
-| 4 | `Assets/Scenes/Chapter01.unity` | 이후 연결용 자리 |
+| 3 | `Assets/Scenes/Chapter01.unity` | 이후 연결용 자리 |
+
+`BossDevelopmentScene`은 프로젝트 내부 Editor 개발용이며 릴리즈 Build Settings에는 넣지 않는다.
 
 `TutorialScene` 한 씬 안에서 구역을 활성화·비활성화하고 페이드 전환한다. 구역을 서로 물리적으로 연결할 필요는 없다.
 
@@ -150,7 +151,7 @@ Tests       → Runtime asmdef
 - 외부 행군 병력은 전투 AI가 아니라 연출 전용이다.
 - 테우스는 숨겨진 방 이후에도 같은 인스턴스로 동행한다.
 - 원거리 공격 해금은 훈련 완료 후 `1`, 집중포화는 F에서 `2`, 4연속 참격은 헬테에서 `3`이다.
-- 타이틀의 보스전 버튼은 반드시 `BossDevelopmentScene`을 연다.
+- 타이틀에는 보스전 버튼이나 `BossDevelopmentScene` 직접 로드 경로를 두지 않는다.
 - 데모 엔딩 중에는 HUD와 레벨 오브젝트를 숨기고 기존 제니스와 비행정만 보여준다.
 
 ## 6. 씬 수정 표준 절차
@@ -338,7 +339,7 @@ Unity 메뉴:
 - `sragon000/Build/Release/Build macOS`
 - `sragon000/Build/Release/Build Windows and macOS`
 
-현재 출력 루트는 `Builds/Release/DEMO_V3`다. 새 버전 배포 전 자동화 경로, README, 릴리스 노트의 버전을 함께 올린다.
+현재 출력 루트는 `Builds/Release/DEMO_V4`다. 새 버전 배포 전 자동화 경로, README, 릴리스 노트의 버전을 함께 올린다.
 
 릴리스 순서:
 
@@ -351,7 +352,7 @@ Unity 메뉴:
 7. GitHub Release를 생성하고 tag가 정확한 커밋을 가리키는지 확인한다.
 8. 원격 asset digest와 로컬 SHA256을 비교한다.
 
-기본 해상도는 `1920×1080`이고 타이틀 설정에서 현재 디스플레이가 지원하는 해상도와 화면 모드를 선택한다.
+기본 해상도는 `1920×1080`이다. 타이틀 설정의 계층에 미리 배치된 해상도 드롭다운에 현재 디스플레이 지원 모드를 연결하며, 적용 후 10초 유지 확인에 실패하면 이전 설정으로 되돌린다.
 
 ## 12. Git 작업 규칙
 
@@ -385,7 +386,7 @@ Unity 메뉴:
 - [튜토리얼 E2E 체크리스트](TutorialEndToEndChecklist.md)
 - [통합 레벨 계획](TutorialImportedLevelIntegrationPlan.md)
 - [개발일지](DEVLOG.md)
-- [DEMO_V3 릴리스 노트](RELEASE_DEMO_V3.md)
+- [DEMO_V4 릴리스 노트](RELEASE_DEMO_V4.md)
 
 이 문서와 실제 코드가 충돌하면 다음 순서로 판단한다.
 

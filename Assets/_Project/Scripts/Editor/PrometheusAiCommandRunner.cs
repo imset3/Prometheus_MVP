@@ -48,6 +48,12 @@ namespace Narthex.Tools
             "tutorial.enemy-projectile-art.apply",
             "tutorial.wind-dialogue-art.apply",
             "tutorial.ui-polish.apply",
+            "ui.readability.apply",
+            "ui.readability.validate",
+            "resolution-ui.author",
+            "sprite-scale.apply",
+            "sprite-scale.validate",
+            "tutorial.retry-contract.apply",
             "tutorial.double-jump-platform-align",
             "tutorial.demo-ending.apply",
             "tutorial.training-dummies.apply",
@@ -55,11 +61,17 @@ namespace Narthex.Tools
             "tutorial.lava-art.apply",
             "tilemap.clearance.audit",
             "tilemap.clearance.apply",
+            "tilemap.visual-v2.preview",
+            "tilemap.visual-v2.apply",
+            "tilemap.visual-v2.validate",
+            "tilemap.visual-v2.rollback",
             "title.scene.apply",
             "boss.polish.apply",
             "boss.helte-animation-v2.apply",
             "boss.helte-animation-v2.pacing",
             "art.prome-motion.apply",
+            "art.prome-motion.normalize",
+            "art.prome-motion.validate",
             "component.inspect",
             "component.set",
             "code.usage",
@@ -290,6 +302,36 @@ namespace Narthex.Tools
                     response.message = (request.dryRun ? "Previewed" : "Applied") +
                                        " tutorial readable sprite UI (" + response.changes.Count + " change(s)).";
                     break;
+                case "ui.readability.apply":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.ApplyUiReadability(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} authored UI hierarchy ({response.changes.Count} change(s)).";
+                    break;
+                case "ui.readability.validate":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.ValidateUiReadability(scene);
+                    response.changed = false;
+                    response.message = $"Validated authored UI hierarchy ({response.changes.Count} issue(s)).";
+                    break;
+                case "resolution-ui.author":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.AuthorResolutionUi(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} authored resolution UI ({response.changes.Count} change(s)).";
+                    break;
+                case "sprite-scale.apply":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.ApplySpriteScale(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} authored sprite scale ({response.changes.Count} change(s)).";
+                    break;
+                case "sprite-scale.validate":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.ValidateSpriteScale(scene);
+                    response.success = response.changes.Count == 0;
+                    response.message = $"Sprite-scale validation found {response.changes.Count} issue(s).";
+                    break;
+                case "tutorial.retry-contract.apply":
+                    response.changes = PrometheusHierarchyAuthoringAutomation.ApplyRetryContract(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} retry contract ({response.changes.Count} change(s)).";
+                    break;
                 case "tutorial.double-jump-platform-align":
                     response.changes = PrometheusTutorialUiPolishAutomation.AlignDoubleJumpPlatforms(scene, request.dryRun);
                     response.changed = !request.dryRun && response.changes.Count > 0;
@@ -347,6 +389,27 @@ namespace Narthex.Tools
                     response.message = $"{(request.dryRun ? "Previewed" : "Applied")} tilemap clearance " +
                                        $"'{request.Get("markerId")}' ({response.changes.Count} change(s)).";
                     break;
+                case "tilemap.visual-v2.preview":
+                    response.changes = PrometheusConnectedTilemapV2Automation.Apply(scene, true);
+                    response.message = $"Previewed connected tutorial tilemaps v2 ({response.changes.Count} zone record(s)).";
+                    break;
+                case "tilemap.visual-v2.apply":
+                    response.changes = PrometheusConnectedTilemapV2Automation.Apply(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} connected tutorial tilemaps v2 " +
+                                       $"({response.changes.Count} zone record(s)).";
+                    break;
+                case "tilemap.visual-v2.validate":
+                    response.changes = PrometheusConnectedTilemapV2Automation.Validate(scene);
+                    response.success = response.changes.Count == 0;
+                    response.message = $"Connected tilemap v2 validation found {response.changes.Count} issue(s).";
+                    break;
+                case "tilemap.visual-v2.rollback":
+                    response.changes = PrometheusConnectedTilemapV2Automation.Rollback(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} connected tilemap v2 rollback " +
+                                       $"({response.changes.Count} change(s)).";
+                    break;
                 case "title.scene.apply":
                     response.changes = PrometheusTitleSceneAutomation.Apply(scene, request.dryRun);
                     response.changed = !request.dryRun && response.changes.Count > 0;
@@ -380,6 +443,17 @@ namespace Narthex.Tools
                     response.message = (request.dryRun ? "Previewed" : "Applied") +
                                        " Prome dash, jump, and dialogue expressions (" +
                                        response.changes.Count + " change(s)).";
+                    break;
+                case "art.prome-motion.normalize":
+                    response.changes = PrometheusPromeMotionNormalizationAutomation.Normalize(scene, request.dryRun);
+                    response.changed = !request.dryRun && response.changes.Count > 0;
+                    response.message = $"{(request.dryRun ? "Previewed" : "Applied")} Prome foot pivots and attack impact event " +
+                                       $"({response.changes.Count} change(s)).";
+                    break;
+                case "art.prome-motion.validate":
+                    response.changes = PrometheusPromeMotionNormalizationAutomation.Validate(scene);
+                    response.success = response.changes.Count == 0;
+                    response.message = $"Prome motion validation found {response.changes.Count} issue(s).";
                     break;
                 case "component.inspect":
                     InspectComponent(scene, request, response);

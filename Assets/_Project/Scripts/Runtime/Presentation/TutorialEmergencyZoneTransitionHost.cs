@@ -96,7 +96,7 @@ namespace Narthex.Presentation
         {
             transitionRunning = true;
             playerMotor.ResetTransientInput();
-            playerInputHost.enabled = false;
+            playerInputHost.AcquireInputLock(PlayerInputLockReason.Transition);
             playerBody.linearVelocity = Vector2.zero;
             fadeCanvasGroup.blocksRaycasts = true;
 
@@ -122,7 +122,7 @@ namespace Narthex.Presentation
             yield return FadeTo(0f, fadeInDuration);
             currentZoneRoot.SetActive(false);
             fadeCanvasGroup.blocksRaycasts = false;
-            playerInputHost.enabled = true;
+            playerInputHost.ReleaseInputLock(PlayerInputLockReason.Transition);
             transitionRunning = false;
         }
 

@@ -15,14 +15,20 @@ namespace Narthex.SceneFlow
         private bool held;
         private bool hovered;
         private Vector3 baseScale;
+        private float baseAccentAlpha = 1f;
 
         public void Configure(Graphic accent)
         {
             accentGraphic = accent;
             baseScale = transform.localScale;
+            if (accentGraphic != null) baseAccentAlpha = accentGraphic.color.a;
         }
 
-        private void Awake() => baseScale = transform.localScale;
+        private void Awake()
+        {
+            baseScale = transform.localScale;
+            if (accentGraphic != null) baseAccentAlpha = accentGraphic.color.a;
+        }
 
         private void Update()
         {
@@ -32,7 +38,9 @@ namespace Narthex.SceneFlow
                 baseScale * multiplier,
                 1f - Mathf.Exp(-response * Time.unscaledDeltaTime));
             if (accentGraphic == null) return;
-            var target = held ? 1f : hovered ? 0.82f : 0.55f;
+            var target = held
+                ? Mathf.Min(1f, baseAccentAlpha * 3f)
+                : hovered ? Mathf.Min(1f, baseAccentAlpha * 2f) : baseAccentAlpha;
             var color = accentGraphic.color;
             color.a = Mathf.Lerp(color.a, target, 1f - Mathf.Exp(-response * Time.unscaledDeltaTime));
             accentGraphic.color = color;

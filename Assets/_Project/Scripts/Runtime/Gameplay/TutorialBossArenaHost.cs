@@ -8,7 +8,7 @@ namespace Narthex.Gameplay
     /// Gates the tutorial boss until the player has fully entered the arena.
     /// All visuals are replaceable scene slots; this host only owns encounter state.
     /// </summary>
-    public sealed class TutorialBossArenaHost : MonoBehaviour
+    public sealed class TutorialBossArenaHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [Header("Runtime")]
         [SerializeField] private ServiceRoot serviceRoot;
@@ -64,6 +64,8 @@ namespace Narthex.Gameplay
             bossPatternHost.ResetForEncounter();
             previousPlayerPosition = playerCollider.transform.position;
         }
+
+        public void ResetForTutorialRetry() => ResetForRetry();
 
         private void Awake()
         {

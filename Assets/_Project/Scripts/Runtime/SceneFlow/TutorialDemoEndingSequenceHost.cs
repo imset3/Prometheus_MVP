@@ -133,7 +133,7 @@ namespace Narthex.SceneFlow
             if (endingRoutine != null) StopCoroutine(endingRoutine);
             endingRoutine = null;
             if (finished || !HasValidSetup) return;
-            playerInputHost.enabled = true;
+            playerInputHost.ReleaseInputLock(PlayerInputLockReason.Ending);
             playerBody.gravityScale = originalGravityScale;
             SetPlayerVisible(true);
             RestoreWorldPresentation();
@@ -156,7 +156,7 @@ namespace Narthex.SceneFlow
 
         private IEnumerator RunEnding()
         {
-            playerInputHost.enabled = false;
+            playerInputHost.AcquireInputLock(PlayerInputLockReason.Ending);
             playerBody.linearVelocity = Vector2.zero;
             completionFlow.SetGameplayHudVisible(false);
             HideHudPresentation();

@@ -32,6 +32,10 @@ namespace Narthex.Gameplay
         [SerializeField] private PlayerInputHost playerInputHost;
         [SerializeField] private PlayerMotorHost playerMotorHost;
         [SerializeField] private CanvasGroup fadeCanvasGroup;
+        [SerializeField] private CanvasGroup defeatCanvasGroup;
+        [SerializeField] private QuestManagerHost questManagerHost;
+        [SerializeField] private TutorialTrainingPhaseControllerHost trainingPhaseController;
+        [SerializeField] private TutorialRetrySection[] retrySections = Array.Empty<TutorialRetrySection>();
         [SerializeField] private TutorialRestartCheckpointDefinition[] questCheckpoints =
             Array.Empty<TutorialRestartCheckpointDefinition>();
         [SerializeField] private bool restartSceneOnDeath;
@@ -67,7 +71,9 @@ namespace Narthex.Gameplay
                                                !string.IsNullOrWhiteSpace(relayCheckpointQuestId);
         public bool HasValidSceneRestartSetup => !restartSceneOnDeath && playerInputHost != null && playerMotorHost != null &&
                                                  fadeCanvasGroup != null && questSequenceHost != null && bossArenaHost != null &&
-                                                 questCheckpoints != null && questCheckpoints.Length >= 10;
+                                                 questManagerHost != null && defeatCanvasGroup != null &&
+                                                 questCheckpoints != null && questCheckpoints.Length >= 10 &&
+                                                 retrySections != null && retrySections.Length >= 10;
         public bool UsesInSceneRestart => !restartSceneOnDeath;
         public bool IsRestarting => restarting;
         public string ActiveSpawnPointName => activeSpawnPoint != null ? activeSpawnPoint.name : string.Empty;
@@ -152,24 +158,39 @@ namespace Narthex.Gameplay
         private IEnumerator RestartAtCheckpoint()
         {
             restarting = true;
-            playerInputHost.enabled = false;
+            playerInputHost.AcquireInputLock(PlayerInputLockReason.Defeat);
             playerMotorHost.ResetTransientInput();
             playerBody.linearVelocity = Vector2.zero;
             fadeCanvasGroup.blocksRaycasts = true;
+            SetGroup(defeatCanvasGroup, true);
 
             if (restartDelay > 0f) yield return new WaitForSecondsRealtime(restartDelay);
             yield return FadeTo(1f, fadeDuration);
 
             activeSpawnPoint = ResolveCurrentCheckpoint();
+            var currentQuestId = questSequenceHost.CurrentQuestId;
+            if (!string.IsNullOrWhiteSpace(currentQuestId))
+                questManagerHost.System.ResetProgress(currentQuestId);
+            ResolveRetrySection(currentQuestId)?.RestoreAuthoredState();
             foreach (var actor in resetActors) actor.ResetRuntime();
             if (questSequenceHost.CurrentQuestId == "QST-TUTO-008") bossArenaHost.ResetForRetry();
             MovePlayerToActiveSpawn();
             combatSystemHost.Events.Publish(new PlayerRespawned(playerActor.ActorId));
 
             yield return FadeTo(0f, fadeDuration);
+            SetGroup(defeatCanvasGroup, false);
             fadeCanvasGroup.blocksRaycasts = false;
-            playerInputHost.enabled = true;
+            playerInputHost.ReleaseInputLock(PlayerInputLockReason.Defeat);
             restarting = false;
+        }
+
+        private TutorialRetrySection ResolveRetrySection(string questId)
+        {
+            if (string.IsNullOrWhiteSpace(questId) || retrySections == null) return null;
+            foreach (var section in retrySections)
+                if (section != null && section.QuestId == questId)
+                    return section;
+            return null;
         }
 
         private void HandleTowerActivated(TowerActivated message)
@@ -242,6 +263,14 @@ namespace Narthex.Gameplay
                 yield return null;
             }
             fadeCanvasGroup.alpha = targetAlpha;
+        }
+
+        private static void SetGroup(CanvasGroup group, bool visible)
+        {
+            if (group == null) return;
+            group.alpha = visible ? 1f : 0f;
+            group.interactable = visible;
+            group.blocksRaycasts = visible;
         }
     }
 }

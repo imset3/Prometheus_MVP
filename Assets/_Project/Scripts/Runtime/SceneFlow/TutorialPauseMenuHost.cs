@@ -9,20 +9,27 @@ using UnityEngine.UI;
 
 namespace Narthex.SceneFlow
 {
-    /// <summary>Runtime-installed pause menu for TutorialScene. It never changes the authored level hierarchy.</summary>
+    /// <summary>Controls the pause UI authored and serialized in the scene hierarchy.</summary>
     public sealed class TutorialPauseMenuHost : MonoBehaviour
     {
-        private CanvasGroup root;
-        private CanvasGroup settingsPanel;
-        private Slider masterSlider;
-        private SaveSystemHost saveSystemHost;
-        private PlayerInputHost playerInputHost;
-        private TutorialQuestSequenceHost questSequenceHost;
-        private RectTransform pausePanelRect;
-        private RectTransform settingsPanelRect;
+#if UNITY_EDITOR
+        private const string UiFontPath = "Assets/_Project/Art/Fonts/GoogleFonts/DoHyeon-Regular.ttf";
+#endif
+        [SerializeField] private CanvasGroup root;
+        [SerializeField] private CanvasGroup settingsPanel;
+        [SerializeField] private Slider masterSlider;
+        [SerializeField] private SaveSystemHost saveSystemHost;
+        [SerializeField] private PlayerInputHost playerInputHost;
+        [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
+        [SerializeField] private RectTransform pausePanelRect;
+        [SerializeField] private RectTransform settingsPanelRect;
+        [SerializeField] private Button resumeButton;
+        [SerializeField] private Button settingsButton;
+        [SerializeField] private Button saveAndExitButton;
+        [SerializeField] private Button applyButton;
+        [SerializeField] private Button cancelButton;
         private Sprite buttonFrameSprite;
         private Sprite modalPanelSprite;
-        private bool wasPlayerInputEnabled;
         private bool paused;
         private sealed class ButtonAction
         {
@@ -32,31 +39,37 @@ namespace Narthex.SceneFlow
         private readonly List<ButtonAction> buttonActions = new();
         private int selectedButtonIndex;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void RegisterInstaller()
-        {
-            SceneManager.sceneLoaded -= HandleSceneLoaded;
-            SceneManager.sceneLoaded += HandleSceneLoaded;
-        }
-
-        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name != "TutorialScene" || FindFirstObjectByType<TutorialPauseMenuHost>() != null)
-                return;
-            new GameObject("TutorialPauseMenuHost").AddComponent<TutorialPauseMenuHost>();
-        }
-
         private void Awake()
         {
-            saveSystemHost = FindFirstObjectByType<SaveSystemHost>();
-            playerInputHost = FindFirstObjectByType<PlayerInputHost>();
-            questSequenceHost = FindFirstObjectByType<TutorialQuestSequenceHost>();
-            buttonFrameSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ButtonPlate_v1");
-            modalPanelSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ModalPanel_v1");
-            BuildUi();
+            if (!HasAuthoredSetup())
+            {
+                Debug.LogError("TutorialPauseMenuHost requires the authored PauseCanvas and Inspector references. Run ui.readability.apply.", this);
+                enabled = false;
+                return;
+            }
+            BindButton(resumeButton, Resume);
+            BindButton(settingsButton, ShowSettings);
+            BindButton(saveAndExitButton, SaveAndExit);
+            BindButton(applyButton, ApplySettings);
+            BindButton(cancelButton, HideSettings);
+            masterSlider.onValueChanged.RemoveListener(ApplyMasterVolumeImmediately);
+            masterSlider.onValueChanged.AddListener(ApplyMasterVolumeImmediately);
             RefreshPanelLayout();
             SetVisible(root, false);
             SetVisible(settingsPanel, false);
+        }
+
+        public bool HasAuthoredSetup() => root != null && settingsPanel != null && masterSlider != null &&
+                                           saveSystemHost != null && playerInputHost != null && questSequenceHost != null &&
+                                           pausePanelRect != null && settingsPanelRect != null && resumeButton != null &&
+                                           settingsButton != null && saveAndExitButton != null && applyButton != null &&
+                                           cancelButton != null;
+
+        private void BindButton(Button button, UnityEngine.Events.UnityAction action)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(action);
+            buttonActions.Add(new ButtonAction { Button = button, Action = action });
         }
 
         private void Update()
@@ -73,6 +86,8 @@ namespace Narthex.SceneFlow
 
         private void OnDestroy()
         {
+            if (masterSlider != null)
+                masterSlider.onValueChanged.RemoveListener(ApplyMasterVolumeImmediately);
             if (paused) Time.timeScale = 1f;
         }
 
@@ -80,11 +95,7 @@ namespace Narthex.SceneFlow
         {
             paused = true;
             Time.timeScale = 0f;
-            if (playerInputHost != null)
-            {
-                wasPlayerInputEnabled = playerInputHost.enabled;
-                playerInputHost.enabled = false;
-            }
+            playerInputHost?.AcquireInputLock(PlayerInputLockReason.Pause);
             SetVisible(root, true);
             SelectFirstVisibleButton();
         }
@@ -93,7 +104,7 @@ namespace Narthex.SceneFlow
         {
             paused = false;
             Time.timeScale = 1f;
-            if (playerInputHost != null) playerInputHost.enabled = wasPlayerInputEnabled;
+            playerInputHost?.ReleaseInputLock(PlayerInputLockReason.Pause);
             SetVisible(settingsPanel, false);
             SetVisible(root, false);
         }
@@ -101,7 +112,8 @@ namespace Narthex.SceneFlow
         private void ShowSettings()
         {
             var settings = LoadSettings();
-            masterSlider.value = settings.MasterVolume;
+            masterSlider.SetValueWithoutNotify(Mathf.Clamp01(settings.MasterVolume));
+            AudioListener.volume = Mathf.Clamp01(settings.MasterVolume);
             SetVisible(root, false);
             SetVisible(settingsPanel, true);
             RefreshPanelLayout();
@@ -110,18 +122,24 @@ namespace Narthex.SceneFlow
 
         private void ApplySettings()
         {
+            ApplyMasterVolumeImmediately(masterSlider.value);
+            HideSettings();
+        }
+
+        private void ApplyMasterVolumeImmediately(float value)
+        {
+            value = Mathf.Clamp01(value);
             var settings = LoadSettings();
-            settings.MasterVolume = masterSlider.value;
+            settings.MasterVolume = value;
             settings.MusicVolume = 1f;
             settings.SfxVolume = 1f;
             if (saveSystemHost != null && saveSystemHost.Initialize())
             {
                 saveSystemHost.System.Current.Settings = settings;
-                saveSystemHost.System.Save("PauseSettingsChanged");
+                saveSystemHost.System.Save("PauseMasterVolumeChanged");
             }
             else GameLaunchSession.SaveSettings(settings);
-            AudioListener.volume = settings.MasterVolume;
-            HideSettings();
+            AudioListener.volume = value;
         }
 
         private void HideSettings()
@@ -151,6 +169,7 @@ namespace Narthex.SceneFlow
             }
             paused = false;
             Time.timeScale = 1f;
+            playerInputHost?.ReleaseInputLock(PlayerInputLockReason.Pause);
             StartCoroutine(ReturnToTitle());
         }
 
@@ -161,15 +180,24 @@ namespace Narthex.SceneFlow
                 SceneManager.LoadScene("TitleScene", LoadSceneMode.Single);
         }
 
-        private void BuildUi()
+#if UNITY_EDITOR
+        public void RebuildAuthoredPresentation()
         {
+            if (Application.isPlaying) return;
+            buttonFrameSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ButtonPlate_v2");
+            modalPanelSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_ModalPanel_v1");
+            var existing = gameObject.scene.GetRootGameObjects();
+            foreach (var sceneRoot in existing)
+                if (sceneRoot.name == "PauseCanvas") DestroyImmediate(sceneRoot);
             var canvasObject = new GameObject("PauseCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            SceneManager.MoveGameObjectToScene(canvasObject, gameObject.scene);
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5000;
             var scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
             root = CreateGroup("PauseRoot", canvas.transform);
             var blocker = CreateImage("Blocker", root.transform, new Color(0.01f, 0.02f, 0.035f, 0.82f));
             Stretch(blocker.rectTransform);
@@ -178,11 +206,12 @@ namespace Narthex.SceneFlow
                 modalPanelSprite);
             SetRect(panel.rectTransform, Vector2.zero, new Vector2(560f, 560f));
             pausePanelRect = panel.rectTransform;
-            AddText(panel.transform, "일시 정지", 42, new Vector2(0f, 205f), new Vector2(460f, 70f));
-            AddButton(panel.transform, "계속하기", new Vector2(0f, 90f), Resume);
-            AddButton(panel.transform, "설정", new Vector2(0f, 5f), ShowSettings);
-            AddButton(panel.transform, "저장 및 나가기", new Vector2(0f, -80f), SaveAndExit);
-            AddText(panel.transform, "ESC · 게임으로 돌아가기", 20, new Vector2(0f, -205f), new Vector2(460f, 45f));
+            var pauseSafeArea = CreateRect("ContentSafeArea", panel.transform, Vector2.zero, new Vector2(440f, 430f));
+            AddText(pauseSafeArea, "일시 정지", 42, new Vector2(0f, 165f), new Vector2(420f, 65f));
+            resumeButton = AddButton(pauseSafeArea, "계속하기", new Vector2(0f, 70f), Resume);
+            settingsButton = AddButton(pauseSafeArea, "설정", new Vector2(0f, -10f), ShowSettings);
+            saveAndExitButton = AddButton(pauseSafeArea, "저장 및 나가기", new Vector2(0f, -90f), SaveAndExit);
+            AddText(pauseSafeArea, "ESC · 게임으로 돌아가기", 20, new Vector2(0f, -178f), new Vector2(420f, 42f));
 
             settingsPanel = CreateGroup("PauseSettings", canvas.transform);
             var settingsBlocker = CreateImage("Blocker", settingsPanel.transform, new Color(0.01f, 0.02f, 0.035f, 0.94f));
@@ -192,11 +221,14 @@ namespace Narthex.SceneFlow
                 modalPanelSprite);
             SetRect(settings.rectTransform, Vector2.zero, new Vector2(700f, 600f));
             settingsPanelRect = settings.rectTransform;
-            AddText(settings.transform, "음량 설정", 40, new Vector2(0f, 235f), new Vector2(500f, 65f));
-            masterSlider = AddSlider(settings.transform, "전체 음량", 55f);
-            AddButton(settings.transform, "적용", new Vector2(-115f, -205f), ApplySettings, new Vector2(200f, 58f));
-            AddButton(settings.transform, "취소", new Vector2(115f, -205f), HideSettings, new Vector2(200f, 58f));
+            var settingsSafeArea = CreateRect("ContentSafeArea", settings.transform, Vector2.zero, new Vector2(540f, 450f));
+            AddText(settingsSafeArea, "음량 설정", 40, new Vector2(0f, 175f), new Vector2(500f, 65f));
+            masterSlider = AddSlider(settingsSafeArea, "전체 음량", 45f);
+            applyButton = AddButton(settingsSafeArea, "적용", new Vector2(-115f, -165f), ApplySettings, new Vector2(200f, 58f));
+            cancelButton = AddButton(settingsSafeArea, "취소", new Vector2(115f, -165f), HideSettings, new Vector2(200f, 58f));
+            UnityEditor.EditorUtility.SetDirty(this);
         }
+#endif
 
         private void OnRectTransformDimensionsChange() => RefreshPanelLayout();
 
@@ -214,29 +246,35 @@ namespace Narthex.SceneFlow
             panel.anchoredPosition = Vector2.zero;
         }
 
+#if UNITY_EDITOR
         private static Slider AddSlider(Transform parent, string label, float y)
         {
-            AddText(parent, label, 24, new Vector2(-205f, y), new Vector2(220f, 50f), TextAnchor.MiddleLeft);
+            AddText(parent, label, 25, new Vector2(-155f, y), new Vector2(190f, 50f), TextAnchor.MiddleLeft);
             var root = new GameObject(label + "Slider", typeof(RectTransform), typeof(Slider));
             root.transform.SetParent(parent, false);
-            SetRect(root.GetComponent<RectTransform>(), new Vector2(105f, y), new Vector2(350f, 40f));
-            var track = CreateImage("Track", root.transform, new Color(0.12f, 0.18f, 0.23f, 1f));
-            SetRect(track.rectTransform, Vector2.zero, new Vector2(350f, 8f));
-            var fill = CreateImage("Fill", root.transform, new Color(0.25f, 0.86f, 0.9f, 1f));
-            SetRect(fill.rectTransform, Vector2.zero, new Vector2(350f, 8f));
-            // Slider drives fillRect's horizontal anchors. A fixed 350px sizeDelta would
-            // be added on top of that anchored width and push the bar outside the modal.
-            fill.rectTransform.sizeDelta = new Vector2(0f, 8f);
-            var handle = CreateImage("Handle", root.transform, Color.white);
-            SetRect(handle.rectTransform, Vector2.zero, new Vector2(22f, 22f));
+            SetRect(root.GetComponent<RectTransform>(), new Vector2(105f, y), new Vector2(330f, 44f));
+            var trackSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeTrack_v1");
+            var fillSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeFill_v1");
+            var track = CreateImage("Track", root.transform, Color.white, trackSprite);
+            track.preserveAspect = true;
+            SetRect(track.rectTransform, Vector2.zero, new Vector2(330f, 40f));
+            var fill = CreateImage("EnergyFill", root.transform, Color.white, fillSprite);
+            SetRect(fill.rectTransform, Vector2.zero, new Vector2(290f, 14f));
+            fill.raycastTarget = false;
+            var handleSprite = Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeHandle_v1");
+            var handle = CreateImage("Handle", root.transform, Color.white, handleSprite);
+            handle.preserveAspect = true;
+            SetRect(handle.rectTransform, Vector2.zero, new Vector2(38f, 38f));
             var slider = root.GetComponent<Slider>();
-            slider.fillRect = fill.rectTransform;
+            slider.fillRect = null;
             slider.handleRect = handle.rectTransform;
             slider.targetGraphic = handle;
+            slider.direction = Slider.Direction.LeftToRight;
+            root.AddComponent<ThemedVolumeSliderPresenter>().Configure(slider, fill);
             return slider;
         }
 
-        private void AddButton(Transform parent, string label, Vector2 position, UnityEngine.Events.UnityAction action,
+        private Button AddButton(Transform parent, string label, Vector2 position, UnityEngine.Events.UnityAction action,
             Vector2? size = null)
         {
             var image = CreateImage(label, parent,
@@ -263,6 +301,7 @@ namespace Narthex.SceneFlow
                 AddText(image.transform, label, 26, Vector2.zero, size ?? new Vector2(390f, 66f));
             }
             image.gameObject.AddComponent<TitleMenuHoldAnimator>().Configure(image);
+            return button;
         }
 
         private static Sprite ResolveButtonLabelSprite(string label)
@@ -280,6 +319,7 @@ namespace Narthex.SceneFlow
                 ? null
                 : Resources.Load<Sprite>($"UI/Title/Labels/{assetName}");
         }
+#endif
 
         private void HandleMenuInput()
         {
@@ -341,6 +381,7 @@ namespace Narthex.SceneFlow
             return true;
         }
 
+#if UNITY_EDITOR
         private static CanvasGroup CreateGroup(string name, Transform parent)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup));
@@ -366,14 +407,26 @@ namespace Narthex.SceneFlow
             root.transform.SetParent(parent, false);
             var text = root.GetComponent<Text>();
             text.text = value;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UnityEditor.AssetDatabase.LoadAssetAtPath<Font>(UiFontPath) ??
+                        Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
+            text.fontStyle = FontStyle.Bold;
             text.alignment = anchor;
             text.color = Color.white;
             text.raycastTarget = false;
             SetRect(text.rectTransform, position, dimensions);
             return text;
         }
+
+        private static RectTransform CreateRect(string name, Transform parent, Vector2 position, Vector2 size)
+        {
+            var root = new GameObject(name, typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            SetRect(rect, position, size);
+            return rect;
+        }
+#endif
 
         private static void SetVisible(CanvasGroup group, bool visible)
         {
@@ -382,6 +435,7 @@ namespace Narthex.SceneFlow
             group.blocksRaycasts = visible;
         }
 
+#if UNITY_EDITOR
         private static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
@@ -396,5 +450,6 @@ namespace Narthex.SceneFlow
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
         }
+#endif
     }
 }

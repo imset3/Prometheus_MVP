@@ -86,77 +86,26 @@ namespace Narthex.Gameplay
         }
     }
 
-    /// <summary>
-    /// Player builds strip GameObjects tagged EditorOnly. The authored summit marker remains useful
-    /// in Scene view, while this installer guarantees an equivalent runtime trigger and beacon target
-    /// when the build has stripped that authoring marker.
-    /// </summary>
+    /// <summary>Registers the pre-authored summit marker. It never creates a runtime replacement.</summary>
     public static class TutorialTrainingRuntimeMarkerInstaller
     {
         private const string DoubleJumpQuestId = "QST-TUTO-006";
         private const string DoubleJumpTargetId = "TRAINING-DOUBLE-JUMP-SUMMIT";
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Register()
-        {
-            SceneManager.sceneLoaded -= HandleSceneLoaded;
-            SceneManager.sceneLoaded += HandleSceneLoaded;
-        }
-
-        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name != "TutorialScene" && scene.name != "BossDevelopmentScene") return;
-
-            EnsureDoubleJumpSummit(scene);
-        }
 
         public static Transform EnsureDoubleJumpSummit(Scene scene)
         {
             var existing = FindSceneComponents<TutorialTrainingArrivalMarkerHost>(scene)
                 .FirstOrDefault(marker => marker.SignalTargetId == DoubleJumpTargetId &&
                                           !marker.CompareTag("EditorOnly"));
-            var target = existing != null ? existing.transform : CreateDoubleJumpSummit(scene);
-            if (target == null) return null;
+            if (existing == null)
+            {
+                Debug.LogError("Authored TRAINING-DOUBLE-JUMP-SUMMIT marker is missing or tagged EditorOnly.");
+                return null;
+            }
+            var target = existing.transform;
 
             TutorialRuntimeObjectiveTargetRegistry.Register(DoubleJumpQuestId, target);
             return target;
-        }
-
-        private static Transform CreateDoubleJumpSummit(Scene scene)
-        {
-            var phase = scene.GetRootGameObjects()
-                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-                .FirstOrDefault(item => item.name == "02_더블점프" &&
-                                        item.parent != null && item.parent.name == "TrainingPhaseContents");
-            var serviceRoot = FindSceneComponents<ServiceRoot>(scene).FirstOrDefault();
-            var questSequence = FindSceneComponents<TutorialQuestSequenceHost>(scene).FirstOrDefault();
-            var playerMotor = FindSceneComponents<PlayerMotorHost>(scene).FirstOrDefault();
-            if (phase == null || serviceRoot == null || questSequence == null || playerMotor == null) return null;
-
-            var highestPlatform = phase.GetComponentsInChildren<BoxCollider2D>(true)
-                .Where(collider => !collider.isTrigger)
-                .OrderByDescending(collider => collider.bounds.max.y)
-                .ThenByDescending(collider => collider.bounds.center.x)
-                .FirstOrDefault();
-            if (highestPlatform == null) return null;
-
-            var markerObject = new GameObject("Runtime_훈련_더블점프_끝");
-            markerObject.SetActive(false);
-            markerObject.transform.SetParent(phase, true);
-            markerObject.transform.position = new Vector3(
-                highestPlatform.bounds.center.x,
-                highestPlatform.bounds.max.y + 0.75f,
-                phase.position.z);
-            var trigger = markerObject.AddComponent<BoxCollider2D>();
-            trigger.size = new Vector2(3f, 1.5f);
-            trigger.isTrigger = true;
-            var host = markerObject.AddComponent<TutorialTrainingArrivalMarkerHost>();
-            host.Configure(serviceRoot, questSequence, playerMotor.transform, DoubleJumpQuestId, DoubleJumpTargetId);
-            // Keep activeSelf enabled so the marker follows its phase parent's later activation.
-            // Mirroring activeInHierarchy here permanently disabled it when the scene initially
-            // loaded with the double-jump phase hidden.
-            markerObject.SetActive(true);
-            return markerObject.transform;
         }
 
         private static T[] FindSceneComponents<T>(Scene scene) where T : Component => scene.GetRootGameObjects()

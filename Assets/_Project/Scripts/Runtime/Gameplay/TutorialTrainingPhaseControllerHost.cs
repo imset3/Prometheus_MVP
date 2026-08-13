@@ -33,7 +33,7 @@ namespace Narthex.Gameplay
     /// scopes, start positions, and completion triggers are authored as scene markers.
     /// The controller never owns level coordinates.
     /// </summary>
-    public sealed class TutorialTrainingPhaseControllerHost : MonoBehaviour
+    public sealed class TutorialTrainingPhaseControllerHost : MonoBehaviour, ITutorialRetryParticipant
     {
         [SerializeField] private ServiceRoot serviceRoot;
         [SerializeField] private TutorialQuestSequenceHost questSequenceHost;
@@ -187,6 +187,24 @@ namespace Narthex.Gameplay
             return true;
         }
 
+        public void ResetForTutorialRetry()
+        {
+            if (!HasValidSetup) return;
+            if (transitionRoutine != null)
+            {
+                StopCoroutine(transitionRoutine);
+                transitionRoutine = null;
+            }
+            ResetFadeOverlay();
+            SetPlayerLocked(false);
+            var questId = questSequenceHost.CurrentQuestId;
+            Refresh(questId);
+            if (CurrentPhaseIndex < 0) return;
+            phaseContentRoots[CurrentPhaseIndex].SetActive(false);
+            phaseContentRoots[CurrentPhaseIndex].SetActive(true);
+            phaseAreas[CurrentPhaseIndex].enabled = true;
+        }
+
         private IEnumerator TransitionToPhase(int nextPhaseIndex)
         {
             try
@@ -246,7 +264,11 @@ namespace Narthex.Gameplay
 
         private void SetPlayerLocked(bool locked)
         {
-            if (playerInputHost != null) playerInputHost.enabled = !locked;
+            if (playerInputHost != null)
+            {
+                if (locked) playerInputHost.AcquireInputLock(PlayerInputLockReason.Cutscene);
+                else playerInputHost.ReleaseInputLock(PlayerInputLockReason.Cutscene);
+            }
             if (fadeCanvasGroup != null) fadeCanvasGroup.blocksRaycasts = locked;
             if (locked)
             {

@@ -428,11 +428,14 @@ namespace Narthex.Presentation
 
             var stateHash = Animator.StringToHash($"Base Layer.{stateName}");
             if (!animator.HasState(0, stateHash)) return;
-            animator.CrossFadeInFixedTime(
-                stateHash,
-                Mathf.Max(0f, transitionSeconds ?? crossFadeSeconds),
-                0,
-                0f);
+            if (restart)
+                animator.Play(stateHash, 0, 0f);
+            else
+                animator.CrossFadeInFixedTime(
+                    stateHash,
+                    Mathf.Max(0f, transitionSeconds ?? crossFadeSeconds),
+                    0,
+                    0f);
             currentState = stateName;
         }
 

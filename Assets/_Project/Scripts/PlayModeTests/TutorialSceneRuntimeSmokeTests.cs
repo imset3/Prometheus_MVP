@@ -68,37 +68,50 @@ namespace Narthex.PlayModeTests
             var title = FindSceneTransformOrDefault(scene, "Title")?.GetComponent<Text>();
             Assert.That(title?.text, Is.EqualTo("PROME&THEUS"));
             var displayMode = FindSceneTransformOrDefault(scene, "DisplayModeDropdown")?.GetComponent<Dropdown>();
-            var resolution = FindSceneTransformOrDefault(scene, "ResolutionDropdown")?.GetComponent<Dropdown>();
-            Assert.That(resolution, Is.Not.Null);
+            var resolutionDropdown = FindSceneTransformOrDefault(scene, "ResolutionDropdown")?.GetComponent<Dropdown>();
             var expectedResolutions = TitleScreenHost.BuildResolutionOptions(
                 Screen.resolutions.Select(item => new Vector2Int(item.width, item.height)),
                 new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height));
-            Assert.That(resolution.options.Select(option => option.text), Is.EqualTo(
-                expectedResolutions.Select(item => $"{item.x} × {item.y}")));
+            Assert.That(resolutionDropdown, Is.Not.Null);
+            Assert.That(resolutionDropdown.options.Select(option => option.text),
+                Is.EqualTo(expectedResolutions.Select(item => $"{item.x} × {item.y}")));
             Assert.That(displayMode, Is.Not.Null);
             Assert.That(displayMode.options.Select(option => option.text), Is.EqualTo(new[]
             {
                 "창 모드", "전체 화면", "창 없는 전체 화면"
             }));
             Assert.That(FindSceneTransformOrDefault(scene, "전체 음량Slider")?.gameObject.activeInHierarchy, Is.True);
-            Assert.That(FindSceneTransformOrDefault(scene, "배경 음악Slider")?.gameObject.activeInHierarchy, Is.False,
+            Assert.That(FindSceneTransformOrDefault(scene, "배경 음악Slider")?.gameObject.activeInHierarchy ?? false, Is.False,
                 "Title settings must expose only the master-volume control.");
-            Assert.That(FindSceneTransformOrDefault(scene, "효과음Slider")?.gameObject.activeInHierarchy, Is.False,
+            Assert.That(FindSceneTransformOrDefault(scene, "효과음Slider")?.gameObject.activeInHierarchy ?? false, Is.False,
                 "Title settings must expose only the master-volume control.");
 
-            Assert.That(host.RegisteredButtonCount, Is.EqualTo(8),
-                "The title must register the five main-menu and three settings buttons exactly once.");
+            Assert.That(host.RegisteredButtonCount, Is.EqualTo(9),
+                "The title must register four main-menu, three settings, and two resolution-confirm buttons exactly once.");
             Assert.That(host.HasUniqueButtonBindings, Is.True,
                 "A title button must never receive duplicate manual/action bindings.");
             Assert.That(host.TutorialSceneName, Is.EqualTo("TutorialScene"));
-            Assert.That(host.BossSceneName, Is.EqualTo("BossDevelopmentScene"));
-            Assert.That(Application.CanStreamedLevelBeLoaded(host.BossSceneName), Is.True,
-                "The title Boss button target must be enabled in Build Settings.");
+            Assert.That(FindSceneTransformOrDefault(scene, "보스전"), Is.Null,
+                "The release title must not expose the internal boss-development route.");
+            Assert.That(Application.CanStreamedLevelBeLoaded("BossDevelopmentScene"), Is.False,
+                "BossDevelopmentScene must remain project-internal and excluded from release Build Settings.");
             InvokePrivateMethod(host, "ShowMenu");
             InvokePrivateMethod(host, "ShowSettings");
             Assert.That(host.SettingsVisible, Is.True);
             Assert.That(host.MainMenuVisible, Is.False,
                 "The main menu must stop receiving pointer input while settings are open.");
+            var titleVolumeSlider = FindSceneTransformOrDefault(scene, "전체 음량Slider")?.GetComponent<Slider>();
+            var titleVolumePresenter = titleVolumeSlider?.GetComponent<ThemedVolumeSliderPresenter>();
+            Assert.That(titleVolumePresenter?.EnergyFill?.sprite, Is.Not.Null);
+            Assert.That(titleVolumePresenter.EnergyFill.type, Is.EqualTo(Image.Type.Filled));
+            Assert.That(titleVolumeSlider.fillRect, Is.Null,
+                "The themed energy sprite must reveal with fillAmount instead of being resized by Slider.fillRect.");
+            var initialTitleVolume = titleVolumeSlider.value;
+            titleVolumeSlider.value = 0.37f;
+            Assert.That(AudioListener.volume, Is.EqualTo(0.37f).Within(0.001f),
+                "Title master volume must preview immediately without pressing Apply.");
+            Assert.That(titleVolumePresenter.EnergyFill.fillAmount, Is.EqualTo(0.37f).Within(0.001f));
+            titleVolumeSlider.value = initialTitleVolume;
 
             var applyButton = FindSceneTransformOrDefault(scene, "설정 적용")?.GetComponent<Button>();
             var backButton = FindSceneTransformOrDefault(scene, "돌아가기")?.GetComponent<Button>();
@@ -115,7 +128,7 @@ namespace Narthex.PlayModeTests
 
             foreach (var buttonName in new[]
                      {
-                         "새 게임 시작", "이어하기", "보스전", "설정", "나가기", "설정 적용", "돌아가기", "초기화"
+                         "새 게임 시작", "이어하기", "설정", "나가기", "설정 적용", "돌아가기", "초기화"
                      })
             {
                 var buttonTransform = FindSceneTransformOrDefault(scene, buttonName);
@@ -125,7 +138,16 @@ namespace Narthex.PlayModeTests
                     $"Title button '{buttonName}' must use a generated label sprite instead of runtime text.");
                 Assert.That(buttonTransform.Find("LabelFallback"), Is.Null,
                     $"Title button '{buttonName}' unexpectedly fell back to runtime text.");
+                var labelBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                    buttonTransform, labelImage.rectTransform);
+                Assert.That(labelBounds.center.x, Is.EqualTo(0f).Within(0.1f),
+                    $"Title button '{buttonName}' label must share the button's horizontal center.");
+                Assert.That(labelBounds.center.y, Is.EqualTo(0f).Within(0.1f),
+                    $"Title button '{buttonName}' label must share the button's vertical center.");
             }
+
+            Assert.That(FindSceneTransform(scene, "MenuPanel").Find("ContentSafeArea"), Is.Not.Null);
+            Assert.That(FindSceneTransform(scene, "SettingsPanel").Find("ContentSafeArea"), Is.Not.Null);
 
             var titleTexts = Resources.FindObjectsOfTypeAll<Text>()
                 .Where(text => text != null && text.gameObject.scene == scene && HasAncestor(text.transform, "TitleCanvas"));
@@ -137,11 +159,35 @@ namespace Narthex.PlayModeTests
                     $"Title text '{GetTransformPath(text.transform)}' must not draw outside its panel.");
                 Assert.That(text.resizeTextForBestFit, Is.True,
                     $"Title text '{GetTransformPath(text.transform)}' must scale down at smaller resolutions.");
+                Assert.That(text.fontStyle, Is.EqualTo(FontStyle.Bold),
+                    $"Interactive title text '{GetTransformPath(text.transform)}' must be bold.");
             }
         }
 
+        [Test]
+        public void TitleResolutionValidation_AcceptsPlatformPixelAdjustment()
+        {
+            var settings = new SettingsSaveData
+            {
+                ResolutionWidth = 1728,
+                ResolutionHeight = 1117,
+                DisplayMode = (int)FullScreenMode.Windowed,
+                HasDisplayModeSelection = true
+            };
+
+            Assert.That(TitleScreenHost.ScreenSettingsMatch(
+                settings, 1728, 1118, FullScreenMode.Windowed), Is.True,
+                "macOS may adjust a requested window surface by one pixel.");
+            Assert.That(TitleScreenHost.ScreenSettingsMatch(
+                settings, 1728, 1120, FullScreenMode.Windowed), Is.False,
+                "Adjustments beyond the two-pixel platform tolerance must fail validation.");
+            Assert.That(TitleScreenHost.ScreenSettingsMatch(
+                settings, 1728, 1118, FullScreenMode.FullScreenWindow), Is.False,
+                "A resolution match must never hide a display-mode mismatch.");
+        }
+
         [UnityTest]
-        public IEnumerator TitleBossButton_LoadsDedicatedBossDevelopmentScene()
+        public IEnumerator TitleBossRoute_IsNotAvailableInReleasePresentation()
         {
 #if UNITY_EDITOR
             var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
@@ -155,16 +201,8 @@ namespace Narthex.PlayModeTests
 #endif
             yield return null;
             var titleScene = SceneManager.GetActiveScene();
-            var host = FindSceneComponent<TitleScreenHost>(titleScene);
-            InvokePrivateMethod(host, "ShowMenu");
-            var bossButton = FindSceneTransform(titleScene, "보스전").GetComponent<Button>();
-            Assert.That(bossButton, Is.Not.Null);
-            bossButton.onClick.Invoke();
-            yield return WaitForConditionRealtime(
-                () => SceneManager.GetActiveScene().name == "BossDevelopmentScene",
-                5f,
-                "The title Boss button did not load the dedicated boss-development scene.");
-            Assert.That(FindSceneComponent<HelteBossFsmDevBootstrapHost>(SceneManager.GetActiveScene()), Is.Not.Null);
+            Assert.That(FindSceneTransformOrDefault(titleScene, "보스전"), Is.Null);
+            Assert.That(Application.CanStreamedLevelBeLoaded("BossDevelopmentScene"), Is.False);
         }
 
         [UnityTest]
@@ -365,7 +403,7 @@ namespace Narthex.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator DoubleJumpSummit_IsRecreatedWhenEditorOnlyAuthoringMarkerIsMissing()
+        public IEnumerator DoubleJumpSummit_UsesAuthoredBuildSafeMarkerWithoutRuntimeCreation()
         {
 #if UNITY_EDITOR
             var loadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(
@@ -379,12 +417,8 @@ namespace Narthex.PlayModeTests
 #endif
             var scene = SceneManager.GetActiveScene();
             var authored = FindSceneTransform(scene, "훈련_더블점프_끝");
-            UnityEngine.Object.Destroy(authored.gameObject);
-            yield return null;
-
             var runtimeMarker = TutorialTrainingRuntimeMarkerInstaller.EnsureDoubleJumpSummit(scene);
-            Assert.That(runtimeMarker, Is.Not.Null);
-            Assert.That(runtimeMarker.name, Is.EqualTo("Runtime_훈련_더블점프_끝"));
+            Assert.That(runtimeMarker, Is.EqualTo(authored));
             Assert.That(runtimeMarker.CompareTag("EditorOnly"), Is.False);
             Assert.That(runtimeMarker.GetComponent<TutorialTrainingArrivalMarkerHost>()?.HasValidSetup, Is.True);
             Assert.That(runtimeMarker.GetComponent<Collider2D>()?.isTrigger, Is.True);
@@ -415,7 +449,8 @@ namespace Narthex.PlayModeTests
             foreach (var buttonName in new[] { "계속하기", "설정", "저장 및 나가기", "적용", "취소" })
             {
                 var matches = Resources.FindObjectsOfTypeAll<Button>()
-                    .Where(button => button != null && button.gameObject.scene == scene && button.name == buttonName)
+                    .Where(button => button != null && button.gameObject.scene == scene &&
+                                     button.gameObject.activeInHierarchy && button.name == buttonName)
                     .ToArray();
                 Assert.That(matches, Is.Not.Empty, $"Pause button '{buttonName}' is missing.");
                 foreach (var button in matches)
@@ -423,20 +458,39 @@ namespace Narthex.PlayModeTests
                     var labelImage = button.transform.Find("Label")?.GetComponent<Image>();
                     Assert.That(labelImage?.sprite, Is.Not.Null,
                         $"Pause button '{buttonName}' must use a generated label sprite.");
+                    var labelBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                        button.transform, labelImage.rectTransform);
+                    Assert.That(labelBounds.center.x, Is.EqualTo(0f).Within(0.1f));
+                    Assert.That(labelBounds.center.y, Is.EqualTo(0f).Within(0.1f));
                 }
             }
+            Assert.That(FindSceneTransform(scene, "PausePanel").Find("ContentSafeArea"), Is.Not.Null);
+            Assert.That(FindSceneTransform(scene, "SettingsPanel").Find("ContentSafeArea"), Is.Not.Null);
+            foreach (var text in FindSceneTransform(scene, "PauseCanvas").GetComponentsInChildren<Text>(true))
+                Assert.That(text.fontStyle, Is.EqualTo(FontStyle.Bold));
             InvokePrivateMethod(pauseMenu, "ShowSettings");
             var slider = GetPrivateField<Slider>(pauseMenu, "masterSlider");
             Assert.That(Resources.FindObjectsOfTypeAll<Slider>()
-                .Count(candidate => candidate != null && candidate.gameObject.scene == scene), Is.EqualTo(1),
+                .Count(candidate => candidate != null && candidate.gameObject.scene == scene &&
+                                    candidate.gameObject.activeInHierarchy), Is.EqualTo(1),
                 "Pause settings must expose only the master-volume control.");
-            slider.value = 1f;
+            var presenter = slider.GetComponent<ThemedVolumeSliderPresenter>();
+            Assert.That(presenter?.EnergyFill?.sprite, Is.Not.Null);
+            Assert.That(presenter.EnergyFill.type, Is.EqualTo(Image.Type.Filled));
+            Assert.That(slider.fillRect, Is.Null,
+                "Pause volume art must remain fixed while its energy fill is revealed.");
+            var originalVolume = slider.value;
+            slider.value = 0.42f;
             Canvas.ForceUpdateCanvases();
             var sliderRect = (RectTransform)slider.transform;
-            var fillBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(sliderRect, slider.fillRect);
+            var fillBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(sliderRect, presenter.EnergyFill.rectTransform);
             Assert.That(fillBounds.min.x, Is.GreaterThanOrEqualTo(sliderRect.rect.xMin - 0.1f));
             Assert.That(fillBounds.max.x, Is.LessThanOrEqualTo(sliderRect.rect.xMax + 0.1f),
                 "Pause master-volume fill must remain inside its slider and modal panel.");
+            Assert.That(presenter.EnergyFill.fillAmount, Is.EqualTo(0.42f).Within(0.001f));
+            Assert.That(AudioListener.volume, Is.EqualTo(0.42f).Within(0.001f),
+                "Pause master volume must apply immediately while dragging.");
+            slider.value = originalVolume;
             InvokePrivateMethod(pauseMenu, "Resume");
             Time.timeScale = 1f;
         }
@@ -1430,8 +1484,8 @@ namespace Narthex.PlayModeTests
                 "Prome's PNG animator must contain the new jump sequence.");
             Assert.That(dialogueView.HasPromeExpressions, Is.True,
                 "The tutorial dialogue window must contain Prome's expression sprite set.");
-            Assert.That(meleeAttack.EffectiveCooldownSeconds, Is.EqualTo(0.5f).Within(0.02f),
-                "Prome's melee cooldown must let the 15-frame Attack01 motion finish before another attack.");
+            Assert.That(meleeAttack.EffectiveCooldownSeconds, Is.EqualTo(0.35f).Within(0.02f),
+                "Prome's melee cooldown must match the authored 0.35-second Attack01 motion.");
             Assert.That(introductionCard.PromptDelay, Is.EqualTo(1f).Within(0.01f));
             Assert.That(playerCollider, Is.Not.Null);
 
@@ -1691,6 +1745,7 @@ namespace Narthex.PlayModeTests
                     acceptedAttackCount,
                     Is.EqualTo(hitIndex),
                     $"Melee input {hitIndex} did not produce exactly one accepted attack.");
+                yield return new WaitForSeconds(0.26f);
                 Assert.That(
                     tutorialEnemy.GetComponent<CombatActorHost>().Runtime.CurrentHealth,
                     Is.EqualTo(100 - 25 * hitIndex),

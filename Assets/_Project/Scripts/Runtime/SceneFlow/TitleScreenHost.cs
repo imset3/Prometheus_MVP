@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Narthex.Save;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,14 +20,17 @@ namespace Narthex.SceneFlow
         [Header("Replaceable title art")]
         [SerializeField] private Sprite backgroundSprite;
         [SerializeField] private Sprite zenithSprite;
+        [SerializeField] private Sprite cloudSprite;
         [SerializeField] private Sprite[] promeIdleFrames = System.Array.Empty<Sprite>();
         [SerializeField] private Sprite titleLogoFrameSprite;
         [SerializeField] private Sprite buttonFrameSprite;
         [SerializeField] private Sprite loadingCompassSprite;
         [SerializeField] private Sprite modalPanelSprite;
+        [SerializeField] private Sprite volumeTrackSprite;
+        [SerializeField] private Sprite volumeFillSprite;
+        [SerializeField] private Sprite volumeHandleSprite;
         [SerializeField] private Sprite newGameLabelSprite;
         [SerializeField] private Sprite continueLabelSprite;
-        [SerializeField] private Sprite bossLabelSprite;
         [SerializeField] private Sprite settingsLabelSprite;
         [SerializeField] private Sprite quitLabelSprite;
         [SerializeField] private Sprite applyLabelSprite;
@@ -39,7 +43,6 @@ namespace Narthex.SceneFlow
 
         [Header("Scenes")]
         [SerializeField] private string tutorialSceneName = "TutorialScene";
-        [SerializeField] private string bossSceneName = "BossDevelopmentScene";
 
         [Header("Motion")]
         [SerializeField, Min(1f)] private float promeFramesPerSecond = 12f;
@@ -85,6 +88,13 @@ namespace Narthex.SceneFlow
         private Dropdown resolutionDropdown;
         private Dropdown displayModeDropdown;
         private Slider masterSlider;
+        private CanvasGroup resolutionConfirmGroup;
+        private Text resolutionConfirmCountdown;
+        private Button keepResolutionButton;
+        private Button revertResolutionButton;
+        private Coroutine resolutionConfirmRoutine;
+        private SettingsSaveData pendingSettings;
+        private SettingsSaveData previousSettings;
         private AudioSource musicSource;
         private SaveData saveData;
         private float elapsed;
@@ -96,10 +106,11 @@ namespace Narthex.SceneFlow
         public bool HasValidSetup => backgroundSprite != null && zenithSprite != null &&
                                      promeIdleFrames != null && promeIdleFrames.Length > 0;
         public bool HasThemeSpriteSetup => titleLogoFrameSprite != null && buttonFrameSprite != null &&
-                                           loadingCompassSprite != null && modalPanelSprite != null;
+                                           loadingCompassSprite != null && modalPanelSprite != null &&
+                                           volumeTrackSprite != null && volumeFillSprite != null &&
+                                           volumeHandleSprite != null;
         public bool HasButtonLabelSpriteSetup => newGameLabelSprite != null && continueLabelSprite != null &&
-                                                 bossLabelSprite != null && settingsLabelSprite != null &&
-                                                 quitLabelSprite != null && applyLabelSprite != null &&
+                                                 settingsLabelSprite != null && quitLabelSprite != null && applyLabelSprite != null &&
                                                  backLabelSprite != null && resetLabelSprite != null &&
                                                  resetConfirmLabelSprite != null;
         public bool MainMenuVisible => IsGroupVisible(menuGroup);
@@ -107,7 +118,6 @@ namespace Narthex.SceneFlow
         public bool IsLoading => loading;
         public bool UsesAuthoredPresentation => usesAuthoredPresentation;
         public string TutorialSceneName => tutorialSceneName;
-        public string BossSceneName => bossSceneName;
         public int RegisteredButtonCount => buttonActions.Count;
         public bool HasUniqueButtonBindings
         {
@@ -126,8 +136,14 @@ namespace Narthex.SceneFlow
             saveData = GameLaunchSession.LoadSave();
             RefreshSupportedResolutions();
             ResolveThemeSprites();
-            EnsureInputEventSystem();
-            if (!TryBindAuthoredPresentation()) BuildPresentation();
+            if (EventSystem.current == null)
+                Debug.LogError("TitleScene requires a pre-authored EventSystem.", this);
+            if (!TryBindAuthoredPresentation())
+            {
+                Debug.LogError("TitleScene requires a fully authored TitleCanvas. Run title.scene.apply in Edit Mode.", this);
+                enabled = false;
+                return;
+            }
             ApplySavedSettings();
             RefreshSettingsLayout();
         }
@@ -135,7 +151,12 @@ namespace Narthex.SceneFlow
         private void Start()
         {
             if (titleMusic == null) return;
-            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource = GetComponent<AudioSource>();
+            if (musicSource == null)
+            {
+                Debug.LogError("TitleScreenRoot requires a pre-authored AudioSource.", this);
+                return;
+            }
             musicSource.clip = titleMusic;
             musicSource.loop = true;
             musicSource.playOnAwake = false;
@@ -151,6 +172,7 @@ namespace Narthex.SceneFlow
             else if (menuShown && !loading) HandleManualUiInput();
         }
 
+#if UNITY_EDITOR
         private void BuildPresentation()
         {
             var canvasObject = new GameObject("TitleCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -166,7 +188,6 @@ namespace Narthex.SceneFlow
             Stretch(backgroundImage.rectTransform);
             backgroundImage.preserveAspect = false;
 
-            var cloudSprite = Application.isPlaying ? CreateCloudSprite() : null;
             cloudRects = new RectTransform[3];
             for (var index = 0; index < cloudRects.Length; index++)
             {
@@ -197,36 +218,39 @@ namespace Narthex.SceneFlow
             title.fontStyle = FontStyle.Bold;
             var subtitle = CreateText("Subtitle", titleFrame.transform, "CHAPTER 0  ·  DEMO", 23, TextAnchor.MiddleCenter, bodyFont,
                 new Color(0.67f, 0.9f, 0.94f, 0.92f));
+            subtitle.fontStyle = FontStyle.Bold;
             SetRect(subtitle.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -62f), new Vector2(650f, 44f));
 
             introGroup = CreateGroup("IntroPrompt", canvas.transform);
             var prompt = CreateText("Prompt", introGroup.transform, "아무 키나 눌러 시작", 30, TextAnchor.MiddleCenter,
                 bodyFont, Color.white);
+            prompt.fontStyle = FontStyle.Bold;
             SetRect(prompt.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(410f, -295f), new Vector2(700f, 72f));
 
             menuGroup = CreateGroup("MainMenu", canvas.transform);
             SetGroup(menuGroup, false);
             var menuPanel = CreateImage("MenuPanel", menuGroup.transform, modalPanelSprite,
                 modalPanelSprite != null ? Color.white : new Color(0.025f, 0.045f, 0.07f, 0.84f));
-            // Keep the menu in the lower visual band and give each choice a clear,
-            // controller-friendly hit area at every supported resolution.
             SetRect(menuPanel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(430f, -220f), new Vector2(700f, 610f));
-            var vertical = menuPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            vertical.padding = new RectOffset(58, 58, 52, 52);
-            vertical.spacing = 17f;
+            var menuSafeArea = CreateRect("ContentSafeArea", menuPanel.transform,
+                new Vector2(0f, 0f), new Vector2(560f, 440f));
+            var vertical = menuSafeArea.gameObject.AddComponent<VerticalLayoutGroup>();
+            vertical.padding = new RectOffset(0, 0, 0, 0);
+            vertical.spacing = 16f;
             vertical.childControlHeight = true;
-            vertical.childForceExpandHeight = true;
+            vertical.childForceExpandHeight = false;
             vertical.childControlWidth = true;
             vertical.childForceExpandWidth = true;
-            CreateMenuButton(menuPanel.transform, "새 게임 시작", newGameLabelSprite, StartNewGame);
-            continueButton = CreateMenuButton(menuPanel.transform, "이어하기", continueLabelSprite, ContinueGame);
-            CreateMenuButton(menuPanel.transform, "보스전", bossLabelSprite, StartBossDevelopment);
-            CreateMenuButton(menuPanel.transform, "설정", settingsLabelSprite, ShowSettings);
-            CreateMenuButton(menuPanel.transform, "나가기", quitLabelSprite, QuitGame);
+            CreateMenuButton(menuSafeArea, "새 게임 시작", newGameLabelSprite, StartNewGame);
+            continueButton = CreateMenuButton(menuSafeArea, "이어하기", continueLabelSprite, ContinueGame);
+            CreateMenuButton(menuSafeArea, "설정", settingsLabelSprite, ShowSettings);
+            CreateMenuButton(menuSafeArea, "나가기", quitLabelSprite, QuitGame);
             continueButton.interactable = saveData != null && GameLaunchSession.CanContinue(saveData);
 
             settingsGroup = BuildSettings(canvas.transform);
             SetGroup(settingsGroup, false);
+            resolutionConfirmGroup = BuildResolutionConfirm(canvas.transform);
+            SetGroup(resolutionConfirmGroup, false);
             loadingGroup = BuildLoading(canvas.transform);
             SetGroup(loadingGroup, false);
         }
@@ -250,6 +274,7 @@ namespace Narthex.SceneFlow
             EnsureInputEventSystem();
             usesAuthoredPresentation = true;
         }
+#endif
 
         private bool TryBindAuthoredPresentation()
         {
@@ -272,39 +297,41 @@ namespace Narthex.SceneFlow
             loadingBar = FindNamedComponent<Image>(canvasObject.transform, "ProgressFill");
             loadingCompassGlow = FindNamedComponent<Image>(canvasObject.transform, "CompassGlow");
             loadingCompassRect = FindNamedComponent<Image>(canvasObject.transform, "LoadingCompass")?.rectTransform;
+            resolutionConfirmGroup = FindNamedComponent<CanvasGroup>(canvasObject.transform, "ResolutionConfirmPanel");
+            resolutionConfirmCountdown = FindNamedComponent<Text>(canvasObject.transform, "ResolutionConfirmCountdown");
 
             cloudRects = new RectTransform[3];
-            var cloudSprite = CreateCloudSprite();
             for (var index = 0; index < cloudRects.Length; index++)
             {
                 var cloud = FindNamedComponent<Image>(canvasObject.transform, "CloudLayer_" + (index + 1));
                 if (cloud == null) return false;
-                cloud.sprite = cloudSprite;
                 cloudRects[index] = cloud.rectTransform;
             }
 
             if (backgroundImage == null || zenithImage == null || promeImage == null || introGroup == null ||
                 menuGroup == null || settingsGroup == null || loadingGroup == null || resolutionDropdown == null ||
                 displayModeDropdown == null || masterSlider == null ||
-                loadingText == null || loadingBar == null || loadingCompassRect == null)
+                loadingText == null || loadingBar == null || loadingCompassRect == null ||
+                resolutionConfirmGroup == null || resolutionConfirmCountdown == null)
                 return false;
 
-            resolutionDropdown.ClearOptions();
-            resolutionDropdown.AddOptions(supportedResolutions
-                .ConvertAll(resolution => $"{resolution.x} × {resolution.y}"));
+            BindResolutionDropdown();
+            BindMasterVolumeSlider();
             displayModeDropdown.ClearOptions();
             displayModeDropdown.AddOptions(new List<string>(DisplayModeLabels));
 
             RegisterAuthoredButton(canvasObject.transform, "새 게임 시작", StartNewGame);
             continueButton = RegisterAuthoredButton(canvasObject.transform, "이어하기", ContinueGame);
-            RegisterAuthoredButton(canvasObject.transform, "보스전", StartBossDevelopment);
             RegisterAuthoredButton(canvasObject.transform, "설정", ShowSettings);
             RegisterAuthoredButton(canvasObject.transform, "나가기", QuitGame);
             RegisterAuthoredButton(canvasObject.transform, "설정 적용", ApplyAndCloseSettings);
             RegisterAuthoredButton(canvasObject.transform, "돌아가기", HideSettings);
             resetButton = RegisterAuthoredButton(canvasObject.transform, "초기화", RequestResetAllData);
+            keepResolutionButton = RegisterAuthoredButton(canvasObject.transform, "해상도 유지", KeepResolution);
+            revertResolutionButton = RegisterAuthoredButton(canvasObject.transform, "해상도 되돌리기", RevertResolution);
             resetButtonLabel = resetButton != null ? resetButton.transform.Find("Label")?.GetComponent<Image>() : null;
-            if (buttonActions.Count != 8 || continueButton == null || resetButton == null || resetButtonLabel == null)
+            if (buttonActions.Count != 9 || continueButton == null || resetButton == null || resetButtonLabel == null ||
+                keepResolutionButton == null || revertResolutionButton == null)
                 return false;
 
             continueButton.interactable = GameLaunchSession.CanContinue(saveData);
@@ -313,6 +340,7 @@ namespace Narthex.SceneFlow
             SetGroup(introGroup, true);
             SetGroup(menuGroup, false);
             SetGroup(settingsGroup, false);
+            SetGroup(resolutionConfirmGroup, false);
             SetGroup(loadingGroup, false);
             usesAuthoredPresentation = true;
             return true;
@@ -345,6 +373,7 @@ namespace Narthex.SceneFlow
             return null;
         }
 
+#if UNITY_EDITOR
         private CanvasGroup BuildSettings(Transform parent)
         {
             var group = CreateGroup("Settings", parent);
@@ -352,31 +381,55 @@ namespace Narthex.SceneFlow
             Stretch(blocker.rectTransform);
             var panel = CreateImage("SettingsPanel", group.transform, modalPanelSprite,
                 modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 0.98f));
-            SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980f, 900f));
+            SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980f, 820f));
             settingsPanelRect = panel.rectTransform;
             var contentBackdrop = CreatePanel("ContentBackdrop", panel.transform, new Color(0.01f, 0.025f, 0.045f, 0.7f));
-            SetRect(contentBackdrop.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(850f, 730f));
-            CreateLabel(panel.transform, "환경 설정", new Vector2(0f, 378f), 46, 700f, TextAnchor.MiddleCenter);
-            CreateLabel(panel.transform, "화면 설정", new Vector2(-350f, 295f), 24, 220f, TextAnchor.MiddleLeft,
+            SetRect(contentBackdrop.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -10f), new Vector2(820f, 660f));
+            var safeArea = CreateRect("ContentSafeArea", panel.transform, new Vector2(0f, -10f), new Vector2(760f, 620f));
+            CreateLabel(safeArea, "환경 설정", new Vector2(0f, 265f), 46, 700f, TextAnchor.MiddleCenter);
+            CreateLabel(safeArea, "화면 설정", new Vector2(-280f, 198f), 25, 180f, TextAnchor.MiddleLeft,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
-            CreateLabel(panel.transform, "해상도", new Vector2(-285f, 230f), 27, 250f);
-            resolutionDropdown = CreateDropdown(panel.transform, new Vector2(145f, 230f));
-            CreateLabel(panel.transform, "화면 모드", new Vector2(-285f, 150f), 27, 250f);
+            CreateLabel(safeArea, "해상도", new Vector2(-245f, 132f), 27, 220f);
+            resolutionDropdown = CreateDropdown(safeArea, new Vector2(120f, 132f), null, "ResolutionDropdown");
+            CreateLabel(safeArea, "화면 모드", new Vector2(-245f, 58f), 27, 220f);
             displayModeDropdown = CreateDropdown(
-                panel.transform,
-                new Vector2(145f, 150f),
+                safeArea,
+                new Vector2(120f, 58f),
                 DisplayModeLabels,
                 "DisplayModeDropdown");
-            CreateLabel(panel.transform, "오디오", new Vector2(-350f, 82f), 24, 220f, TextAnchor.MiddleLeft,
+            CreateLabel(safeArea, "오디오", new Vector2(-280f, -10f), 25, 180f, TextAnchor.MiddleLeft,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
-            masterSlider = CreateVolumeRow(panel.transform, "전체 음량", 20f);
-            var apply = CreateMenuButton(panel.transform, "설정 적용", applyLabelSprite, ApplyAndCloseSettings);
-            SetRect(apply.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-145f, -245f), new Vector2(260f, 72f));
-            var close = CreateMenuButton(panel.transform, "돌아가기", backLabelSprite, HideSettings);
-            SetRect(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(145f, -245f), new Vector2(260f, 72f));
-            resetButton = CreateMenuButton(panel.transform, "초기화", resetLabelSprite, RequestResetAllData);
-            SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0f, -345f), new Vector2(360f, 72f));
+            masterSlider = CreateVolumeRow(safeArea, "전체 음량", -76f);
+            var apply = CreateMenuButton(safeArea, "설정 적용", applyLabelSprite, ApplyAndCloseSettings);
+            SetRect(apply.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-145f, -178f), new Vector2(260f, 72f));
+            var close = CreateMenuButton(safeArea, "돌아가기", backLabelSprite, HideSettings);
+            SetRect(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(145f, -178f), new Vector2(260f, 72f));
+            resetButton = CreateMenuButton(safeArea, "초기화", resetLabelSprite, RequestResetAllData);
+            SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0f, -267f), new Vector2(360f, 72f));
             resetButtonLabel = resetButton.transform.Find("Label")?.GetComponent<Image>();
+            return group;
+        }
+
+        private CanvasGroup BuildResolutionConfirm(Transform parent)
+        {
+            var group = CreateGroup("ResolutionConfirmPanel", parent);
+            var blocker = CreatePanel("Blocker", group.transform, new Color(0.005f, 0.01f, 0.02f, 0.88f));
+            Stretch(blocker.rectTransform);
+            var panel = CreateImage("ConfirmFrame", group.transform, modalPanelSprite,
+                modalPanelSprite != null ? Color.white : new Color(0.035f, 0.065f, 0.095f, 1f));
+            SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(720f, 420f));
+            var heading = CreateText("ConfirmTitle", panel.transform, "이 화면 설정을 유지할까요?", 34,
+                TextAnchor.MiddleCenter, titleFont, Color.white);
+            heading.fontStyle = FontStyle.Bold;
+            SetRect(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 105f), new Vector2(600f, 64f));
+            resolutionConfirmCountdown = CreateText("ResolutionConfirmCountdown", panel.transform, "10초 후 이전 설정으로 돌아갑니다.", 24,
+                TextAnchor.MiddleCenter, bodyFont, Color.white);
+            resolutionConfirmCountdown.fontStyle = FontStyle.Bold;
+            SetRect(resolutionConfirmCountdown.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 25f), new Vector2(600f, 54f));
+            var keep = CreateMenuButton(panel.transform, "해상도 유지", applyLabelSprite, KeepResolution);
+            SetRect(keep.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(-155f, -105f), new Vector2(270f, 72f));
+            var revert = CreateMenuButton(panel.transform, "해상도 되돌리기", backLabelSprite, RevertResolution);
+            SetRect(revert.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(155f, -105f), new Vector2(270f, 72f));
             return group;
         }
 
@@ -397,9 +450,11 @@ namespace Narthex.SceneFlow
             SetRect(informationFrame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -145f), new Vector2(840f, 315f));
             var heading = CreateText("Heading", informationFrame.transform, "제니스의 빛을 따라가는 중", 36,
                 TextAnchor.MiddleCenter, titleFont, Color.white);
+            heading.fontStyle = FontStyle.Bold;
             SetRect(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 45f), new Vector2(620f, 65f));
             loadingText = CreateText("ProgressText", informationFrame.transform, "LOADING  0%", 23,
                 TextAnchor.MiddleCenter, bodyFont, new Color(0.63f, 0.9f, 0.94f, 1f));
+            loadingText.fontStyle = FontStyle.Bold;
             SetRect(loadingText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(500f, 50f));
             var track = CreateImage("ProgressTrack", informationFrame.transform, null, new Color(0.13f, 0.18f, 0.23f, 1f));
             SetRect(track.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -76f), new Vector2(570f, 12f));
@@ -411,6 +466,7 @@ namespace Narthex.SceneFlow
             Stretch(loadingBar.rectTransform);
             return group;
         }
+#endif
 
         private void AnimateArtLayers()
         {
@@ -503,6 +559,25 @@ namespace Narthex.SceneFlow
             SelectFirstVisibleButton();
         }
 
+        private void BindMasterVolumeSlider()
+        {
+            if (masterSlider == null) return;
+            masterSlider.onValueChanged.RemoveListener(ApplyMasterVolumeImmediately);
+            masterSlider.onValueChanged.AddListener(ApplyMasterVolumeImmediately);
+        }
+
+        private void ApplyMasterVolumeImmediately(float value)
+        {
+            value = Mathf.Clamp01(value);
+            AudioListener.volume = value;
+            if (saveData == null) return;
+            var settings = saveData.Settings ??= new SettingsSaveData();
+            settings.MasterVolume = value;
+            settings.MusicVolume = 1f;
+            settings.SfxVolume = 1f;
+            GameLaunchSession.SaveSettings(CloneSettings(settings));
+        }
+
         private void RequestResetAllData()
         {
             GameLaunchSession.ResetAllLocalData();
@@ -519,20 +594,28 @@ namespace Narthex.SceneFlow
 
         private void ApplyAndCloseSettings()
         {
+            if (supportedResolutions.Count == 0) return;
             var resolution = supportedResolutions[Mathf.Clamp(resolutionDropdown.value, 0, supportedResolutions.Count - 1)];
-            saveData.Settings.ResolutionWidth = resolution.x;
-            saveData.Settings.ResolutionHeight = resolution.y;
             var displayMode = supportedDisplayModes[
                 Mathf.Clamp(displayModeDropdown.value, 0, supportedDisplayModes.Length - 1)];
-            saveData.Settings.DisplayMode = (int)displayMode;
-            saveData.Settings.HasDisplayModeSelection = true;
-            saveData.Settings.Fullscreen = displayMode != FullScreenMode.Windowed;
-            saveData.Settings.MasterVolume = masterSlider.value;
-            saveData.Settings.MusicVolume = 1f;
-            saveData.Settings.SfxVolume = 1f;
-            GameLaunchSession.SaveSettings(saveData.Settings);
-            ApplySavedSettings();
-            HideSettings();
+            if (displayMode == FullScreenMode.FullScreenWindow)
+                resolution = new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height);
+
+            previousSettings = CloneSettings(saveData.Settings);
+            pendingSettings = CloneSettings(saveData.Settings);
+            pendingSettings.ResolutionWidth = resolution.x;
+            pendingSettings.ResolutionHeight = resolution.y;
+            pendingSettings.DisplayMode = (int)displayMode;
+            pendingSettings.HasDisplayModeSelection = true;
+            pendingSettings.Fullscreen = displayMode != FullScreenMode.Windowed;
+            pendingSettings.MasterVolume = masterSlider.value;
+            pendingSettings.MusicVolume = 1f;
+            pendingSettings.SfxVolume = 1f;
+            ApplyScreenSettings(pendingSettings);
+            SetGroup(settingsGroup, false);
+            SetGroup(resolutionConfirmGroup, true);
+            if (resolutionConfirmRoutine != null) StopCoroutine(resolutionConfirmRoutine);
+            resolutionConfirmRoutine = StartCoroutine(ConfirmResolutionAfterApply());
         }
 
         private void ApplySavedSettings()
@@ -542,10 +625,7 @@ namespace Narthex.SceneFlow
                 supportedResolutions,
                 new Vector2Int(settings.ResolutionWidth, settings.ResolutionHeight));
             AudioListener.volume = Mathf.Clamp01(settings.MasterVolume);
-            Screen.SetResolution(
-                resolution.x,
-                resolution.y,
-                ResolveDisplayMode(settings));
+            ApplyScreenSettings(settings);
             settings.MusicVolume = 1f;
             settings.SfxVolume = 1f;
             if (musicSource != null) musicSource.volume = 0.62f;
@@ -565,11 +645,142 @@ namespace Narthex.SceneFlow
                 bestDifference = difference;
                 best = index;
             }
-            resolutionDropdown.value = best;
+            resolutionDropdown.SetValueWithoutNotify(best);
             var displayMode = ResolveDisplayMode(settings);
             var displayModeIndex = System.Array.IndexOf(supportedDisplayModes, displayMode);
             displayModeDropdown.value = Mathf.Max(0, displayModeIndex);
-            masterSlider.value = Mathf.Clamp01(settings.MasterVolume);
+            resolutionDropdown.interactable = displayMode != FullScreenMode.FullScreenWindow;
+            masterSlider.SetValueWithoutNotify(Mathf.Clamp01(settings.MasterVolume));
+        }
+
+        private void BindResolutionDropdown()
+        {
+            resolutionDropdown.ClearOptions();
+            resolutionDropdown.AddOptions(supportedResolutions
+                .Select(resolution => $"{resolution.x} × {resolution.y}").ToList());
+            displayModeDropdown.onValueChanged.RemoveAllListeners();
+            displayModeDropdown.onValueChanged.AddListener(index =>
+                resolutionDropdown.interactable = supportedDisplayModes[Mathf.Clamp(index, 0, supportedDisplayModes.Length - 1)] !=
+                                                   FullScreenMode.FullScreenWindow);
+        }
+
+        private IEnumerator ConfirmResolutionAfterApply()
+        {
+            const float timeout = 10f;
+            const float stabilizationTimeout = 3f;
+            const float requiredStableDuration = 0.15f;
+            var stabilizationRemaining = stabilizationTimeout;
+            var stableDuration = 0f;
+            while (stabilizationRemaining > 0f && stableDuration < requiredStableDuration)
+            {
+                if (ScreenSettingsMatch(pendingSettings, Screen.width, Screen.height, Screen.fullScreenMode))
+                    stableDuration += Time.unscaledDeltaTime;
+                else
+                    stableDuration = 0f;
+
+                stabilizationRemaining -= Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (stableDuration < requiredStableDuration)
+            {
+                RevertResolution();
+                yield break;
+            }
+
+            pendingSettings.ResolutionWidth = Mathf.Max(1, Screen.width);
+            pendingSettings.ResolutionHeight = Mathf.Max(1, Screen.height);
+            var remaining = timeout;
+            while (remaining > 0f)
+            {
+                if (!ScreenSettingsMatch(pendingSettings, Screen.width, Screen.height, Screen.fullScreenMode))
+                {
+                    RevertResolution();
+                    yield break;
+                }
+                if (resolutionConfirmCountdown != null)
+                    resolutionConfirmCountdown.text = $"{Mathf.CeilToInt(remaining)}초 후 이전 설정으로 돌아갑니다.";
+                remaining -= Time.unscaledDeltaTime;
+                yield return null;
+            }
+            RevertResolution();
+        }
+
+        public static bool ScreenSettingsMatch(
+            SettingsSaveData settings,
+            int actualWidth,
+            int actualHeight,
+            FullScreenMode actualMode)
+        {
+            const int sizeTolerancePixels = 2;
+            if (settings == null || actualMode != ResolveDisplayMode(settings)) return false;
+
+            var expectedWidth = settings.ResolutionWidth;
+            var expectedHeight = settings.ResolutionHeight;
+            if (actualMode == FullScreenMode.FullScreenWindow)
+            {
+                expectedWidth = Screen.currentResolution.width;
+                expectedHeight = Screen.currentResolution.height;
+            }
+
+            return Mathf.Abs(actualWidth - Mathf.Max(1, expectedWidth)) <= sizeTolerancePixels &&
+                   Mathf.Abs(actualHeight - Mathf.Max(1, expectedHeight)) <= sizeTolerancePixels;
+        }
+
+        private void KeepResolution()
+        {
+            if (pendingSettings == null) return;
+            if (resolutionConfirmRoutine != null) StopCoroutine(resolutionConfirmRoutine);
+            resolutionConfirmRoutine = null;
+            saveData.Settings = CloneSettings(pendingSettings);
+            GameLaunchSession.SaveSettings(saveData.Settings);
+            pendingSettings = null;
+            previousSettings = null;
+            SetGroup(resolutionConfirmGroup, false);
+            HideSettings();
+        }
+
+        private void RevertResolution()
+        {
+            if (resolutionConfirmRoutine != null) StopCoroutine(resolutionConfirmRoutine);
+            resolutionConfirmRoutine = null;
+            if (previousSettings != null) ApplyScreenSettings(previousSettings);
+            pendingSettings = null;
+            previousSettings = null;
+            SetGroup(resolutionConfirmGroup, false);
+            SetGroup(settingsGroup, true);
+            PopulateSettingsUi();
+            SelectFirstVisibleButton();
+        }
+
+        private static SettingsSaveData CloneSettings(SettingsSaveData source)
+        {
+            source ??= new SettingsSaveData();
+            return new SettingsSaveData
+            {
+                MasterVolume = source.MasterVolume,
+                MusicVolume = source.MusicVolume,
+                SfxVolume = source.SfxVolume,
+                ResolutionWidth = source.ResolutionWidth,
+                ResolutionHeight = source.ResolutionHeight,
+                Fullscreen = source.Fullscreen,
+                DisplayMode = source.DisplayMode,
+                HasDisplayModeSelection = source.HasDisplayModeSelection,
+                InputBindingJson = source.InputBindingJson
+            };
+        }
+
+        private static void ApplyScreenSettings(SettingsSaveData settings)
+        {
+            var mode = ResolveDisplayMode(settings);
+            var width = settings.ResolutionWidth;
+            var height = settings.ResolutionHeight;
+            if (mode == FullScreenMode.FullScreenWindow)
+            {
+                width = Screen.currentResolution.width;
+                height = Screen.currentResolution.height;
+            }
+            Screen.SetResolution(Mathf.Max(1, width), Mathf.Max(1, height), mode);
         }
 
         private void RefreshSupportedResolutions()
@@ -582,7 +793,8 @@ namespace Narthex.SceneFlow
                 Mathf.Max(1, Screen.currentResolution.width),
                 Mathf.Max(1, Screen.currentResolution.height));
             supportedResolutions.Clear();
-            supportedResolutions.AddRange(BuildResolutionOptions(detected, current));
+            var options = BuildResolutionOptions(detected, current);
+            supportedResolutions.AddRange(options.GetRange(0, Mathf.Min(16, options.Count)));
         }
 
         public static List<Vector2Int> BuildResolutionOptions(
@@ -656,12 +868,6 @@ namespace Narthex.SceneFlow
             StartCoroutine(LoadScene(tutorialSceneName));
         }
 
-        private void StartBossDevelopment()
-        {
-            GameLaunchSession.PrepareBossDevelopment();
-            StartCoroutine(LoadScene(bossSceneName));
-        }
-
         private IEnumerator LoadScene(string sceneName)
         {
             if (loading || string.IsNullOrWhiteSpace(sceneName)) yield break;
@@ -710,6 +916,7 @@ namespace Narthex.SceneFlow
 #endif
         }
 
+#if UNITY_EDITOR
         private void CreateLabel(
             Transform parent,
             string value,
@@ -719,29 +926,32 @@ namespace Narthex.SceneFlow
             TextAnchor alignment = TextAnchor.MiddleLeft,
             Color? color = null)
         {
-            var label = CreateText(value, parent, value, size, alignment, bodyFont, color ?? Color.white);
+            var label = CreateText(value, parent, value, size, alignment, titleFont, color ?? Color.white);
+            label.fontStyle = FontStyle.Bold;
             SetRect(label.rectTransform, new Vector2(0.5f, 0.5f), position, new Vector2(width, 56f));
         }
 
         private Slider CreateVolumeRow(Transform parent, string label, float y)
         {
-            CreateLabel(parent, label, new Vector2(-285f, y), 26, 250f);
+            CreateLabel(parent, label, new Vector2(-245f, y), 26, 220f);
             var sliderObject = new GameObject(label + "Slider", typeof(RectTransform), typeof(Slider));
             sliderObject.transform.SetParent(parent, false);
             var slider = sliderObject.GetComponent<Slider>();
-            SetRect(slider.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(145f, y), new Vector2(440f, 38f));
-            var background = CreateImage("Background", sliderObject.transform, null, new Color(0.12f, 0.18f, 0.23f, 1f));
-            SetRect(background.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440f, 10f));
-            var fillArea = new GameObject("Fill Area", typeof(RectTransform));
-            fillArea.transform.SetParent(sliderObject.transform, false);
-            Stretch(fillArea.GetComponent<RectTransform>(), 6f);
-            var fill = CreateImage("Fill", fillArea.transform, null, new Color(0.25f, 0.86f, 0.9f, 1f));
-            Stretch(fill.rectTransform);
-            slider.fillRect = fill.rectTransform;
-            var handle = CreateImage("Handle", sliderObject.transform, null, Color.white);
-            SetRect(handle.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(26f, 26f));
+            SetRect(slider.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(120f, y), new Vector2(460f, 44f));
+            var background = CreateImage("Track", sliderObject.transform, volumeTrackSprite, Color.white);
+            background.preserveAspect = true;
+            SetRect(background.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(460f, 54f));
+            var fill = CreateImage("EnergyFill", sliderObject.transform, volumeFillSprite, Color.white);
+            SetRect(fill.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(404f, 20f));
+            fill.raycastTarget = false;
+            var handle = CreateImage("Handle", sliderObject.transform, volumeHandleSprite, Color.white);
+            handle.preserveAspect = true;
+            SetRect(handle.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(44f, 44f));
+            slider.fillRect = null;
             slider.handleRect = handle.rectTransform;
             slider.targetGraphic = handle;
+            slider.direction = Slider.Direction.LeftToRight;
+            sliderObject.AddComponent<ThemedVolumeSliderPresenter>().Configure(slider, fill);
             return slider;
         }
 
@@ -749,15 +959,17 @@ namespace Narthex.SceneFlow
             string objectName = "ResolutionDropdown")
         {
             var root = CreatePanel(objectName, parent, new Color(0.08f, 0.13f, 0.18f, 1f));
-            SetRect(root.rectTransform, new Vector2(0.5f, 0.5f), position, new Vector2(440f, 58f));
+            SetRect(root.rectTransform, new Vector2(0.5f, 0.5f), position, new Vector2(460f, 58f));
             var dropdown = root.gameObject.AddComponent<Dropdown>();
-            var caption = CreateText("Label", root.transform, "", 23, TextAnchor.MiddleLeft, bodyFont, Color.white);
+            var caption = CreateText("Label", root.transform, "", 23, TextAnchor.MiddleLeft, titleFont, Color.white);
+            caption.fontStyle = FontStyle.Bold;
             caption.rectTransform.anchorMin = Vector2.zero;
             caption.rectTransform.anchorMax = Vector2.one;
             caption.rectTransform.offsetMin = new Vector2(20f, 8f);
             caption.rectTransform.offsetMax = new Vector2(-60f, -8f);
-            var arrow = CreateText("Arrow", root.transform, "▼", 22, TextAnchor.MiddleCenter, bodyFont,
+            var arrow = CreateText("Arrow", root.transform, "▼", 22, TextAnchor.MiddleCenter, titleFont,
                 new Color(0.4f, 0.92f, 0.96f, 1f));
+            arrow.fontStyle = FontStyle.Bold;
             arrow.rectTransform.anchorMin = new Vector2(1f, 0f);
             arrow.rectTransform.anchorMax = Vector2.one;
             arrow.rectTransform.pivot = new Vector2(1f, 0.5f);
@@ -807,7 +1019,8 @@ namespace Narthex.SceneFlow
             itemCheck.rectTransform.anchorMin = new Vector2(0f, 0f);
             itemCheck.rectTransform.anchorMax = new Vector2(0f, 1f);
             itemCheck.rectTransform.sizeDelta = new Vector2(5f, 0f);
-            var itemLabel = CreateText("Item Label", item.transform, "Option", 21, TextAnchor.MiddleCenter, bodyFont, Color.white);
+            var itemLabel = CreateText("Item Label", item.transform, "Option", 21, TextAnchor.MiddleCenter, titleFont, Color.white);
+            itemLabel.fontStyle = FontStyle.Bold;
             Stretch(itemLabel.rectTransform, 6f);
             var itemToggle = item.GetComponent<Toggle>();
             itemToggle.targetGraphic = itemBackground;
@@ -834,29 +1047,27 @@ namespace Narthex.SceneFlow
             button.targetGraphic = panel;
             button.onClick.AddListener(action);
             buttonActions.Add(new ButtonAction { Button = button });
-            var labelBackdrop = CreateImage("LabelBackdrop", panel.transform, null, new Color(0.015f, 0.035f, 0.055f, 0.32f));
-            Stretch(labelBackdrop.rectTransform, 12f);
-            var accent = CreateImage("Accent", panel.transform, null, new Color(0.25f, 0.86f, 0.9f, 0.55f));
-            accent.rectTransform.anchorMin = new Vector2(0f, 0f);
-            accent.rectTransform.anchorMax = new Vector2(0f, 1f);
-            accent.rectTransform.pivot = new Vector2(0f, 0.5f);
-            accent.rectTransform.sizeDelta = new Vector2(6f, 0f);
+            var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 96f;
+            layoutElement.flexibleHeight = 0f;
             if (labelSprite != null)
             {
                 var labelImage = CreateImage("Label", panel.transform, labelSprite, Color.white);
                 labelImage.preserveAspect = true;
-                Stretch(labelImage.rectTransform, 12f);
+                Stretch(labelImage.rectTransform, 16f);
                 labelImage.raycastTarget = false;
             }
             else
             {
                 var fallbackText = CreateText("LabelFallback", panel.transform, label, 32, TextAnchor.MiddleCenter,
-                    bodyFont, Color.white);
-                Stretch(fallbackText.rectTransform, 12f);
+                    titleFont, Color.white);
+                fallbackText.fontStyle = FontStyle.Bold;
+                Stretch(fallbackText.rectTransform, 16f);
             }
-            panel.gameObject.AddComponent<TitleMenuHoldAnimator>().Configure(accent);
+            panel.gameObject.AddComponent<TitleMenuHoldAnimator>().Configure(null);
             return button;
         }
+#endif
 
         private void HandleManualUiInput()
         {
@@ -900,6 +1111,7 @@ namespace Narthex.SceneFlow
             return true;
         }
 
+#if UNITY_EDITOR
         private CanvasGroup CreateGroup(string name, Transform parent)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup));
@@ -909,6 +1121,15 @@ namespace Narthex.SceneFlow
         }
 
         private static Image CreatePanel(string name, Transform parent, Color color) => CreateImage(name, parent, null, color);
+
+        private static RectTransform CreateRect(string name, Transform parent, Vector2 position, Vector2 size)
+        {
+            var root = new GameObject(name, typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            SetRect(rect, new Vector2(0.5f, 0.5f), position, size);
+            return rect;
+        }
 
         private static Image CreateImage(string name, Transform parent, Sprite sprite, Color color)
         {
@@ -941,6 +1162,7 @@ namespace Narthex.SceneFlow
             outline.effectDistance = new Vector2(1.5f, -1.5f);
             return text;
         }
+#endif
 
         private static void Stretch(RectTransform rect, float margin = 0f)
         {
@@ -969,6 +1191,7 @@ namespace Narthex.SceneFlow
         private static bool IsGroupVisible(CanvasGroup group) =>
             group != null && group.alpha > 0.01f && group.interactable && group.blocksRaycasts;
 
+#if UNITY_EDITOR
         private static Sprite CreateCloudSprite()
         {
             const int width = 256;
@@ -1001,16 +1224,19 @@ namespace Narthex.SceneFlow
             var dy = (y - centerY) / radiusY;
             return Mathf.Exp(-(dx * dx + dy * dy) * 2.4f);
         }
+#endif
 
         private void ResolveThemeSprites()
         {
             titleLogoFrameSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_LogoFrame_v1");
-            buttonFrameSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_ButtonPlate_v1");
+            buttonFrameSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_ButtonPlate_v2");
+            volumeTrackSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeTrack_v1");
+            volumeFillSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeFill_v1");
+            volumeHandleSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_VolumeHandle_v1");
             loadingCompassSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_LoadingCompass_v1");
             modalPanelSprite ??= Resources.Load<Sprite>("UI/Title/TITLE_UI_ModalPanel_v1");
             newGameLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_NewGame_v1");
             continueLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Continue_v1");
-            bossLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Boss_v1");
             settingsLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Settings_v1");
             quitLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Quit_v1");
             applyLabelSprite ??= Resources.Load<Sprite>("UI/Title/Labels/TITLE_LABEL_Apply_v1");
@@ -1033,6 +1259,7 @@ namespace Narthex.SceneFlow
             };
         }
 
+#if UNITY_EDITOR
         private static void EnsureInputEventSystem()
         {
             if (EventSystem.current != null) return;
@@ -1040,5 +1267,6 @@ namespace Narthex.SceneFlow
             var inputModule = eventSystem.AddComponent<InputSystemUIInputModule>();
             inputModule.AssignDefaultActions();
         }
+#endif
     }
 }

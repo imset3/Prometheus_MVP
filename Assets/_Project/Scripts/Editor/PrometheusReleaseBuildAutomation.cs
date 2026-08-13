@@ -14,19 +14,18 @@ namespace Narthex.Tools
             "Assets/Scenes/TitleScene.unity",
             "Assets/_Project/Scenes/Boot.unity",
             "Assets/Scenes/TutorialScene.unity",
-            "Assets/Scenes/BossDevelopmentScene.unity",
             "Assets/Scenes/Chapter01.unity"
         };
 
         [MenuItem("sragon000/Build/Release/Build Windows x64")]
         public static void BuildWindows() => Build(
             BuildTarget.StandaloneWindows64,
-            "Builds/Release/DEMO_V3/Windows/Prometheus_MVP.exe");
+            "Builds/Release/DEMO_V4/Windows/Prometheus_MVP.exe");
 
         [MenuItem("sragon000/Build/Release/Build macOS")]
         public static void BuildMacOS() => Build(
             BuildTarget.StandaloneOSX,
-            "Builds/Release/DEMO_V3/macOS/Prometheus_MVP.app");
+            "Builds/Release/DEMO_V4/macOS/Prometheus_MVP.app");
 
         [MenuItem("sragon000/Build/Release/Build Windows and macOS")]
         public static void BuildAllDesktop()

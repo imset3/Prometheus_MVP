@@ -109,7 +109,7 @@ namespace Narthex.Presentation
         private IEnumerator ArrivalRoutine()
         {
             playerMotor.ResetTransientInput();
-            playerInputHost.enabled = false;
+            playerInputHost.AcquireInputLock(PlayerInputLockReason.Cutscene);
             playerBody.linearVelocity = Vector2.zero;
             fadeCanvasGroup.blocksRaycasts = true;
 
@@ -134,7 +134,7 @@ namespace Narthex.Presentation
             yield return FadeTo(0f, fadeInDuration);
 
             fadeCanvasGroup.blocksRaycasts = false;
-            playerInputHost.enabled = true;
+            playerInputHost.ReleaseInputLock(PlayerInputLockReason.Cutscene);
             serviceRoot.Events.Publish(new TutorialNarrativeChanged(requiredQuestId, stageId, dialogueLines));
 
             yield return null;

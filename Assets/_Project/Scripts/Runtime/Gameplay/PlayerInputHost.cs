@@ -3,6 +3,18 @@ using UnityEngine.InputSystem;
 
 namespace Narthex.Gameplay
 {
+    [System.Flags]
+    public enum PlayerInputLockReason
+    {
+        None = 0,
+        Dialogue = 1 << 0,
+        Pause = 1 << 1,
+        Transition = 1 << 2,
+        Defeat = 1 << 3,
+        Ending = 1 << 4,
+        Cutscene = 1 << 5
+    }
+
     public static class TutorialAimPolicy
     {
         public static float ResolveNonPointerAttackDirection(
@@ -50,8 +62,11 @@ namespace Narthex.Gameplay
         public bool HasLookAction => playerInput != null && playerInput.actions != null &&
                                      playerInput.actions.FindAction(lookActionName, false) != null;
         public bool IsDialogueInputClaimed => dialogueInputClaimed;
+        public PlayerInputLockReason ActiveInputLocks => activeInputLocks;
+        public bool IsGameplayInputLocked => activeInputLocks != PlayerInputLockReason.None;
         public float AimDirectionX { get; private set; } = 1f;
         private bool dialogueInputClaimed;
+        private PlayerInputLockReason activeInputLocks;
         private Vector2 latestMovementInput;
         private Vector2 latestLookInput;
 
@@ -95,6 +110,7 @@ namespace Narthex.Gameplay
                     motor.SetGlideHeld(false);
                 return;
             }
+            if (activeInputLocks != PlayerInputLockReason.None) return;
 
             if (context.action.name == moveActionName)
             {
@@ -147,7 +163,7 @@ namespace Narthex.Gameplay
 
         private void Update()
         {
-            if (!dialogueInputClaimed && playerInput != null && playerInput.inputIsActive && Keyboard.current != null &&
+            if (activeInputLocks == PlayerInputLockReason.None && playerInput != null && playerInput.inputIsActive && Keyboard.current != null &&
                 (Keyboard.current.digit3Key.wasPressedThisFrame || Keyboard.current.numpad3Key.wasPressedThisFrame))
                 BossSkillRequested?.Invoke();
             if (!dialogueInputClaimed || !AnyDialogueInputPressed()) return;
@@ -169,6 +185,8 @@ namespace Narthex.Gameplay
         public void SetDialogueInputClaimed(bool claimed)
         {
             dialogueInputClaimed = claimed;
+            if (claimed) AcquireInputLock(PlayerInputLockReason.Dialogue);
+            else ReleaseInputLock(PlayerInputLockReason.Dialogue);
             if (claimed)
             {
                 motor?.ResetTransientInput();
@@ -184,6 +202,27 @@ namespace Narthex.Gameplay
                 latestMovementInput = movementAction.ReadValue<Vector2>();
                 motor?.SetMovementInput(latestMovementInput);
             }
+        }
+
+        public void AcquireInputLock(PlayerInputLockReason reason)
+        {
+            if (reason == PlayerInputLockReason.None) return;
+            activeInputLocks |= reason;
+            motor?.ResetTransientInput();
+            motor?.StopHorizontalMotion();
+        }
+
+        public void ReleaseInputLock(PlayerInputLockReason reason)
+        {
+            if (reason == PlayerInputLockReason.None) return;
+            activeInputLocks &= ~reason;
+            if (activeInputLocks != PlayerInputLockReason.None) return;
+            var movementAction = playerInput != null && playerInput.actions != null
+                ? playerInput.actions.FindAction(moveActionName, false)
+                : null;
+            if (movementAction == null) return;
+            latestMovementInput = movementAction.ReadValue<Vector2>();
+            motor?.SetMovementInput(latestMovementInput);
         }
 
         public string GetBindingDisplayName(string actionName, string fallback)

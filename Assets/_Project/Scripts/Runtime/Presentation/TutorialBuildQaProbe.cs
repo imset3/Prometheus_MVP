@@ -15,17 +15,9 @@ namespace Narthex.Presentation
     {
         private const string Argument = "-prometheus-build-qa";
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
-        {
-            if (!System.Environment.GetCommandLineArgs().Contains(Argument)) return;
-            if (FindFirstObjectByType<TutorialBuildQaProbe>() != null) return;
-            DontDestroyOnLoad(new GameObject(nameof(TutorialBuildQaProbe))
-                .AddComponent<TutorialBuildQaProbe>().gameObject);
-        }
-
         private IEnumerator Start()
         {
+            if (!System.Environment.GetCommandLineArgs().Contains(Argument)) yield break;
             var operation = SceneManager.LoadSceneAsync("TutorialScene", LoadSceneMode.Single);
             while (operation != null && !operation.isDone) yield return null;
             yield return new WaitForSecondsRealtime(0.75f);
