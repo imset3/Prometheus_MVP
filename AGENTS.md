@@ -1,5 +1,7 @@
 # Prometheus AI scene workflow
 
+Before making any project change, read `Assets/_Project/Docs/AI_AGENT_ONBOARDING.md` completely. It is the canonical quick-start, architecture, validation, troubleshooting, and release guide for a new agent.
+
 When changing Unity scenes, markers, serialized component values, or scene activation state:
 
 1. Read `Assets/_Project/Docs/AI_SCENE_TOOLKIT.md`.

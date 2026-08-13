@@ -1,5 +1,7 @@
 # Prometheus MVP Project Handoff
 
+> 신규 AI 에이전트는 먼저 [Prometheus 신규 에이전트 기술 가이드](AI_AGENT_ONBOARDING.md)를 읽는다. 이 문서는 프로젝트 배경과 이전 기록을 보존하며, 최신 운영·검증·릴리스 절차는 신규 가이드를 기준으로 한다.
+
 ## 1. Project Identity
 
 - Game title: `Prometheus` (Korean: `프로메테우스`)
@@ -158,7 +160,7 @@ For production persistence, disable the component or uncheck `Reset Progress On 
 - Unity EditMode suite covers progression, save, combat, high-speed trigger crossing, and updraft policies.
 - `TutorialSceneRuntimeSmokeTests` loads the real tutorial scene in PlayMode. The full-flow test drives the hidden room, passkey, meeting-room return, ladder, sequential training lessons, exterior departure, F/G enemy-clear gates, wind routes and Helte arrival through live scene systems.
 - Save reset has a focused test in `Assets/_Project/Scripts/Tests/CoreAndSaveTests.cs`.
-- Latest confirmed run: EditMode `110/110 passed`; PlayMode confirms the boss-development flow, chapter intro, debug skip, and the full Helte-to-demo-ending flow. The full PlayMode suite currently has three unrelated scene-regression failures (G `Square (21)` activation, objective-panel alpha expectation, and the isolated imported-training scenario). Active tutorial scene validation passed.
+- Latest confirmed run: EditMode `123/123 passed`, PlayMode `15/15 passed`. The suite covers title/save flows, boss-development startup, chapter intro, debug skip, sequential training, F/G traversal, Helte combat and the demo ending. Active Tutorial Scene Validator and Training Marker Validator both pass.
 
 ### Scene Validator
 

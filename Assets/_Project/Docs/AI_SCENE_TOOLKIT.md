@@ -36,6 +36,7 @@
 | 기존 원거리 더미 통합 | `tutorial.training-dummies.apply` | Hierarchy / Collider2D |
 | F/G 적 지상 물리 적용 | `tutorial.enemy-physics.apply` | Rigidbody2D / Collider2D / Grounded Motor |
 | 원거리 적 투사체 아트 | `tutorial.enemy-projectile-art.apply` | SpriteRenderer / Scene View |
+| 플레이어 체력바 | `hud.player-health.apply` | TutorialHUD / CombatHealthTextPresenter |
 | 코드 영향 확인 | `code.usage` | 씬 검색 |
 
 ## Unity MCP 사용
@@ -142,6 +143,15 @@ Unity `JsonUtility` 호환을 위해 인자는 Dictionary가 아니라 배열이
   - 대상 + `componentType`, `propertyPath`, `value`
   - 지원 값: 정수, 실수, bool, string, enum, Vector2, Vector3, `GlobalObjectId` 참조
   - Vector 값은 `1.5,2.0` 또는 `1.5,2.0,0`처럼 입력한다.
+
+### 플레이어 체력바
+
+- `hud.player-health.apply`
+
+`PlayerHealthText`의 기존 `CombatHealthTextPresenter`와 Actor 참조를 유지하면서 실제 씬 계층에
+`PlayerHealthBarTrack`, `PlayerHealthBarFill`, `PlayerHealthValueText`를 생성·연결한다. 게이지는
+현재/최대 체력 비율로 줄어들고 중앙 텍스트는 `500 / 500` 형식으로 표시된다. 튜토리얼과 보스
+개발씬에 각각 dry-run 후 적용하며 런타임 임시 UI를 만들지 않는다.
 
 ### 튜토리얼 배경판
 
